@@ -1,0 +1,31 @@
+{
+    "ESOINN":
+    {
+        "Atype":[30,1,6,7,8,16],
+        "Amax":[2,100,50,10,20,10],
+        "Modelfile":"Model.ESOINN",
+        "Scalefactorfile":"Sfactor.in",
+        "Target":"Train",
+        "Maxsteps":200000,
+        "Traininterval":500,
+        "Clusterinterval":50000
+    },
+    "Compute":
+    {
+        "Gpulist":[0]
+    },
+    "System":
+    [
+        {
+            "Systemparm":"1aay_crystall.prmtop",
+            "Initstruc":"",
+            "Traj":"1aay_eval_1ns.mdcrd",
+            "Strucdict":{"NCHAIN":1,"CHNPTS":[0],"CHNPTE":[33],"CENTER":533,"QMCUT":2.8}
+        }
+    ],
+    "Dataset":
+    {
+        "Outputdataset":"Added_1AAY"
+    }
+
+}

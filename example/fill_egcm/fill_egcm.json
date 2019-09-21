@@ -1,0 +1,12 @@
+{
+    "ESOINN":{
+        "Atype":[30,1,6,7,8,16],
+        "Amax":[2,100,50,10,20,10]
+    },
+    "Dataset":{
+        "Inputdatasetlist":["Added_1AAY","Added_1AAY2"],
+        "Outputdataset":"1AAY_EGCM",
+        "ESOINNdataset":"1AAY.EGCM"
+    }
+}
+
