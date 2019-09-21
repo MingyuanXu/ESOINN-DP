@@ -17,8 +17,9 @@ def UpdateGPARAMS(jsonfile):
                 GPARAMS.Esoinn_setting.Model=Esoinn(GPARAMS.Esoinn_setting.Modelfile,\
                                                     dim=GPARAMS.Esoinn_setting.Maxnum,\
                                                     iteration_threshold=GPARAMS.Esoinn_setting.Traininterval)
-                if os.path.exists(GPARAMS.Esoinn_setting.Modelfile):
+                if os.path.exists(GPARAMS.Esoinn_setting.Modelfile+".ESOINN"):
                     GPARAMS.Esoinn_setting.Model.Load()
+                    print (GPARAMS.Esoinn_setting.Model.nodes)
             if GPARAMS.Esoinn_setting.Scalefactorfile!="":
                 if os.path.exists(GPARAMS.Esoinn_setting.Scalefactorfile):
                     with open(GPARAMS.Esoinn_setting.Scalefactorfile,'rb') as f:
