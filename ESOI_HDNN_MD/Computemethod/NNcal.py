@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # coding=utf-8
+
 from .DFTBcal import *
 from ..Neuralnetwork import *
 from ..Base import *
 from ..Comparm import *
+
 def Cal_NN_EFQ(NNSet,inpath='./'):
     ERROR_mols=[]
     MSet_list=[MSet('ID%d'%i) for i in range(len(GPARAMS.Esoinn_setting.NNdict['NN']))]
@@ -81,6 +83,7 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
         if MAX_MSE_F > GPARAMS.Neuralnetwork_setting.Maxerr :
             ERROR_str+='%dth mol in NNSet is not believable, MAX_MSE_F: %f\n '%(i,MAX_MSE_F)
             ERROR_mols.append([NNSet.mols[i],MAX_MSE_F])
+         
 #        if MAX_MSE_F>=50 or MAX_MSE_F-tmperr>30:
 #            ERROR_str+='%dth mol will be calculated with DFTB!'
 #            NNSet.mols[i].Write_DFTB_input(parapath,False,inpath)

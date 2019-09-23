@@ -7,5 +7,6 @@ from .Info import *
 from .Physics import * 
 from .Mol import *
 from .Dftbin import * 
+from .Hardware import *
 
 

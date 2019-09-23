@@ -1,12 +1,13 @@
 from ..Comparm import *
 import os
 
-def productor(ID='',GPARAMS_index=0,Queue=None):
+def productor(GPARAMS_index=0,Queue=None):
     from ..Computemethod import QMMM_FragSystem
     from ..MD import Simulation
-    os.environ["CUDA_VISIBLE_DEVICES"]=ID
-
-    if GPARAMS.Compute_setting.Theroylevel=="DFTB":
+    from ..Base import Find_useable_gpu
+    print (GPARAMS.Compute_setting.Traininglevel)
+    os.environ["CUDA_VISIBLE_DEVICES"]=Find_useable_gpu(GPARAMS.Compute_setting.Gpulist)
+    if GPARAMS.Compute_setting.Theroylevel=="DFTB+":
         os.environ["OMP_NUM_THREADS"]=GPARAMS.Compute_setting.Ncoresperthreads
 
     if GPARAMS.Compute_setting.Computelevel[GPARAMS_index]=="QM/MM":
@@ -25,9 +26,13 @@ def productor(ID='',GPARAMS_index=0,Queue=None):
                 os.system("cp "+initstruc+' '+MDpath+initstruc)
             qmsys=QMMM_FragSystem(MDpath+prmfile,MDpath+initstruc,\
                                 Strucdict=GPARAMS.System_setting[GPARAMS_index].Strucdict,\
-                                Path=GPARAMS.MD_setting[GPARAMS_index].Name)
+                                Path=GPARAMS.MD_setting[GPARAMS_index].Name,\
+                                Inpath='./'+GPARAMS.Compute_setting.Traininglevel+\
+                                        '/'+GPARAMS.MD_setting[GPARAMS_index].Name)
     if GPARAMS.MD_setting[GPARAMS_index].MDmethod=="Normal MD":
+        print (GPARAMS.MD_setting[GPARAMS_index].Name)
         MD_simulation=Simulation(sys=qmsys,\
                                  MD_setting=GPARAMS.MD_setting[GPARAMS_index])
         MDdeviation=MD_simulation.MD(Queue)
+        
 

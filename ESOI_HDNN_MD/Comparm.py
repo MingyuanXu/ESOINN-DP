@@ -128,6 +128,7 @@ class Train_setting:
     def __init__(self):
         self.Ifwithhelp=False
         self.Trainstage=0
+        self.Stagenum=1
         return 
 
 class Neuralnetwork_setting:

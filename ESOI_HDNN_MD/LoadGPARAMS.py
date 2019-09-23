@@ -27,12 +27,12 @@ def UpdateGPARAMS(jsonfile):
                 else:
                     GPARAMS.Esoinn_setting.scalemax=None
                     GPARAMS.Esoinn_setting.scalemin=None
-
             if GPARAMS.Esoinn_setting.Loadefdnet==True and GPARAMS.Esoinn_setting.Model!=None:
                 nnlist=Get_neuralnetwork_instance(GPARAMS.Esoinn_setting.Model.class_id)
             if GPARAMS.Esoinn_setting.Loadrespnet==True and GPARAMS.Esoinn_setting.respnetname!="":
                 respnet=Get_resp_instance(GPARAMS.Esoinn_setting.respnetname)
             GPARAMS.Esoinn_setting.NNdict={"NN":nnlist,"RESP":respnet}
+
         if 'HDNN' in jsondict.keys():
             Loaddict2obj(jsondict['HDNN'],GPARAMS.Neuralnetwork_setting)
             GPARAMS.Neuralnetwork_setting.Update()
@@ -48,6 +48,12 @@ def UpdateGPARAMS(jsonfile):
                 GPARAMS.MD_setting.append(Tmpmd_setting)
         if "Dataset" in jsondict.keys():
             Loaddict2obj(jsondict['Dataset'],GPARAMS.Dataset_setting)
+        if "Train" in jsondict.keys():
+            Loaddict2obj(jsondict["Train"],GPARAMS.Train_setting)
+            if GPARAMS.Train_setting.Trainstage!=0:
+                GPARAMS.MD_setting.Stageindex=GPARAMS.Train_setting.Trainstage
+                GPARAMS.MD_setting.Mdstage=GPARAMS.Train_setting.Stagenum
+                
     return
 
 def Loaddict2obj(dict,obj):

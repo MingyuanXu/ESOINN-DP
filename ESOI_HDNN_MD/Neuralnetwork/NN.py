@@ -19,10 +19,10 @@ class BP_HDNN():
         if Name_!=None:
             self.name=Name_
             self.Load()
-            print ("HHHHHHHHHHHHHKKKKKKKKKKKKKKKKKHHHHHHHHHHHHHHHH")
-            print (GPARAMS.Compute_setting.Traininglevel)
-            print ("./"+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+".record")
-            print ("HHHHHHHHHHHHHKKKKKKKKKKKKKKKKKHHHHHHHHHHHHHHHH")
+            #print ("HHHHHHHHHHHHHKKKKKKKKKKKKKKKKKHHHHHHHHHHHHHHHH")
+            #print (GPARAMS.Compute_setting.Traininglevel)
+            #print ("./"+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+".record")
+            #print ("HHHHHHHHHHHHHKKKKKKKKKKKKKKKKKHHHHHHHHHHHHHHHH")
             self.recorder=open('./'+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+'.record','a')
             if self.TData==None and TData_ ==None and Trainable_==True:
                 print ("ERROR: A Trainable BP_HDNN Instance don't have trainable dataset!!")
@@ -80,7 +80,7 @@ class BP_HDNN():
         self.TData = TData_
         self.element=0
         self.name = self.TData.name+"_"+self.TData.dig.name+"_"+self.NetType+"_"+str(self.element)
-        print ("./"+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+".record")
+        #print ("./"+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+".record")
         self.recorder=open('./'+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+'.record','a')
         self.train_dir = GPARAMS.Neuralnetwork_setting.Networkprefix+self.name
         self.PreparedFor=0
@@ -539,11 +539,11 @@ class BP_HDNN():
         output_charge=tf.zeros(tf.concat([batch_size_ctrl,[self.MaxNAtoms]],axis=0),dtype=self.tf_prec)
         #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
         dipole_wb = []
-        print (natom)
+        #print (natom)
         with tf.name_scope("DipoleNet"):
-            print (self.eles)
+            #print (self.eles)
             for e in range(len(self.eles)):
-                print (inp[e])
+                #print (inp[e])
                 Dbranches.append([])
                 charge_inputs = inp[e]
                 charge_shp_in = tf.shape(charge_inputs)
@@ -1062,7 +1062,7 @@ class BP_HDNN():
         return
 
     def Load(self):
-        print ("Unpickling TFInstance...")
+        #print ("Unpickling TFInstance...")
         from TensorMol.Containers.PickleTM import UnPickleTM as UnPickleTM
         tmp = UnPickleTM(self.path+self.name+".tfn")
         self.Clean()
@@ -1070,7 +1070,7 @@ class BP_HDNN():
         # Simple hack to fix checkpoint path.
         self.chk_file = os.path.join(self.train_dir,self.name+'-chk')
         self.chk_file=self.chk_file.replace("./networks/",GPARAMS.Neuralnetwork_setting.Networkprefix)
-        print("self.chk_file:", self.chk_file)
+        #print("self.chk_file:", self.chk_file)
         return 
 
     def save_chk(self, step):  # We need to merge this with the one in TFInstance

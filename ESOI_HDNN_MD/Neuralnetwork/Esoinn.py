@@ -413,6 +413,7 @@ class Esoinn(BaseEstimator, ClusterMixin):
 
     def find_closest_cluster(self, num, signal):
         n=self.nodes.shape[0]
+        print (self.class_id,self.nodes,signal)
         D=np.sum((self.nodes-np.array([signal]*n))**2,1)
         list_node=[[] for i in range(self.class_id)]
         list_dis=[[] for i in range(self.class_id)]

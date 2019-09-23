@@ -6,7 +6,7 @@ from ..Comparm import *
 import numpy as np
 import time
 class Molnew:
-    def __init__(self,atoms=np.array([1],dtype=int),crd=np.array([0.0,0.0,0.0],dtype=float),charge=np.array([0.0],dtype=float)):
+    def __init__(self,atoms=np.array([1],dtype=int),crd=np.array([0.0,0.0,0.0],dtype=float),charge=np.array([0.0],dtype=float),name=''):
         #Mol.__init__(self,atoms,crd)
         self.atoms=atoms
         self.atomnamelist=[Element_Table[i] for i in self.atoms]
@@ -14,11 +14,37 @@ class Molnew:
         self.coords=crd 
         self.totalcharge=charge
         self.natom=len(atoms)
-        self.name=time.strftime("%d-%H-%M-%S_mol", time.localtime()) 
+        if name=='':
+            self.name=time.strftime("%d-%H-%M-%S_mol", time.localtime()) 
+        else:
+            self.name=name
         self.properties={}
         self.belongto=[]
-    def Update_from_Gaulog(self,filename):
-        file=open(filename,'r') 
+        self.spin=1
+    def Write_Gaussian_input(self,keyworkds,inpath,nproc=14,mem=600,spin=1):
+        file=open(inpath+self.namei+'.com','w')
+        file.write('%'+'nproc=%d\n'%nproc)
+        file.write('%mem='+'%dMW\n'%mem)
+        file.write('%'+'chk=MODEL%d.chk\n'%id)
+        file.write(keywords)
+        file.write('\n')
+        try: 
+            file.write('MODEL ERROR: %f'%self.properties['ERR'])
+        except:
+            file.write('Hello world\n')
+        file.write('\n')
+        file.write('%d %d\n'%(self.totalcharge,self.spin))
+        for i in range(len(self.atoms)):
+            file.write('%s %.3f %.3f %.3f\n'%(element_dict[self.atoms[i]],self.coords[i][0],self.coords[i][1],self.coords[i][2]))
+        file.write('\n')
+        file.close()
+    
+    def Cal_Gaussian(self,inpath='./'):
+        os.system('cd '+inpath+self.name+'.com && g16 '+filename)
+        self.Update_from_Gaulog(inpath+self.name+'.com')
+        return 
+    def Update_from_Gaulog(self,inpath='./'):
+        file=open(inpath+filename+'.log','r') 
         line=file.readline()
         natom=0
         atoms=[];coords=[];charge=[];force=[];dipole=[];energy=0

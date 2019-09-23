@@ -8,7 +8,6 @@ from ..Base import *
 from ..MD import *
 import pickle
 import random
-
 from  TensorMol import *
 from parmed.amber import AmberParm
 from parmed.amber import AmberMdcrd
@@ -20,8 +19,9 @@ from .Basestruc import *
 from ..Comparm import *
 from .NNcal import*
 from .DFTBcal import * 
+
 class QMMM_FragSystem:
-    def __init__(self,prmname='',crdname='',Strucdict={},Path='./'):
+    def __init__(self,prmname='',crdname='',Strucdict={},Path='./',Inpath='./'):
         self.prmname=prmname
         self.crdname=crdname
         self.update_step=0
@@ -32,6 +32,7 @@ class QMMM_FragSystem:
         self.chnpte=Strucdict['CHNPTE']
         self.catom=Strucdict['CENTER']
         self.path=Path
+        self.Inpath=Inpath
         self.qmcutoff=GPARAMS.Compute_setting.Qmradius
         if GPARAMS.Esoinn_setting.Loadrespnet ==True:
             self.ifresp=True 
@@ -46,6 +47,8 @@ class QMMM_FragSystem:
         self.Path=Path 
         if not os.path.exists(self.Path):
             os.system("mkdir "+self.Path)
+        if not os.path.exists(self.Inpath):
+            os.system("mkdir -p "+self.Inpath)
         self.Get_prmtop_info()
         if self.crdname!='': 
             self.Get_init_coord()
@@ -291,6 +294,7 @@ class QMMM_FragSystem:
         
     def Update_DisMap(self):
         self.Distance_Matrix=self.Dsess.run(self.tfDM,{self.tfcrd:self.coords})
+
     def Create_QMarea(self):
         self.TCRvec=self.Distance_Matrix[self.catom]
         tmpindex=np.where(self.TCRvec<self.qmcutoff)[0]
@@ -357,22 +361,24 @@ class QMMM_FragSystem:
             EGCM=(QMMol.Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
             EGCM[ ~ np.isfinite( EGCM )] = 0
             EGCMlist.append(EGCM)
+
             QMMol.belongto=GPARAMS.Esoinn_setting.Model.find_closest_cluster(3,EGCM)
         QMMol.properties['clabel']=QMcharge
         QMSet=MSet()
         QMSet.mols.append(QMMol)
         if self.Theroylevel=='NN':
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
-                    Cal_NN_EFQ(QMSet,inpath=self.Path)
+                    Cal_NN_EFQ(QMSet,inpath=self.Inpath)
 
         if self.Theroylevel=='DFTB3':
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
                     Cal_DFTB_EFQ(QMSet,\
                                  GPARAMS.Software_setting.Dftbparapath,\
-                                 inpath=self.Path)
+                                 inpath=self.Inpath)
 
         if self.Theroylevel=="Semiqm":
-            pass
+            NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
+                    Cal_Gaussian_EFQ(QMSet,self.Inpath,GPARAMS.Compute_setting.Gaussiankeywords,GPARAMS.Compute_setting.Ncoresperthreads)
         if len(ERROR_mols)>0 and self.step-self.record_err_step>5:
             print ('ERR_step:',self.record_err_step)
             self.record_err_step=self.step    
@@ -397,7 +403,6 @@ class QMMM_FragSystem:
                 self.force[QMlist_withg[i].bpt] +=self.QMarea_QMforce[i]
                 if len(self.QMarea_respcharge)!=0:
                     self.RESPCHARGE[QMlist_withg[i].bpt]+=self.QMarea_respcharge[i]
-
             else:
                 self.force[QMlist_withg[i].realpt]+=self.QMarea_QMforce[i]
                 if len(self.QMarea_respcharge)!=0:
