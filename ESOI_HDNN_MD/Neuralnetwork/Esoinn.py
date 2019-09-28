@@ -15,7 +15,6 @@ class Esoinn(BaseEstimator, ClusterMixin):
         self.Name=Name
         self.dim = dim
         self.iteration_threshold =iteration_threshold
-        print (self.iteration_threshold)
         self.c1 = c1
         self.c2 = c2
         self.max_edge_age = max_edge_age
@@ -106,7 +105,6 @@ class Esoinn(BaseEstimator, ClusterMixin):
                 signal=self.__check_signal(signal_list[i])
                 total_data.append(signal)
             total_pt[-1].append(len(total_data))    
-            print (total_pt)
             similarities =euclidean_distances(np.array(total_data))
             mds=manifold.MDS(n_components=2,max_iter=500,eps=1e-7,dissimilarity="precomputed",n_jobs=nproc)
             pos=mds.fit(similarities).embedding_
@@ -168,7 +166,6 @@ class Esoinn(BaseEstimator, ClusterMixin):
             class_nodelist[self.node_labels[i]].append(self.nodes[i])
         class_nodelist=np.array(class_nodelist)
         for i in range(self.class_id):
-            print (np.sum(class_nodelist[i],0))
             class_center[i]=np.sum(class_nodelist[i],0)/float(len(class_nodelist))
         self.class_center=class_center
         return self
@@ -413,7 +410,6 @@ class Esoinn(BaseEstimator, ClusterMixin):
 
     def find_closest_cluster(self, num, signal):
         n=self.nodes.shape[0]
-        print (self.class_id,self.nodes,signal)
         D=np.sum((self.nodes-np.array([signal]*n))**2,1)
         list_node=[[] for i in range(self.class_id)]
         list_dis=[[] for i in range(self.class_id)]

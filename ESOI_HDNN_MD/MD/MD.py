@@ -20,7 +20,6 @@ class Simulation():
         self.name=MD_setting.Name 
         self.sys=sys
         self.path='./'+MD_setting.Name+'/' 
-        self.Outfile=open(self.path+MD_setting.Name+'.mdout','w')
         self.format=MD_setting.Mdformat
         self.T=MD_setting.Temp
         self.maxstep=MD_setting.Mdmaxsteps
@@ -33,6 +32,7 @@ class Simulation():
         self.MDThermostat=MD_setting.Thermostat 
         self.MDV0=MD_setting.Mdv0 
         self.stageindex=MD_setting.Stageindex
+        self.Outfile=open(self.path+MD_setting.Name+'_%d.mdout'%self.stageindex,'w')
         self.Nprint=MD_setting.Nprint
         self.Maxerr=GPARAMS.Neuralnetwork_setting.Maxerr 
         self.Miderr=GPARAMS.Neuralnetwork_setting.Miderr 
@@ -58,7 +58,7 @@ class Simulation():
         self.f=f
         self.md_log=None
         if self.format=="Amber":
-            self.trajectory=AmberMdcrd(self.path+self.name+'.mdcrd',natom=self.sys.natom,hasbox=False,mode='w')
+            self.trajectory=AmberMdcrd(self.path+self.name+'_%d.mdcrd'%self.stageindex,natom=self.sys.natom,hasbox=False,mode='w')
             self.restart=Rst7(natom=len(self.atoms))
             self.trajectory.add_coordinates(self.x)
         #else:
@@ -101,11 +101,11 @@ class Simulation():
             ERROR_record.append(ERROR)
             if ERROR>self.Miderr and ERROR<self.Maxerr:
                 miderr_num+=1
-            if self.MODE=='TRAIN':
+            if self.MODE=='Train':
                 if QMQueue!=None:
                     if ERROR>self.Maxerr:
                         QMQueue.put(ERROR_mols)
-                    elif miderr_num<self.Mdmaxsteps*self.Midrate:
+                    elif miderr_num<self.maxstep*self.Midrate:
                         QMQueue.put(ERROR_mols)
                 if ESOINNQueue!=None:
                     ESOINNQueue.put(EGCMlist)
@@ -139,7 +139,7 @@ class Simulation():
                 if self.format=="Amber":
                     self.restart.coordinates=self.x
                     self.restart.vels=self.v
-                    self.restart.write(self.path+self.name+'.rst7')
+                    self.restart.write(self.path+self.name+'_%d.rst7'%self.stageindex)
             step+=1
             AVG_ERR=np.mean(np.array(ERROR_record[-1:-50]))
             if AVG_ERR>200:

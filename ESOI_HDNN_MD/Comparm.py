@@ -52,6 +52,8 @@ class Compute_setting:
         self.Ompthreads=28
         self.Qmradius=2.8
         self.Ncoresperthreads=1
+        self.Gaussiankeywords=''
+        self.Atomizationlevel=""
         return
     def Update(self):
         if not os.path.exists(self.Traininglevel):
@@ -69,6 +71,7 @@ class Software_setting:
             for eachline in f:
                 if 'g16' in eachline:
                     self.G16path=eachline.strip()
+                    print (self.G16path)
         with os.popen('which dftb+','r') as f:
             for eachline in f:
                 if 'dftb+' in eachline:
@@ -155,7 +158,7 @@ class Neuralnetwork_setting:
         self.Maxcheckpoints=1
         self.Innormroutine=None
         self.Outnormroutine=None
-        self.Monitormset=None
+        self.Monitorset=None
         self.AN1_r_Rc=4.6
         self.AN1_a_Rc=3.1
         self.AN1_eta=4.0

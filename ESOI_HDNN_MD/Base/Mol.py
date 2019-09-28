@@ -10,7 +10,6 @@ class Molnew:
         #Mol.__init__(self,atoms,crd)
         self.atoms=atoms
         self.atomnamelist=[Element_Table[i] for i in self.atoms]
-        print (self.atomnamelist)
         self.coords=crd 
         self.totalcharge=charge
         self.natom=len(atoms)
@@ -21,12 +20,13 @@ class Molnew:
         self.properties={}
         self.belongto=[]
         self.spin=1
-    def Write_Gaussian_input(self,keyworkds,inpath,nproc=14,mem=600,spin=1):
-        file=open(inpath+self.namei+'.com','w')
+    def Write_Gaussian_input(self,keywords,inpath,nproc=14,mem=600,spin=1):
+        print (inpath)
+        file=open(inpath+self.name+'.com','w')
         file.write('%'+'nproc=%d\n'%nproc)
         file.write('%mem='+'%dMW\n'%mem)
-        file.write('%'+'chk=MODEL%d.chk\n'%id)
-        file.write(keywords)
+        file.write('%'+'chk=%s.chk\n'%self.name)
+        file.write("# "+keywords+'\n')
         file.write('\n')
         try: 
             file.write('MODEL ERROR: %f'%self.properties['ERR'])
@@ -38,17 +38,20 @@ class Molnew:
             file.write('%s %.3f %.3f %.3f\n'%(element_dict[self.atoms[i]],self.coords[i][0],self.coords[i][1],self.coords[i][2]))
         file.write('\n')
         file.close()
-    
+        return 
     def Cal_Gaussian(self,inpath='./'):
-        os.system('cd '+inpath+self.name+'.com && g16 '+filename)
-        self.Update_from_Gaulog(inpath+self.name+'.com')
+        print ('cd '+inpath+' && g16 '+self.name+'.com && cd -')
+        os.system('cd '+inpath+' && g16 '+self.name+'.com && cd -')
+        self.Update_from_Gaulog(inpath)
+        self.CalculateAtomization(GPARAMS.Compute_setting.Atomizationlevel)
         return 
     def Update_from_Gaulog(self,inpath='./'):
-        file=open(inpath+filename+'.log','r') 
+        file=open(inpath+self.name+'.log','r') 
         line=file.readline()
         natom=0
         atoms=[];coords=[];charge=[];force=[];dipole=[];energy=0
         while line:
+            print (line)
             if 'Charge' in line and 'Multiplicity' in line:
                 var=line.split()
                 totalcharge=int(var[2]);spin=int(var[-1])
@@ -93,7 +96,7 @@ class Molnew:
                 DBLOCK=''
                 while 'Normal termination' not in line:
                     if 'Error termination' in line:
-                        print (filename+' is end with error')
+                        print (self.name+' is end with error')
                         stop
                     DBLOCK=DBLOCK+line.strip('\n').strip()
                     line=file.readline()
@@ -101,7 +104,7 @@ class Molnew:
                 for i in var:
                     if 'Dipole' in i:
                         dipole_str=i.strip(' Dipole=')
-                        print (filename,dipole_str)
+                        print (self.name,dipole_str)
                         dipole=[float(m)/0.393456 for m in dipole_str.split(',')]
             line=file.readline()
         self.atoms=np.array(atoms)
@@ -112,7 +115,8 @@ class Molnew:
         self.properties['gradients']=-np.array(force)
         self.properties['dipole']=np.array(dipole)
         self.properties['charge']=np.array(charge)
-        
+        print (self.properties)
+        return 
     def Cal_EGCM(self,dummy_water=1):
         anum=len(self.atoms)
         crd=self.coords
@@ -282,6 +286,7 @@ class Molnew:
     def __str__(self,wprop=False):
         lines =""
         natom = self.atoms.shape[0]
+        print (self.atoms,natom)
         if (wprop):
             lines = lines+(str(natom)+"\nComment: "+self.PropertyString()+"\n")
         else:

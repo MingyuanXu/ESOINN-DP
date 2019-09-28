@@ -53,7 +53,6 @@ class QMMM_FragSystem:
         if self.crdname!='': 
             self.Get_init_coord()
         self.recorderr=10
-
         self.FullMMparm=copy.deepcopy(self.prmtop)
         mmsys=self.FullMMparm.createSystem(nonbondedMethod=NoCutoff,rigidWater=False)
         integrator=LangevinIntegrator(300*kelvin, 1/picosecond, 0.00001*picoseconds)
@@ -70,13 +69,11 @@ class QMMM_FragSystem:
         atomname=self.prmtop.parm_data['ATOM_NAME']
         eleindex=self.prmtop.parm_data['ATOMIC_NUMBER']
         self.atoms=eleindex 
-
         respt=np.array(self.prmtop.parm_data['RESIDUE_POINTER'])-1
         respts=respt
         respte=self.prmtop.parm_data['RESIDUE_POINTER'][1:]
         respte.append(natom+1)
         respte=np.array(respte)-2
-
         atomcrg=np.array(self.prmtop.parm_data['CHARGE'])
         if self.ifresp==True:
             self.RESPCHARGE=copy.deepcopy(atomcrg)
@@ -84,7 +81,6 @@ class QMMM_FragSystem:
         for i in range(nres):
             rescrg[i]=round(np.sum(atomcrg[respts[i]:respte[i]+1]))
         residue=self.prmtop.parm_data['RESIDUE_LABEL']
-        
         restype=['L' for i in range(nres)]
         resindex=[]
         resname=[]
@@ -348,7 +344,7 @@ class QMMM_FragSystem:
         def get_aindex(elem):
             return elem.aindex
         QMlist_withg.sort(key=get_aindex)
-
+    
         self.force=np.zeros((self.natom,3))
         self.energy=0
         self.charge=np.zeros(self.natom)
@@ -357,19 +353,20 @@ class QMMM_FragSystem:
         positions=np.array([m.crd for m in QMlist_withg])
         QMcharge=np.sum(np.array(self.fragcharge)[QMfraglist])
         QMMol=Molnew(alist,positions,QMcharge)
+    
         if self.Theroylevel=='NN':
             EGCM=(QMMol.Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
             EGCM[ ~ np.isfinite( EGCM )] = 0
             EGCMlist.append(EGCM)
-
             QMMol.belongto=GPARAMS.Esoinn_setting.Model.find_closest_cluster(3,EGCM)
         QMMol.properties['clabel']=QMcharge
         QMSet=MSet()
         QMSet.mols.append(QMMol)
+        QMSet.mols[-1].name="Stage_%d_MDStep_%d_%d"%(GPARAMS.Train_setting.Trainstage,self.step,len(QMSet.mols))
         if self.Theroylevel=='NN':
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
                     Cal_NN_EFQ(QMSet,inpath=self.Inpath)
-
+            
         if self.Theroylevel=='DFTB3':
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
                     Cal_DFTB_EFQ(QMSet,\
@@ -380,6 +377,7 @@ class QMMM_FragSystem:
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
                     Cal_Gaussian_EFQ(QMSet,self.Inpath,GPARAMS.Compute_setting.Gaussiankeywords,GPARAMS.Compute_setting.Ncoresperthreads)
         if len(ERROR_mols)>0 and self.step-self.record_err_step>5:
+            print (ERROR_mols[0])
             print ('ERR_step:',self.record_err_step)
             self.record_err_step=self.step    
         else:
@@ -389,7 +387,7 @@ class QMMM_FragSystem:
         self.QMarea_QMforce=NN_predict[0][1]
         self.QMarea_QMenergy=NN_predict[0][0]
         self.QMarea_respcharge=NN_predict[0][3] 
-        print (QMMol)
+
         if self.ifresp==True:
             self.RESPCHARGE=copy.deepcopy(np.array(self.prmtop.parm_data['CHARGE']))
         if len(self.QMarea_respcharge)!=0:
@@ -398,6 +396,7 @@ class QMMM_FragSystem:
                     self.RESPCHARGE[QMlist_withg[i].bpt]=0
                 else:
                     self.RESPCHARGE[QMlist_withg[i].realpt]=0
+
         for i in range(len(QMlist_withg)):
             if QMlist_withg[i].bpt!=-1:
                 self.force[QMlist_withg[i].bpt] +=self.QMarea_QMforce[i]
@@ -407,7 +406,6 @@ class QMMM_FragSystem:
                 self.force[QMlist_withg[i].realpt]+=self.QMarea_QMforce[i]
                 if len(self.QMarea_respcharge)!=0:
                     self.RESPCHARGE[QMlist_withg[i].realpt]+=self.QMarea_respcharge[i]
-                    print(i,QMlist_withg[i].realpt,self.QMarea_respcharge[i])
 
         self.energy+=self.QMarea_QMenergy
         print ('Step: %d RESP CHARGE OF MBG: %.3f %.3f %.3f %.3f %.3f'\
@@ -450,7 +448,7 @@ class QMMM_FragSystem:
         for i in range(len(QMlist)):
             self.force[QMlist[i].realpt]-=self.QMarea_MMforce[i]
         self.energy-=self.QMarea_MMenergy
-
+        
         if self.ifresp==True:
             if self.step%100==0:
                 self.FullMMparm=copy.deepcopy(self.prmtop)
@@ -461,6 +459,7 @@ class QMMM_FragSystem:
                 positions=np.array(self.coords)
                 self.MM_simulation.context.setPositions(positions/10)
                 self.MMstate=self.MM_simulation.context.getState(getEnergy=True,getForces=True,getPositions=True)
+            
         positions=np.array(self.coords)
         self.MM_simulation.context.setPositions(positions/10)
         self.MMstate=self.MM_simulation.context.getState(getEnergy=True,getForces=True,getPositions=True)
@@ -468,6 +467,7 @@ class QMMM_FragSystem:
         self.FullMM_force=self.MMstate.getForces(asNumpy=True).value_in_unit(kilocalories/(angstrom*mole))
         self.force+=self.FullMM_force
         self.energy+=self.FullMM_energy
+
         #num=0
         #if self.stepmethod=='DFTB':
         #    for i in range(len(QMlist_withg)):
@@ -477,6 +477,7 @@ class QMMM_FragSystem:
         #            num+=1
         self.step+=1
         return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,AVG_ERR,ERROR_mols,EGCMlist 
+
     def update_crd(self):
         for i in range(self.natom):
             self.atomlist[i].get_crd(self.coords[i])    

@@ -5,23 +5,26 @@ from .DFTBcal import *
 from ..Neuralnetwork import *
 from ..Base import *
 from ..Comparm import *
-
+import numpy as np
 def Cal_NN_EFQ(NNSet,inpath='./'):
     ERROR_mols=[]
     MSet_list=[MSet('ID%d'%i) for i in range(len(GPARAMS.Esoinn_setting.NNdict['NN']))]
     Mol_label=[[] for i in NNSet.mols]
     if GPARAMS.Esoinn_setting.NNdict["RESP"]!=None:
+        for i in range(len(NNSet.mols)):
+            print(i,len(NNSet.mols[i].atoms))
         N_Times=math.ceil(len(NNSet.mols)/GPARAMS.Neuralnetwork_setting.Batchsize)
         RESPCHARGE=[]
-        for i in range(len(NNSet.mols)):
+        for i in range(N_Times):
             TMMSET=MSet('tmp')
             TMMSET.mols=NNSet.mols[i*GPARAMS.Neuralnetwork_setting.Batchsize:(i+1)*GPARAMS.Neuralnetwork_setting.Batchsize]
-            try:
-                atom_charge=\
+            #try:
+            atom_charge=\
                     Eval_charge(TMMSET,GPARAMS.Esoinn_setting.NNdict["RESP"])
-            except:
-                atom_charge=[]
+            #except:
+            #    atom_charge=[]
             RESPCHARGE+=list(atom_charge)
+            print (np.shape(RESPCHARGE))
     for i in range(len(NNSet.mols)):
         for j in NNSet.mols[i].belongto:
             MSet_list[j].mols.append(NNSet.mols[i])
@@ -67,6 +70,7 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
             N_num=math.ceil((NN_num+1)/2)
         E_avg=np.mean(E_i)
         F_avg=np.mean(F_i,axis=0)
+        print (i,imol.name,len(F_i),len(F_avg))
         tmp_list=np.argsort(np.max(np.reshape(np.square(F_i-F_avg),(len(imol.belongto),-1)),1))[:N_num]
         F_New=[F_i[m] for m in tmp_list]
         F_avg=np.mean(F_New,axis=0)
@@ -80,6 +84,7 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
         MAX_MSE_F=-np.sort(-np.reshape(MSE_F,-1))[0]
         MAX_ERR.append(MAX_MSE_F)
         method='NN'
+        print (GPARAMS.Neuralnetwork_setting.Maxerr)
         if MAX_MSE_F > GPARAMS.Neuralnetwork_setting.Maxerr :
             ERROR_str+='%dth mol in NNSet is not believable, MAX_MSE_F: %f\n '%(i,MAX_MSE_F)
             ERROR_mols.append([NNSet.mols[i],MAX_MSE_F])
@@ -100,7 +105,6 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
 #            method='DFTB'
         NN_predict.append([E_avg,F_avg,D_avg,Q_avg])
     AVG_ERR=np.mean(np.array(MAX_ERR))
-    print (RESPCHARGE)
     if GPARAMS.Esoinn_setting.NNdict["RESP"]!=None:
         for i in range(len(NNSet.mols)):
             NN_predict[i][3]=RESPCHARGE[i]

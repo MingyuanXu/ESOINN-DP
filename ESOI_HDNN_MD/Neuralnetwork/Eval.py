@@ -52,7 +52,7 @@ def EvalSet_charge(mol_set, instance,Rr_cut=GPARAMS.Neuralnetwork_setting.AN1_r_
         xyzs[i][:mol.NAtoms()] = mol.coords
         Zs[i][:mol.NAtoms()]   = mol.atoms
         natom[i]               = mol.NAtoms()
-        masks[i][:mol.NAtoms()]               = np.ones( mol.NAtoms(),dtype=np.float64 )
+        masks[i][:mol.NAtoms()] = np.ones( mol.NAtoms(),dtype=np.float64 )
         qtlabels[i]            = mol.properties['clabel']
     
     NL = NeighborListSet(xyzs, natom, True, True, Zs, sort_=True)
