@@ -344,7 +344,6 @@ class QMMM_FragSystem:
         def get_aindex(elem):
             return elem.aindex
         QMlist_withg.sort(key=get_aindex)
-    
         self.force=np.zeros((self.natom,3))
         self.energy=0
         self.charge=np.zeros(self.natom)
@@ -353,7 +352,6 @@ class QMMM_FragSystem:
         positions=np.array([m.crd for m in QMlist_withg])
         QMcharge=np.sum(np.array(self.fragcharge)[QMfraglist])
         QMMol=Molnew(alist,positions,QMcharge)
-    
         if self.Theroylevel=='NN':
             EGCM=(QMMol.Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
             EGCM[ ~ np.isfinite( EGCM )] = 0
@@ -376,6 +374,7 @@ class QMMM_FragSystem:
         if self.Theroylevel=="Semiqm":
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
                     Cal_Gaussian_EFQ(QMSet,self.Inpath,GPARAMS.Compute_setting.Gaussiankeywords,GPARAMS.Compute_setting.Ncoresperthreads)
+
         if len(ERROR_mols)>0 and self.step-self.record_err_step>5:
             print (ERROR_mols[0])
             print ('ERR_step:',self.record_err_step)
@@ -428,7 +427,6 @@ class QMMM_FragSystem:
             self.QMparmdict[qmsysname]=self.QMparm
         else:
             self.QMparm=self.QMparmdict[qmsysname]
-             
         if qmsysname not in self.QMsysdict.keys():
             tmpparm=copy.deepcopy(self.QMparm)
             qmsys=tmpparm.createSystem(nonbondedMethod=NoCutoff,rigidWater=False)
@@ -439,7 +437,6 @@ class QMMM_FragSystem:
             self.QMsysdict[qmsysname]=self.QMarea_simulation
         else:
             self.QMarea_simulation=self.QMsysdict[qmsysname]
-            
         positions=np.array([m.crd for m in QMlist])
         self.QMarea_simulation.context.setPositions(positions/10)
         self.QMarea_state=self.QMarea_simulation.context.getState(getEnergy=True,getForces=True,getPositions=True)
@@ -448,7 +445,6 @@ class QMMM_FragSystem:
         for i in range(len(QMlist)):
             self.force[QMlist[i].realpt]-=self.QMarea_MMforce[i]
         self.energy-=self.QMarea_MMenergy
-        
         if self.ifresp==True:
             if self.step%100==0:
                 self.FullMMparm=copy.deepcopy(self.prmtop)

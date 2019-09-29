@@ -1,7 +1,7 @@
 from ..Comparm import *
 import os
 
-def productor(GPARAMS_index=0,Queue=None):
+def productor(GPARAMS_index=0,Queue=None,EGCMQueue=None):
     from ..Computemethod import QMMM_FragSystem
     from ..MD import Simulation
     from ..Base import Find_useable_gpu
@@ -17,7 +17,7 @@ def productor(GPARAMS_index=0,Queue=None):
         if GPARAMS.System_setting[GPARAMS_index].Forcefield=="Amber":
             prmfile=GPARAMS.System_setting[GPARAMS_index].Systemparm
             MDpath='./'+GPARAMS.MD_setting[GPARAMS_index].Name+'/'
-            os.system("cp "+prmfile+' '+MDpath+'/'+prmfile)
+            os.system("cp "+prmfile+' '+MDpath+prmfile)
             if GPARAMS.MD_setting[GPARAMS_index].Stageindex!=0:
                 restartstruc=GPARAMS.MD_setting[GPARAMS_index].Name+\
                         '_%d.rst7'%(GPARAMS.MD_setting[GPARAMS_index].Stageindex-1)
@@ -38,6 +38,6 @@ def productor(GPARAMS_index=0,Queue=None):
         print (GPARAMS.MD_setting[GPARAMS_index].Name)
         MD_simulation=Simulation(sys=qmsys,\
                                  MD_setting=GPARAMS.MD_setting[GPARAMS_index])
-        MDdeviation=MD_simulation.MD(Queue)
+        MDdeviation=MD_simulation.MD(Queue,EGCMQueue)
         
 

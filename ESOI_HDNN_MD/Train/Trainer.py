@@ -2,12 +2,12 @@ import numpy as np
 import pickle
 import random
 from multiprocessing import Queue,Process,Manager
+from ..Neuralnetwork import *
+from ..Comparm import *
      
 def NNTrainer(DataQueue,ID,ifcontinue):
     from   TensorMol import MSet,PARAMS,MolDigester
-    from ..Neuralnetwork import *
     import os
-    from ..Comparm import *
     os.environ["CUDA_VISIBLE_DEVICES"]=str(ID)
     while True:
         TMMSET,ider,maxsteps=DataQueue.get()

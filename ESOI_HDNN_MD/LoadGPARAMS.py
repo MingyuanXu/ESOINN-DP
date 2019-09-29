@@ -13,6 +13,7 @@ def UpdateGPARAMS(jsonfile):
         if 'ESOINN' in jsondict.keys():
             Loaddict2obj(jsondict['ESOINN'],GPARAMS.Esoinn_setting)
             GPARAMS.Esoinn_setting.Update()
+            nnlist=None;respnet=None
             if GPARAMS.Esoinn_setting.Modelfile!="":
                 GPARAMS.Esoinn_setting.Model=Esoinn(GPARAMS.Esoinn_setting.Modelfile,\
                                                     dim=GPARAMS.Esoinn_setting.Maxnum,\

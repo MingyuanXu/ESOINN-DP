@@ -10,10 +10,11 @@ import pickle
 import random
 import argparse
 from multiprocessing import Queue,Process,Manager
+from ..Comparm import GPARAMS 
 
-def ESOINNer(EsoinnQueue,if_new):
-    from ..Comparm import * 
+def ESOINNer(EsoinnQueue):
     if_continue=True
+    cluster_center_before=GPARAMS.Esoinn_setting.Model.cal_cluster_center()
     while if_continue:
         with open(GPARAMS.Dataset_setting.ESOINNdataset,'rb') as f:
             Dataset=pickle.load(f)
@@ -27,8 +28,15 @@ def ESOINNer(EsoinnQueue,if_new):
                 if_continue=False
         EGCM_trainingset=np.array(EGCM_trainingset) 
         Dataset=np.concatenate(Dataset,EGCM_trainingset)
-        GPARAMS.Esoinn_setting.Model.fit(EGCM_trainingset,iteration_steps=5000,if_reset=False)
-        ESOINN_MODEL.fit(Dataset,iteration_step=50000,if_reset=False)
+        Noiseset,_=GPARAMS.Esoinn_setting.Model.predict(Dataset)
+        GPARAMS.Esoinn_setting.Model.fit(Noiseset,iteration_steps=50000,if_reset=False)
         GPARAMS.Esoinn_setting.Model.Save()
         pickle.save(GPARAMS.Dataset_setting.ESOINNdataset,Dataset)
+    cluster_center_after=GPARAMS.Esoinn_setting.Model.cal_cluster_center()
+    updaterule=np.zeros(GPARAMS.Esoinn_setting.Modelfile.E)
+    for i in range(len(cluster_center_after)):
+        vec1=cluster_center_after[i]
+        dis=np.sum(np.array(cluster_center_before)-np.array([vec1]*len(cluster_center_before))**2,1) 
+        index=np.argmin(dis)[0]
+        print (i,vec1)
 

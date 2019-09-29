@@ -5,6 +5,7 @@ from ..Comparm import GPARAMS
 from ..Comparm import * 
 import numpy as np
 import time
+
 class Molnew:
     def __init__(self,atoms=np.array([1],dtype=int),crd=np.array([0.0,0.0,0.0],dtype=float),charge=np.array([0.0],dtype=float),name=''):
         #Mol.__init__(self,atoms,crd)
@@ -21,7 +22,6 @@ class Molnew:
         self.belongto=[]
         self.spin=1
     def Write_Gaussian_input(self,keywords,inpath,nproc=14,mem=600,spin=1):
-        print (inpath)
         file=open(inpath+self.name+'.com','w')
         file.write('%'+'nproc=%d\n'%nproc)
         file.write('%mem='+'%dMW\n'%mem)
@@ -40,8 +40,7 @@ class Molnew:
         file.close()
         return 
     def Cal_Gaussian(self,inpath='./'):
-        print ('cd '+inpath+' && g16 '+self.name+'.com && cd -')
-        os.system('cd '+inpath+' && g16 '+self.name+'.com && cd -')
+        os.system('cd '+inpath+' && g16 '+self.name+'.com && rm '+self.name+'.chk && cd -')
         self.Update_from_Gaulog(inpath)
         self.CalculateAtomization(GPARAMS.Compute_setting.Atomizationlevel)
         return 
@@ -51,7 +50,6 @@ class Molnew:
         natom=0
         atoms=[];coords=[];charge=[];force=[];dipole=[];energy=0
         while line:
-            print (line)
             if 'Charge' in line and 'Multiplicity' in line:
                 var=line.split()
                 totalcharge=int(var[2]);spin=int(var[-1])

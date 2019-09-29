@@ -5,7 +5,7 @@ from parmed.amber import AmberParm
 from parmed.amber import AmberMdcrd
 from parmed.amber import Rst7
 import pickle
-from base import *
+from ..Base import *
 import random
 from multiprocessing import Queue,Process 
 
@@ -18,10 +18,10 @@ class BumpHolder(ForceHolder):
         self.h=None
         self.w=None
         self.Prepare()
-    return 
+        return 
     def Prepare():
         self.Bumpgraph=tf.Graph()
-        with self.Bumpgraph.as_default()
+        with self.Bumpgraph.as_default():
             self.xyzs_pl=tf.placeholder(tf.float64,shape=(cv_num,3))
             self.xyzt_pl=tf.placeholder(tf.float64,shape=(cv_num,3))
             self.dis_pl=tf.placeholder(tf.float64,shape=(None,cv_num,1))
@@ -30,7 +30,7 @@ class BumpHolder(ForceHolder):
             self.dis=tf.reduce_sum(tf.square(self.xyzs_pl-self.xyzt_pl),1)
             init=tf.global_variables_initializer()
         self.Bumpsess=tf.Session(graph=self.Bumpgraph,config=tf.ConfigProto(allow_soft_placement=True))
-        self.sess.run(self.dis,{self.xyzs_pl:})
+        #self.sess.run(self.dis,{self.xyzs_pl:})
             
 
 class Meta_Simulation():

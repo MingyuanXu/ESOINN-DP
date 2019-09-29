@@ -71,15 +71,18 @@ class Simulation():
             Tstat = Thermostat(self.m, self.v)
         elif self.MDV0=="Thermal":
             self.v = np.random.normal(size=self.x.shape) * np.sqrt(1.38064852e-23 * self.T / self.m)[:,None]
+
         self.Tstat = None
         if (self.MDThermostat=="Rescaling"):
             self.Tstat = Thermo(self.m,self.v)
         elif (self.MDThermostat=="Andersen"):
             self.Tstat = Andersen(self.m,self.v)
+
         self.a=pow(10.0,-10.0)*np.einsum("ax,a->ax", self.f, 1.0/self.m)
         if self.format=="Amber":
             self.restart.coordinates=self.x
             self.restart.vels=self.v
+
         step=0
         self.md_log=np.zeros((self.maxstep+1,7))
         res_order=np.array(range(1,self.sys.nres))

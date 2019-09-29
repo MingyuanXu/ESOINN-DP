@@ -4,13 +4,13 @@ import random
 import argparse
 from multiprocessing import Queue,Process,Manager
 import os 
+from ..Comparm import *
 def Dataer(Dataqueue,GPUNum):
     from TensorMol import MSet
-    from ..Comparm import *
     Trainingset=MSet(GPARAMS.Compute_setting.Traininglevel)
     Trainingset.Load()
     Newadded_Set=MSet('Newadded')
-    if os.path.exists('./datasets/Newadded.pdb')
+    if os.path.exists('./datasets/Newadded.pdb'):
         Newadded_Set.Load()
     ClusNum=GPARAMS.Compute_setting.zeros.class_id
     CluNmols_before=np.zeros(ClusNum)
@@ -25,7 +25,7 @@ def Dataer(Dataqueue,GPUNum):
         EGCM=(Trainingset.mols[i].EGCM-GPARAMS.Esoinn_setting.Scalemin)/\
                 (GPARAMS.Esoinn_setting.Scalemax-GPARAMS.Esoinn_setting.Scalemin)
         EGCM[ ~ np.isfinite( EGCM )] = 0
-        list=GPARAMS.Esoinn_setting.Model..find_closest_cluster(3,EGCM)
+        list=GPARAMS.Esoinn_setting.Model.find_closest_cluster(3,EGCM)
         for j in list:
             SubTrainList[j].mols.append(Trainingset.mols[i])
     for i in range(ClusNum):
