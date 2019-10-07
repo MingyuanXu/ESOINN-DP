@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os, gc
 from TensorMol import *
-
+from ..Comparm import *
 class TData_BP_Direct_EE_WithCharge():
 #class TensorMolData_BP_Direct_EE(TensorMolData_BP_Direct_Linear):
 #class TensorMolData_BP_Direct_Linear(TensorMolData_BP_Direct):

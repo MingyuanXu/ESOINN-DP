@@ -24,7 +24,9 @@ class Simulation():
         self.T=MD_setting.Temp
         self.maxstep=MD_setting.Mdmaxsteps
         self.dt=MD_setting.Mddt
-        self.icap=(not MD_setting.Ifbox)
+        self.icap=MD_setting.Icap
+        self.ibox=MD_setting.Ibox
+        self.box=MD_setting.Box 
         self.center=MD_setting.Center 
         self.radius=MD_setting.Capradius 
         self.fcap=MD_setting.Capf
@@ -68,21 +70,22 @@ class Simulation():
         if self.MDV0=="Random":
             np.random.seed()
             self.v=np.random.randn(*self.x.shape)
-            Tstat = Thermostat(self.m, self.v)
+            Tstat = Thermostat(self.m, self.v,self.T,self.dt)
         elif self.MDV0=="Thermal":
+            print ("+++++++++++++++++self.T++++++++++%d"%self.T)
             self.v = np.random.normal(size=self.x.shape) * np.sqrt(1.38064852e-23 * self.T / self.m)[:,None]
 
         self.Tstat = None
         if (self.MDThermostat=="Rescaling"):
-            self.Tstat = Thermo(self.m,self.v)
+            self.Tstat = Thermo(self.m,self.v,self.T,self.dt)
         elif (self.MDThermostat=="Andersen"):
-            self.Tstat = Andersen(self.m,self.v)
+            self.Tstat = Andersen(self.m,self.v,self.T,self.dt)
 
         self.a=pow(10.0,-10.0)*np.einsum("ax,a->ax", self.f, 1.0/self.m)
         if self.format=="Amber":
             self.restart.coordinates=self.x
             self.restart.vels=self.v
-
+        
         step=0
         self.md_log=np.zeros((self.maxstep+1,7))
         res_order=np.array(range(1,self.sys.nres))
@@ -120,6 +123,7 @@ class Simulation():
                         tmpvec=(x_new[i]-x_new[self.center])
                         tmpvec=tmpvec/np.sqrt(np.sum(tmpvec**2))
                         f[i]=f[i]-tmpvec*self.fcap*Vec[i]*JOULEPERHARTREE/627.51
+                
             a_new=pow(10.0,-10.0)*np.einsum("ax,a->ax", f, 1.0/self.m)
             v_new=self.v+0.5*(self.a+a_new)*self.dt
             if self.MDThermostat!=None and step%1==0:

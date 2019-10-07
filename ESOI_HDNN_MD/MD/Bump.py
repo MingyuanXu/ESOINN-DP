@@ -11,6 +11,7 @@ class BumpHolder():
         self.w=None
         self.Prepare()
         return
+
     def Prepare(self):
         self.Bumpgraph=tf.Graph()
         with self.Bumpgraph.as_default():
@@ -26,9 +27,9 @@ class BumpHolder():
             self.Bumpforce2=tf.gradients(self.Bumpenergy,self.xyzt_pl)
             #self.Bumpenergy=tf.
             init=tf.global_variables_initializer()
-            
         self.Bumpsess=tf.Session(graph=self.Bumpgraph,config=tf.ConfigProto(allow_soft_placement=True))
         self.Bumpsess.run(init)
+
     def Cal_Bumpforce(self,xyzs,xyzt,dis_pl):
         BF1=self.Bumpsess.run(self.Bumpforce1,{self.xyzs_pl:xyzs,self.xyzt_pl:xyzt,self.dis_pl:dis_pl})
         return BF1

@@ -127,7 +127,7 @@ class BP_HDNN_charge():
         #Training Setting
         self.keep_prob = np.asarray(GPARAMS.Neuralnetwork_setting.Keepprob)
         self.nlayer = len(GPARAMS.Neuralnetwork_setting.Keepprob) - 1
-        self.monitor_mset =  GPARAMS.Neuralnetwork_setting.Monitormset
+        self.monitor_mset =  GPARAMS.Neuralnetwork_setting.Monitorset
         self.GradScalar = GPARAMS.Neuralnetwork_setting.Scalar["F"]
         self.EnergyScalar = GPARAMS.Neuralnetwork_setting.Scalar["E"]
         self.DipoleScalar = GPARAMS.Neuralnetwork_setting.Scalar["D"]

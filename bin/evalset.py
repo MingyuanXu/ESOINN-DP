@@ -2,7 +2,7 @@ import numpy as np
 from ESOI_HDNN_MD.Computemethod import Qmmm
 from ESOI_HDNN_MD.Comparm import GPARAMS
 from ESOI_HDNN_MD.Base.Info import List2str
-from ESOI_HDNN_MD import UpdateGPARAMS
+from ESOI_HDNN_MD import UpdateGPARAMS,LoadModel
 from ESOI_HDNN_MD.Train import productor,consumer
 from ESOI_HDNN_MD.Train import consumer
 from ESOI_HDNN_MD.Computemethod import Cal_NN_EFQ 
@@ -20,6 +20,7 @@ jsonfile=args.input
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 if __name__=="__main__":
     UpdateGPARAMS(jsonfile)
+    LoadModel()
     if not os.path.exists("./results") :
         os.system("mkdir ./results")
     for i in range(len(GPARAMS.Dataset_setting.Inputdatasetlist)):

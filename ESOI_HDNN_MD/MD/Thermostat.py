@@ -6,16 +6,16 @@ def KineticEnergy(v,m):
     return 0.5*np.dot(np.einsum('ia,ia->i',v,v)*pow(10.0,10.0),m)/len(m)
 
 class Thermo:
-    def __init__(self,m_,v_):
+    def __init__(self,m_,v_,T,dt):
         """
         Velocity Verlet step with a Rescaling Thermostat
         """
         self.N = len(m_)
         self.m = m_.copy()
-        self.T = PARAMS["MDTemp"]
+        self.T = T
         self.Teff = 0.001
         self.kT = IDEALGASR*pow(10.0,-10.0)*self.T # energy units here are kg (A/fs)^2
-        self.tau = 30*PARAMS["MDdt"]
+        self.tau = 30*dt 
         self.name = "Rescaling"
         print("Using ", self.name, " thermostat at ",self.T, " degrees Kelvin")
         self.Rescale(v_)
@@ -35,15 +35,15 @@ class Thermo:
         return
 
 class Andersen(Thermo):
-    def __init__(self,m,v):
+    def __init__(self,m,v,T,dt):
         self.N = len(list(m))
         self.m = m.copy()
-        self.T = PARAMS["MDTemp"]
+        self.T = T
         self.gamma=0.5
         self.name='Andersen'
         self.Teff = 0.001
         self.kT = IDEALGASR*pow(10.0,-10.0)*self.T # energy units here are kg (A/fs)^2
-        self.tau = 30*PARAMS["MDdt"]
+        self.tau = 30*dt 
         print("Using ", self.name, " thermostat at ",self.T, " degrees Kelvin")
         self.Rescale(v)
          

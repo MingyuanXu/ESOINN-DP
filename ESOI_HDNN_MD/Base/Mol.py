@@ -41,14 +41,16 @@ class Molnew:
         return 
     def Cal_Gaussian(self,inpath='./'):
         os.system('cd '+inpath+' && g16 '+self.name+'.com && rm '+self.name+'.chk && cd -')
-        self.Update_from_Gaulog(inpath)
-        self.CalculateAtomization(GPARAMS.Compute_setting.Atomizationlevel)
-        return 
+        flag=self.Update_from_Gaulog(inpath)
+        if flag==True:
+            self.CalculateAtomization(GPARAMS.Compute_setting.Atomizationlevel)
+        return flag 
     def Update_from_Gaulog(self,inpath='./'):
         file=open(inpath+self.name+'.log','r') 
         line=file.readline()
         natom=0
         atoms=[];coords=[];charge=[];force=[];dipole=[];energy=0
+        normalflag=True 
         while line:
             if 'Charge' in line and 'Multiplicity' in line:
                 var=line.split()
@@ -95,14 +97,13 @@ class Molnew:
                 while 'Normal termination' not in line:
                     if 'Error termination' in line:
                         print (self.name+' is end with error')
-                        stop
+                        normalflag=False
                     DBLOCK=DBLOCK+line.strip('\n').strip()
                     line=file.readline()
                 var=DBLOCK.split('\\')
                 for i in var:
                     if 'Dipole' in i:
                         dipole_str=i.strip(' Dipole=')
-                        print (self.name,dipole_str)
                         dipole=[float(m)/0.393456 for m in dipole_str.split(',')]
             line=file.readline()
         self.atoms=np.array(atoms)
@@ -113,8 +114,7 @@ class Molnew:
         self.properties['gradients']=-np.array(force)
         self.properties['dipole']=np.array(dipole)
         self.properties['charge']=np.array(charge)
-        print (self.properties)
-        return 
+        return normalflag 
     def Cal_EGCM(self,dummy_water=1):
         anum=len(self.atoms)
         crd=self.coords
@@ -232,7 +232,7 @@ class Molnew:
             force=np.array(force)
             charge=np.array(charge)
             self.properties["energy"]=energy
-            self.CalculateAtomization('DFTB')
+            self.CalculateAtomization('DFTB3')
             print (self.properties["atomization"])
             self.properties["force"]=force
             self.properties["gradients"]=-force
@@ -244,34 +244,10 @@ class Molnew:
         return flag  
 
     def CalculateAtomization(self,Level):
-        if (Level=='DFTB3'):
-            AE = self.properties["energy"]
-            for i in range (0, self.atoms.shape[0]):
-                if (self.atoms[i] in DFTB3_U):
-                    AE = AE - DFTB3_U[self.atoms[i]]
-            self.properties["atomization"] = AE
-            
-        elif (Level=='REAXFF'):
-            AE=self.properties["energy"]
-            for i in range(0,self.atoms.shape[0]):
-                if (self.atoms[i] in reax_U):
-                    AE = AE - reax_U[self.atoms[i]]
-            self.properties["atomization"]=AE
-        elif (Level=='M062X/SDD'):
-            AE=self.properties["energy"]
-            for i in range(0,self.atoms.shape[0]):
-                if (self.atoms[i] in M062XSDD_U):
-                    AE = AE - M062XSDD_U[self.atoms[i]]
-            self.properties["atomization"]=AE
-            print(self.properties["energy"],self.properties["atomization"])
-        elif (Level=='HF/6-31g*'):
-            AE=self.properties["energy"]
-            for i in range(0,self.atoms.shape[0]):
-                AE=AE-HF631Gs_U[self.atoms[i]]
-            self.properties["atomization"] =AE
-            print (self.properties["energy"],self.properties["atomization"])
-        else:
-            raise Exception("Missing energy to calculate atomization... ")
+        AE = self.properties["energy"]
+        for i in range (0, self.atoms.shape[0]):
+                AE = AE - AtomizationE[Level][self.atoms[i]]
+        self.properties["atomization"] = AE
         return
     def NAtoms(self):
         return self.atoms.shape[0]

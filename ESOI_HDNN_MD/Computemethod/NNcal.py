@@ -26,6 +26,7 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
             RESPCHARGE+=list(atom_charge)
             print (np.shape(RESPCHARGE))
     for i in range(len(NNSet.mols)):
+        print (NNSet.mols[i].belongto )
         for j in NNSet.mols[i].belongto:
             MSet_list[j].mols.append(NNSet.mols[i])
             Mol_label[i].append([j,len(MSet_list[j].mols)-1])
@@ -65,7 +66,7 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
         Q_i=np.array(Q_i)
         NN_num=len(imol.belongto)
         if NN_num <=3:
-            N_num=2
+            N_num=min(2,NN_num)
         else:
             N_num=math.ceil((NN_num+1)/2)
         E_avg=np.mean(E_i)

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os, gc
 from TensorMol import *
-
+from ..Comparm import *
 class TData_BP_Direct_EE_WithEle():
     """
     A Training Set is a Molecule set, with a sampler and an embedding

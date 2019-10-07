@@ -168,7 +168,7 @@ class Esoinn(BaseEstimator, ClusterMixin):
         for i in range(self.class_id):
             class_center[i]=np.sum(class_nodelist[i],0)/float(len(class_nodelist))
         self.class_center=class_center
-        return self
+        return self.class_center 
 
     def cal_cluster_edge(self,topnum):
         connect_num=np.zeros(len(self.nodes),dtype=int)
@@ -185,7 +185,7 @@ class Esoinn(BaseEstimator, ClusterMixin):
             tmp=np.argsort(class_nodecnum[i])
             class_edge[i]=[class_nodelist[i][m] for m in tmp[:topnum]]
         self.class_edge=class_edge
-        return self
+        return self.class_edge 
 
     def input_signal(self, signal: np.ndarray):
 

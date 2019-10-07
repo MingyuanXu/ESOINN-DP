@@ -2,7 +2,6 @@ from  TensorMol import *
 import numpy as np
 import  pickle
 from ..Comparm import *
-
 class BP_HDNN():
     """
     Electrostatic embedding Behler Parinello with van der waals interaction implemented with Grimme C6 scheme.
@@ -13,16 +12,12 @@ class BP_HDNN():
             TData_: A TensorMolData instance.
             Name_: A name for this instance.
         """
-        self.path = GPARAMS.Neuralnetwork_setting.Networkprefix
+        self.path = GPARAMS.Neuralnetwork_setting.Networkprefix 
         self.Trainable = Trainable_
         self.need_Newtrain=True
         if Name_!=None:
             self.name=Name_
             self.Load()
-            #print ("HHHHHHHHHHHHHKKKKKKKKKKKKKKKKKHHHHHHHHHHHHHHHH")
-            #print (GPARAMS.Compute_setting.Traininglevel)
-            #print ("./"+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+".record")
-            #print ("HHHHHHHHHHHHHKKKKKKKKKKKKKKKKKHHHHHHHHHHHHHHHH")
             self.recorder=open('./'+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+'.record','a')
             if self.TData==None and TData_ ==None and Trainable_==True:
                 print ("ERROR: A Trainable BP_HDNN Instance don't have trainable dataset!!")
@@ -31,7 +26,7 @@ class BP_HDNN():
                 self.TData.LoadDataToScratch(self.tformer)
                 self.max_steps = math.ceil(GPARAMS.Neuralnetwork_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
                 self.switch_steps=math.ceil(self.max_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
-                self.batch_size = GPARAMS.Neuralnetwork_setting.Batchsize 
+                self.batch_size = GPARAMS.Neuralnetwork_setting.Batchsize
                 self.real_steps=math.ceil(self.max_steps*self.TData.NTrain/self.batch_size)
                 self.real_switch_steps=math.ceil(self.real_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
                 self.learning_rate = np.array(GPARAMS.Neuralnetwork_setting.Learningrate)
@@ -46,6 +41,7 @@ class BP_HDNN():
                 if Trainable_==True:
                     if TData_.eles==self.eles and TData_.MaxNAtoms==self.TData.MaxNAtoms:
                         self.TData=TData_
+                        print ('TM has get the Training data')
                         self.tformer = Transformer(GPARAMS.Neuralnetwork_setting.Innormroutine, \
                                        GPARAMS.Neuralnetwork_setting.Outnormroutine,\
                                        self.element, self.TData.dig.name,\
@@ -75,7 +71,7 @@ class BP_HDNN():
                         print (TData_.MaxNAtoms,self.TData.MaxNAtoms)
                         self.need_Newtrain=True
             if Trainable_==False:
-                return 
+                return
         self.NetType = "RawBP_EE_Charge_DipoleEncode_Update_vdw_DSF_elu_Normalize_Dropout"
         self.TData = TData_
         self.element=0
@@ -112,6 +108,7 @@ class BP_HDNN():
             self.tf_prec = eval(GPARAMS.Neuralnetwork_setting.tfprec)
         self.MaxNAtoms = self.TData.MaxNAtoms
         self.momentum = GPARAMS.Neuralnetwork_setting.Momentum
+
         self.max_steps = math.ceil(GPARAMS.Neuralnetwork_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
         self.switch_steps=math.ceil(self.max_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
         self.batch_size = GPARAMS.Neuralnetwork_setting.Batchsize
@@ -131,7 +128,7 @@ class BP_HDNN():
         #Training Setting
         self.keep_prob = np.asarray(GPARAMS.Neuralnetwork_setting.Keepprob)
         self.nlayer = len(GPARAMS.Neuralnetwork_setting.Keepprob) - 1
-        self.monitor_mset =  GPARAMS.Neuralnetwork_setting.Monitormset
+        self.monitor_mset =  GPARAMS.Neuralnetwork_setting.Monitorset
         self.GradScalar = GPARAMS.Neuralnetwork_setting.Scalar["F"]
         self.EnergyScalar = GPARAMS.Neuralnetwork_setting.Scalar["E"]
         self.DipoleScalar = GPARAMS.Neuralnetwork_setting.Scalar["D"]
@@ -273,7 +270,7 @@ class BP_HDNN():
         self.zeta = GPARAMS.Neuralnetwork_setting.AN1_zeta
         self.eta = GPARAMS.Neuralnetwork_setting.AN1_eta
         self.HasANI1PARAMS = True
-        print ("self.inshape:", self.inshape)
+        #print ("self.inshape:", self.inshape)
     
     def Clean(self):
         #MolInstance_DirectBP_EE_ChargeEncode_Update_vdw_DSF_elu_Normalize.Clean(self)
@@ -539,11 +536,8 @@ class BP_HDNN():
         output_charge=tf.zeros(tf.concat([batch_size_ctrl,[self.MaxNAtoms]],axis=0),dtype=self.tf_prec)
         #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
         dipole_wb = []
-        #print (natom)
         with tf.name_scope("DipoleNet"):
-            #print (self.eles)
             for e in range(len(self.eles)):
-                #print (inp[e])
                 Dbranches.append([])
                 charge_inputs = inp[e]
                 charge_shp_in = tf.shape(charge_inputs)
@@ -567,7 +561,6 @@ class BP_HDNN():
                             dipole_wb.append(biases)
                 with tf.name_scope(str(self.eles[e])+'_regression_linear_charge'):
                     charge_shp = tf.shape(charge_inputs)
-                    print (charge_shp)
                     weights = self._variable_with_weight_decay(var_name='weights', var_shape=[self.HiddenLayers[-1], 1], var_stddev=1.0/(10+math.sqrt(float(self.HiddenLayers[-1]))), var_wd=None)
                     biases = tf.Variable(tf.zeros([1], dtype=self.tf_prec), name='biases')
                     dipole_wb.append(weights)
@@ -708,7 +701,7 @@ class BP_HDNN():
             step: the index of this step.
         """
         Ncase_train = self.TData.NTrain
-        print ('NTrain:',self.TData.NTrain,'N ministep per epoch:',int(Ncase_train/self.batch_size))
+        #print ('NTrain:',self.TData.NTrain,'N ministep per epoch:',int(Ncase_train/self.batch_size))
         start_time = time.time()
         train_loss =  0.0
         train_energy_loss = 0.0
@@ -722,6 +715,7 @@ class BP_HDNN():
         print_grads_loss = 0.0
         print_time = 0.0
         time_print_mini = time.time()
+        duration=time.time()-start_time
         for ministep in range (0, int(Ncase_train/self.batch_size)):
             
             t_mini = time.time()
@@ -734,7 +728,7 @@ class BP_HDNN():
             print_grads_loss += grads_loss
             print_dipole_loss += dipole_loss
             if (ministep%print_per_mini == 0 and ministep!=0):
-                print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
+                #print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
                 print_loss = 0.0
                 print_energy_loss = 0.0
                 print_dipole_loss = 0.0
@@ -758,7 +752,7 @@ class BP_HDNN():
             step: the index of this step.
         """
         Ncase_train = self.TData.NTrain
-        print (Ncase_train)
+        #print (Ncase_train)
         start_time = time.time()
         train_loss =  0.0
         train_energy_loss = 0.0
@@ -773,7 +767,8 @@ class BP_HDNN():
         print_grads_loss = 0.0
         print_time = 0.0
         time_print_mini = time.time()
-        print (int(Ncase_train/self.batch_size))
+        #print (int(Ncase_train/self.batch_size))
+        duration=time.time()-start_time
         for ministep in range (0, int(Ncase_train/self.batch_size)):
             t_mini = time.time()
             batch_data = self.TData.GetTrainBatch(self.batch_size) + [False] + [self.keep_prob]
@@ -785,7 +780,7 @@ class BP_HDNN():
             print_grads_loss += grads_loss
             print_dipole_loss += dipole_loss
             if (ministep%print_per_mini == 0 and ministep!=0):
-                print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
+                #print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
                 print_loss = 0.0
                 print_energy_loss = 0.0
                 print_dipole_loss = 0.0
@@ -814,6 +809,7 @@ class BP_HDNN():
         test_dipole_loss = 0.0
         test_grads_loss = 0.0
         num_of_mols = 0
+        duration = time.time() - start_time
         for ministep in range (0, int(Ncase_test/self.batch_size)):
             batch_data = self.TData.GetTestBatch(self.batch_size)+[False] + [np.ones(self.nlayer+1)]
             actual_mols  = self.batch_size
@@ -825,7 +821,7 @@ class BP_HDNN():
             test_dipole_loss += dipole_loss
             duration = time.time() - start_time
             num_of_mols += actual_mols
-        print ("testing...")
+        #print ("testing...")
         self.print_training(step, test_loss, test_energy_loss, test_grads_loss, test_dipole_loss, num_of_mols, duration,0,False)
         return  test_loss
 
@@ -842,6 +838,7 @@ class BP_HDNN():
         test_dipole_loss = 0.0
         test_grads_loss = 0.0
         num_of_mols = 0
+        duration = time.time() - start_time
         for ministep in range (0, int(Ncase_test/self.batch_size)):
             batch_data = self.TData.GetTestBatch(self.batch_size)+[GPARAMS.Neuralnetwork_setting.AddEcc] + [np.ones(self.nlayer+1)]
             actual_mols  = self.batch_size
@@ -853,7 +850,7 @@ class BP_HDNN():
             test_dipole_loss += dipole_loss
             duration = time.time() - start_time
             num_of_mols += actual_mols
-        print ("testing...")
+        #print ("testing...")
         self.print_training(step, test_loss, test_energy_loss, test_grads_loss, test_dipole_loss, num_of_mols, duration,0,False)
         return  test_loss
 
@@ -934,7 +931,7 @@ class BP_HDNN():
         f = open(self.name+"_monitor_"+str(step)+".dat","wb")
         pickle.dump(monitor_data, f)
         f.close()
-        print ("calculating monitoring set..")
+        #print ("calculating monitoring set..")
         return Etotal, Ebp, Ebp_atom, Ecc, Evdw, mol_dipole, atom_charge, gradient
 
     def print_training(self, step, loss, energy_loss, grads_loss, dipole_loss, Ncase, duration,lr=0, Train=True):
@@ -955,7 +952,6 @@ class BP_HDNN():
         nmol = batch_data[2].shape[0]
         self.activation_function_type = GPARAMS.Neuralnetwork_setting.Neuraltype
         self.AssignActivation()
-
         #print ("self.activation_function:\n\n", self.activation_function)
         #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
         #if (batch_data[0].shape[1] != self.MaxNAtoms or self.batch_size != nmol):
@@ -1056,21 +1052,24 @@ class BP_HDNN():
         self.Clean()
         #print("Going to pickle...\n",[(attr,type(ins)) for attr,ins in self.__dict__.items()])
         f=open(self.path+self.name+".tfn","wb")
-        print (self.__dict__)
+        #print (self.__dict__)
         pickle.dump(self.__dict__, f ,protocol=pickle.HIGHEST_PROTOCOL)
         f.close()
         return
 
     def Load(self):
-        #print ("Unpickling TFInstance...")
+        print ("Unpickling TFInstance...")
         from TensorMol.Containers.PickleTM import UnPickleTM as UnPickleTM
+        tmpname=self.name
         tmp = UnPickleTM(self.path+self.name+".tfn")
         self.Clean()
         self.__dict__.update(tmp)
         # Simple hack to fix checkpoint path.
+        self.name=tmpname
+        self.train_dir = GPARAMS.Neuralnetwork_setting.Networkprefix+self.name
         self.chk_file = os.path.join(self.train_dir,self.name+'-chk')
         self.chk_file=self.chk_file.replace("./networks/",GPARAMS.Neuralnetwork_setting.Networkprefix)
-        #print("self.chk_file:", self.chk_file)
+        print("self.chk_file:", self.chk_file)
         return 
 
     def save_chk(self, step):  # We need to merge this with the one in TFInstance

@@ -24,6 +24,7 @@ class Esoinn_setting:
         self.Clusterinterval=50000
         self.Loadefdnet=False 
         self.Loadrespnet=False  
+        self.efdnetname=""
         self.respnetname=""
         self.NNdict={} 
         self.scalemax=None
@@ -105,15 +106,16 @@ class MD_setting:
         self.Mdrestart=False
         self.Mdstage=0
         self.Nprint=10
-        self.Ifcap=True
         self.Capradius=0
         self.Capf=50
-        self.Ifbox=False
+        self.Icap=False
+        self.Ibox=False 
         self.Boxradius=0
         self.Stageindex=0 
         self.Mode="Train"
         self.MDmethod="Normal MD"
         self.Name="MD"
+        self.Box=np.zeros(3)
         return
     def Update():
         if not os.path.exists(self.Name):
@@ -132,6 +134,12 @@ class Train_setting:
         self.Ifwithhelp=False
         self.Trainstage=0
         self.Stagenum=1
+        self.Maxepochpertrain=10
+        self.Maxbatchnumpertrain=[6000,10000]
+        self.Batchnumcontrol=[8000,20000]
+        self.Modelnumperpoint=3
+        self.Samplecontrol=[2000,8000]
+        self.Esoistep=50000
         return 
 
 class Neuralnetwork_setting:

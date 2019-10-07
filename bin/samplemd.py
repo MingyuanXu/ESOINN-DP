@@ -29,9 +29,10 @@ if __name__=="__main__":
     DataQueue=manager.Queue()
     UpdateGPARAMS(jsonfile)
 #    """
-    #productor(0,QMQueue)
-    #QMQueue.put(None)
-    #consumer(QMQueue)
+    productor(0,QMQueue)
+    QMQueue.put(None)
+    consumer(QMQueue)
+    """
     for stage in range(GPARAMS.Train_setting.Trainstage,\
                        GPARAMS.Train_setting.Stagenum+GPARAMS.Train_setting.Trainstage):
 
@@ -49,3 +50,5 @@ if __name__=="__main__":
             GPARAMS.MD_setting[i].Stageindex+=1
         GPARAMS.Train_setting.Trainstage+=1
 
+
+    """

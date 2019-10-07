@@ -1,13 +1,17 @@
 from ..Comparm import *
 import os
 
-def productor(GPARAMS_index=0,Queue=None,EGCMQueue=None):
+def productor(GPARAMS_index=0,Queue=None,EGCMQueue=None,GPUQueue=None):
     from ..Computemethod import QMMM_FragSystem
+    from ..Computemethod import FullQM_System_Amber 
     from ..MD import Simulation
     from ..Base import Find_useable_gpu
+    from ..LoadGPARAMS import LoadModel
     print (GPARAMS.Compute_setting.Traininglevel)
     print (GPARAMS.Compute_setting.Theroylevel)
-    os.environ["CUDA_VISIBLE_DEVICES"]=Find_useable_gpu(GPARAMS.Compute_setting.Gpulist)
+#    os.environ["CUDA_VISIBLE_DEVICES"]=Find_useable_gpu(GPARAMS.Compute_setting.Gpulist)
+    GPUid=GPUQueue.get()
+    os.environ["CUDA_VISIBLE_DEVICES"]=str(GPUid)
     print (os.environ["CUDA_VISIBLE_DEVICES"])
 
     if GPARAMS.Compute_setting.Theroylevel=="DFTB+":
@@ -17,6 +21,8 @@ def productor(GPARAMS_index=0,Queue=None,EGCMQueue=None):
         if GPARAMS.System_setting[GPARAMS_index].Forcefield=="Amber":
             prmfile=GPARAMS.System_setting[GPARAMS_index].Systemparm
             MDpath='./'+GPARAMS.MD_setting[GPARAMS_index].Name+'/'
+            if not os.path.exists(MDpath):
+                os.system("mkdir -p %s"%MDpath)
             os.system("cp "+prmfile+' '+MDpath+prmfile)
             if GPARAMS.MD_setting[GPARAMS_index].Stageindex!=0:
                 restartstruc=GPARAMS.MD_setting[GPARAMS_index].Name+\
@@ -33,11 +39,38 @@ def productor(GPARAMS_index=0,Queue=None,EGCMQueue=None):
                                 Strucdict=GPARAMS.System_setting[GPARAMS_index].Strucdict,\
                                 Path=GPARAMS.MD_setting[GPARAMS_index].Name,\
                                 Inpath='./'+GPARAMS.Compute_setting.Traininglevel+\
-                                        '/'+GPARAMS.MD_setting[GPARAMS_index].Name+'/')
+                                        '/'+GPARAMS.MD_setting[GPARAMS_index].Name+'/',\
+                                 Name=GPARAMS.MD_setting[GPARAMS_index].Name)
+    elif GPARAMS.Compute_setting.Computelevel[GPARAMS_index]=="Full":
+        if GPARAMS.System_setting[GPARAMS_index].Forcefield=="Amber":
+            prmfile=GPARAMS.System_setting[GPARAMS_index].Systemparm
+            MDpath='./'+GPARAMS.MD_setting[GPARAMS_index].Name+'/'
+            if not os.path.exists(MDpath):
+                os.system("mkdir -p %s"%MDpath)
+            os.system("cp "+prmfile+' '+MDpath+prmfile)
+            if GPARAMS.MD_setting[GPARAMS_index].Stageindex!=0:
+                restartstruc=GPARAMS.MD_setting[GPARAMS_index].Name+\
+                        '_%d.rst7'%(GPARAMS.MD_setting[GPARAMS_index].Stageindex-1)
+                initstruc=GPARAMS.MD_setting[GPARAMS_index].Name+\
+                        '_%d.inpcrd'%(GPARAMS.MD_setting[GPARAMS_index].Stageindex)
+                os.system('cp '+MDpath+restartstruc+' '+MDpath+initstruc)
+            else:
+                initstruc=GPARAMS.MD_setting[GPARAMS_index].Name+\
+                        '_%d.inpcrd'%(GPARAMS.MD_setting[GPARAMS_index].Stageindex)
+                pstruc=GPARAMS.System_setting[GPARAMS_index].Initstruc
+                os.system("cp "+pstruc+' '+MDpath+initstruc)
+            qmsys=FullQM_System_Amber(MDpath+prmfile,MDpath+initstruc,\
+                                          Path=GPARAMS.MD_setting[GPARAMS_index].Name,\
+                                          Inpath='./'+GPARAMS.Compute_setting.Traininglevel+\
+                                          '/'+GPARAMS.MD_setting[GPARAMS_index].Name+'/',\
+                                        Name=GPARAMS.MD_setting[GPARAMS_index].Name\
+                                         ) 
+
     if GPARAMS.MD_setting[GPARAMS_index].MDmethod=="Normal MD":
         print (GPARAMS.MD_setting[GPARAMS_index].Name)
         MD_simulation=Simulation(sys=qmsys,\
                                  MD_setting=GPARAMS.MD_setting[GPARAMS_index])
         MDdeviation=MD_simulation.MD(Queue,EGCMQueue)
+    GPUQueue.put(GPUid)
         
 

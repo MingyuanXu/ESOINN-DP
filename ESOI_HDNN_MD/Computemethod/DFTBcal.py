@@ -11,7 +11,7 @@ def Cal_DFTB_EFQ(NNSet,parapath,inpath):
         F_avg=NNSet.mols[i].properties['force']*627.51
         D_avg=NNSet.mols[i].properties['dipole']
         Q_i=NNSet.mols[i].properties['charge']
-        ERROR_mols.append(NNSet.mols[i])
+        ERROR_mols.append([NNSet.mols[i],999])
         method='DFTB'
         NN_predict.append([E_avg,F_avg,D_avg,Q_i])
     return NN_predict,ERROR_mols,0,'',method
@@ -25,7 +25,7 @@ def Cal_Gaussian_EFQ(NNSet,inpath,keywords,nproc=14,mem=600):
         F_avg=NNSet.mols[i].properties['force']*627.51
         D_avg=NNSet.mols[i].properties['dipole']
         Q_i=NNSet.mols[i].properties['charge']
-        ERROR_mols.append(NNSet.mols[i])
+        ERROR_mols.append([NNSet.mols[i],999])
         method="Gaussian"
         NN_predict.append([E_avg,F_avg,D_avg,Q_i])
     return NN_predict,ERROR_mols,0,'',method 

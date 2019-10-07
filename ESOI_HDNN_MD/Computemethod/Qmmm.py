@@ -21,12 +21,10 @@ from .NNcal import*
 from .DFTBcal import * 
 
 class QMMM_FragSystem:
-    def __init__(self,prmname='',crdname='',Strucdict={},Path='./',Inpath='./'):
+    def __init__(self,prmname='',crdname='',Strucdict={},Path='./',Inpath='./',Name=""):
         self.prmname=prmname
         self.crdname=crdname
-        self.update_step=0
-        self.err_step=0
-        self.Error_set=MSet('Unknown_Struc')
+        self.name=Name
         self.nchain=Strucdict['NCHAIN']
         self.chnpts=Strucdict['CHNPTS']
         self.chnpte=Strucdict['CHNPTE']
@@ -352,11 +350,17 @@ class QMMM_FragSystem:
         positions=np.array([m.crd for m in QMlist_withg])
         QMcharge=np.sum(np.array(self.fragcharge)[QMfraglist])
         QMMol=Molnew(alist,positions,QMcharge)
-        if self.Theroylevel=='NN':
+
+        try:
             EGCM=(QMMol.Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
             EGCM[ ~ np.isfinite( EGCM )] = 0
             EGCMlist.append(EGCM)
-            QMMol.belongto=GPARAMS.Esoinn_setting.Model.find_closest_cluster(3,EGCM)
+            #QMMol.belongto=GPARAMS.Esoinn_setting.Model.find_closest_cluster(GPARAMS.Train_setting.Modelnumperpoint,EGCM)
+            QMMol.belongto=GPARAMS.Esoinn_setting.Model.find_closest_cluster(min(GPARAMS.Train_setting.Modelnumperpoint,GPARAMS.Esoinn_setting.Model.class_id),EGCM)
+        except:
+            EGCM=QMMol.Cal_EGCM()
+            EGCMlist.append(EGCM)
+            
         QMMol.properties['clabel']=QMcharge
         QMSet=MSet()
         QMSet.mols.append(QMMol)
@@ -374,40 +378,45 @@ class QMMM_FragSystem:
         if self.Theroylevel=="Semiqm":
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
                     Cal_Gaussian_EFQ(QMSet,self.Inpath,GPARAMS.Compute_setting.Gaussiankeywords,GPARAMS.Compute_setting.Ncoresperthreads)
-
-        if len(ERROR_mols)>0 and self.step-self.record_err_step>5:
-            print (ERROR_mols[0])
-            print ('ERR_step:',self.record_err_step)
-            self.record_err_step=self.step    
-        else:
-            self.ERROR_mols=[]
+        if self.stepmethod=="NN":
+            if len(ERROR_mols)>0 and self.step-self.record_err_step>5:
+                print (ERROR_mols[0])
+                print ('ERR_step:',self.record_err_step)
+                self.record_err_step=self.step    
+            else:
+                self.ERROR_mols=[]
+                self.EGCMlist=[]
             
         self.recorderr=AVG_ERR
         self.QMarea_QMforce=NN_predict[0][1]
         self.QMarea_QMenergy=NN_predict[0][0]
-        self.QMarea_respcharge=NN_predict[0][3] 
+        if self.ifresp==True:
+            self.QMarea_respcharge=NN_predict[0][3] 
 
         if self.ifresp==True:
             self.RESPCHARGE=copy.deepcopy(np.array(self.prmtop.parm_data['CHARGE']))
-        if len(self.QMarea_respcharge)!=0:
-            for i in range(len(QMlist_withg)):
-                if QMlist_withg[i].bpt!=-1:
-                    self.RESPCHARGE[QMlist_withg[i].bpt]=0
-                else:
-                    self.RESPCHARGE[QMlist_withg[i].realpt]=0
+            if len(self.QMarea_respcharge)!=0:
+                for i in range(len(QMlist_withg)):
+                    if QMlist_withg[i].bpt!=-1:
+                        self.RESPCHARGE[QMlist_withg[i].bpt]=0
+                    else:
+                        self.RESPCHARGE[QMlist_withg[i].realpt]=0
 
         for i in range(len(QMlist_withg)):
             if QMlist_withg[i].bpt!=-1:
                 self.force[QMlist_withg[i].bpt] +=self.QMarea_QMforce[i]
-                if len(self.QMarea_respcharge)!=0:
-                    self.RESPCHARGE[QMlist_withg[i].bpt]+=self.QMarea_respcharge[i]
+                if self.ifresp==True:
+                    if len(self.QMarea_respcharge)!=0:
+                        self.RESPCHARGE[QMlist_withg[i].bpt]+=self.QMarea_respcharge[i]
             else:
                 self.force[QMlist_withg[i].realpt]+=self.QMarea_QMforce[i]
-                if len(self.QMarea_respcharge)!=0:
-                    self.RESPCHARGE[QMlist_withg[i].realpt]+=self.QMarea_respcharge[i]
+                if self.ifresp==True:
+                    if len(self.QMarea_respcharge)!=0:
+                        self.RESPCHARGE[QMlist_withg[i].realpt]+=self.QMarea_respcharge[i]
 
         self.energy+=self.QMarea_QMenergy
-        print ('Step: %d RESP CHARGE OF MBG: %.3f %.3f %.3f %.3f %.3f'\
+        if self.ifresp==True:
+            print ('Step: %d RESP CHARGE OF MBG: %.3f %.3f %.3f %.3f %.3f'\
                %(self.step,self.RESPCHARGE[58],self.RESPCHARGE[124],self.RESPCHARGE[349],self.RESPCHARGE[428],self.RESPCHARGE[533])) 
         qmsysname=''
         for i in QMlist:
