@@ -22,16 +22,23 @@ def Check_MSet(mollist):
         if mindis<0.75 or maxdis>20:
             flag=False
         force=i.properties['force']
-        length=len(force)
-        maxforce=np.max(np.abs(force))*627.51
-        if length!=natom or maxforce>400:
-            flag=False
-        if len(i.properties[dipole] )!=3:
+        try:
+            length=len(force)
+            maxforce=np.max(np.abs(force))*627.51
+            if length!=natom or maxforce>400:
+                flag=False
+            if len(i.properties["dipole"] )!=3:
+                flag=False
+        except:
             flag=False
         if flag==True:
             mols.append(i)
         else:
-            print (i.name,i,mindis,maxdis,maxforce,len(force),len(i.properties['dipole']))
+            try:
+                print (i.name,i,mindis,maxdis,maxforce,len(force),len(i.properties['dipole']))
+            except:
+                print (i.name,i,mindis,maxdis)
+
     return mols 
         
 def dataer(Dataqueue):

@@ -171,7 +171,7 @@ class BP_HDNN():
         self.summary_op =None
         self.summary_writer=None
         #MolInstance(Instance):
-        LOGGER.info("MolInstance.inshape %s MolInstance.outshape %s", str(self.inshape) , str(self.outshape))
+        #LOGGER.info("MolInstance.inshape %s MolInstance.outshape %s", str(self.inshape) , str(self.outshape))
         self.recorder.write('MaxNAtoms: %d Max Epoch step: %d\tSwtich step: %d\t Training Target: %s\n'%(self.MaxNAtoms,self.max_steps,self.switch_steps, self.Training_Target))
         #self.tf_precision = eval("tf.float64")
         #self.set_symmetry_function_params()
@@ -938,6 +938,9 @@ class BP_HDNN():
         if Train:
             self.recorder.write("step: %7d L_rate: %.6f duration: %.5f  Train Loss: Total: %.6f  E: %.6f  F: %.6f, D: %.6f "%(step,lr, duration, (float(loss)/(Ncase)), (float(energy_loss)/(Ncase)), (float(grads_loss)/(Ncase)), (float(dipole_loss)/(Ncase))))
             self.recorder.flush()
+            if step==0:
+                self.recorder.write("\n")
+                self.recorder.flush()
         else:
             self.recorder.write("Test Loss: Total %.6f E: %.6f F: %.6f, D: %.6f\n"%( float(loss)/(Ncase), float(energy_loss)/(Ncase), float(grads_loss)/Ncase, float(dipole_loss)/Ncase))
             self.recorder.flush()
@@ -1075,7 +1078,7 @@ class BP_HDNN():
     def save_chk(self, step):  # We need to merge this with the one in TFInstance
         #self.chk_file = os.path.join(self.train_dir,self.name+'-chk-'+str(step))
         self.chk_file = os.path.join(self.train_dir,self.name+'-chk')
-        LOGGER.info("Saving Checkpoint file in the TFMoInstance")
+        self.recorder.write("Saving Checkpoint file in the TFMoInstance\n")
         self.saver.save(self.sess,  self.chk_file)
         return
 

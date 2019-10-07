@@ -36,6 +36,7 @@ def UpdateGPARAMS(jsonfile,Onlymodel=False):
                     GPARAMS.MD_setting[i].Stageindex=GPARAMS.Train_setting.Trainstage
                     GPARAMS.MD_setting[i].Mdstage=GPARAMS.Train_setting.Stagenum
     return
+
 def LoadModel(ifhdnn=True):
         nnlist=None;respnet=None
         if GPARAMS.Esoinn_setting.Modelfile!="":

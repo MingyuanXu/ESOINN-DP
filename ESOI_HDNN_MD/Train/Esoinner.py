@@ -9,13 +9,13 @@ def esoinner(EsoinnQueue):
         cluster_center_before=GPARAMS.Esoinn_setting.Model.cal_cluster_center()
     else:
         cluster_center_before=None 
+    if os.path.exists(GPARAMS.Dataset_setting.ESOINNdataset):
+        with open(GPARAMS.Dataset_setting.ESOINNdataset,'rb') as f:
+            Dataset=pickle.load(f)
+    else:
+        Dataset=[]
 
     while if_continue:
-        if os.path.exists(GPARAMS.Dataset_setting.ESOINNdataset):
-            with open(GPARAMS.Dataset_setting.ESOINNdataset,'rb') as f:
-                Dataset=pickle.load(f)
-        else:
-            Dataset=[]
         print ("Dataset shape",np.shape(Dataset),len(Dataset))
         EGCM_trainingset=[]
         times=0
@@ -29,12 +29,18 @@ def esoinner(EsoinnQueue):
             if times >10:
                 print ("EGCMset shape",np.shape(EGCM_trainingset),len(EGCM_trainingset),EGCM_trainingset[-1])
         EGCM_trainingset=np.array(EGCM_trainingset) 
-        if len(Dataset)!=0:
+        #if len(Dataset)!=0:
+        try:
             Dataset=np.concatenate((np.array(Dataset),np.array(EGCM_trainingset)),axis=0)
-        else:
-            Dataset=EGCM_trainingset
+            print("Try to concatenate Dataset and EGCM_trainingset and successed!")
+        except:
+            Dataset=EGCM_trainingset[:-2]
+            print("Dataset=EGCM_trainingset and successed!")
         try: 
             if GPARAMS.Esoinn_setting.scalemax==None and GPARAMS.Esoinn_setting.scalemin==None:
+                print("++++++++++++++++++++++++++++++++++++++++++++++++")
+                print("initialize the Scalefactor!!!")
+                print("++++++++++++++++++++++++++++++++++++++++++++++++")
                 GPARAMS.Esoinn_setting.scalemax=np.max(Dataset,0)
                 GPARAMS.Esoinn_setting.scalemin=np.min(Dataset,0)
                 Dataset=(Dataset-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
@@ -43,14 +49,14 @@ def esoinner(EsoinnQueue):
                     pickle.dump((GPARAMS.Esoinn_setting.scalemax,GPARAMS.Esoinn_setting.scalemin),f)
         except:
             pass 
-        if len(GPARAMS.Esoinn_setting.Model.nodes)!=0:
-            Noiseset,a,b,c,d=GPARAMS.Esoinn_setting.Model.predict(Dataset)
-        else:
-            Noiseset=Dataset  
-        GPARAMS.Esoinn_setting.Model.fit(Noiseset,iteration_times=GPARAMS.Train_setting.Esoistep,if_reset=False)
-        GPARAMS.Esoinn_setting.Model.Save()
-        with open(GPARAMS.Dataset_setting.ESOINNdataset,'wb') as f:
-            pickle.dump(Dataset,f)
+    if len(GPARAMS.Esoinn_setting.Model.nodes)!=0:
+        Noiseset,a,b,c,d=GPARAMS.Esoinn_setting.Model.predict(Dataset)
+    else:
+        Noiseset=Dataset  
+    GPARAMS.Esoinn_setting.Model.fit(Noiseset,iteration_times=GPARAMS.Train_setting.Esoistep,if_reset=False)
+    GPARAMS.Esoinn_setting.Model.Save()
+    with open(GPARAMS.Dataset_setting.ESOINNdataset,'wb') as f:
+        pickle.dump(Dataset,f)
     cluster_center_after=GPARAMS.Esoinn_setting.Model.cal_cluster_center()
     if cluster_center_before!=None:# and GPARAMS.Esoinn_setting.NNdict["NN"]!=None:
         print ("Update HDNN")
@@ -73,6 +79,3 @@ def esoinner(EsoinnQueue):
             for j in ['.index','.meta','.data-00000-of-00001']:
                 os.system('mv ./networks/%s/%s-chk%s ./networks/%s/%s-chk%s'%(tnetname,snetname,j,tnetname,tnetname,j))
         
-        
-
-
