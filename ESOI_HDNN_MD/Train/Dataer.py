@@ -62,9 +62,14 @@ def dataer(Dataqueue):
         SubTrainList.append(SubTrainSet)
     print('start make cluster for training set')
     for i in range(len(Trainingset.mols)):
-        EGCM=(Trainingset.mols[i].EGCM-GPARAMS.Esoinn_setting.scalemin)/\
-                (GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
+	try:
+            EGCM=(Trainingset.mols[i].EGCM-GPARAMS.Esoinn_setting.scalemin)/\
+                    (GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
+        except:
+            EGCM=(Trainingset.mols.Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/\
+                    (GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
         EGCM[ ~ np.isfinite( EGCM )] = 0
+                    
         list=GPARAMS.Esoinn_setting.Model.find_closest_cluster(min(GPARAMS.Train_setting.Modelnumperpoint,GPARAMS.Esoinn_setting.Model.class_id),EGCM)
         for j in list:
             SubTrainList[j].mols.append(Trainingset.mols[i])
@@ -92,8 +97,13 @@ def dataer(Dataqueue):
         NewSet=MSet(GPARAMS.Compute_setting.Traininglevel+'_New%d'%i)
         NewTrainList.append(NewSet)
     for i in range(len(Newadded_Set.mols)):
-        EGCM=(Newadded_Set.mols[i].EGCM-GPARAMS.Esoinn_setting.scalemin)/\
+        try:
+            EGCM=(Newadded_Set.mols[i].EGCM-GPARAMS.Esoinn_setting.scalemin)/\
                 (GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
+        except:
+            EGCM=(Newadded_Set.mols[i].Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/\
+                (GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
+                
         EGCM[ ~ np.isfinite( EGCM )] = 0
         list=GPARAMS.Esoinn_setting.Model.find_closest_cluster(min(GPARAMS.Train_setting.Modelnumperpoint,GPARAMS.Esoinn_setting.Model.class_id),EGCM)
         for j in list:
