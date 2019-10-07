@@ -45,8 +45,7 @@ def consumer(Queue):
                 else:
                     Collectset.mols.append(ERROR_mols[i][0])
             num+=1
-            if num>2000:
-                num=0
+            if num%2000==0:
                 Trainingset.Save()
                 Newaddedset.Save()
                 Collectset.Save()
