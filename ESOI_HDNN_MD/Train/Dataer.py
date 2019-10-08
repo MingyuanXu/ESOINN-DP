@@ -38,7 +38,6 @@ def Check_MSet(mollist):
                 print (i.name,i,mindis,maxdis,maxforce,len(force),len(i.properties['dipole']))
             except:
                 print (i.name,i,mindis,maxdis)
-
     return mols 
         
 def dataer(Dataqueue):

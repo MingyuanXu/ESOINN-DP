@@ -16,8 +16,8 @@ def esoinner(EsoinnQueue):
         Dataset=[]
 
     while if_continue:
-        print ("Dataset shape",np.shape(Dataset),len(Dataset))
         EGCM_trainingset=[]
+        print ("Dataset shape",np.shape(Dataset),len(Dataset))
         times=0
         while (not EsoinnQueue.empty() or times<2000) and if_continue:
             times+=1
@@ -29,12 +29,11 @@ def esoinner(EsoinnQueue):
             if times >10:
                 print ("EGCMset shape",np.shape(EGCM_trainingset),len(EGCM_trainingset),EGCM_trainingset[-1])
         EGCM_trainingset=np.array(EGCM_trainingset) 
-        #if len(Dataset)!=0:
         try:
-            Dataset=np.concatenate((np.array(Dataset),np.array(EGCM_trainingset)),axis=0)
+            Dataset=np.concatenate((np.array(Dataset),np.array(EGCM_trainingset[:-2])),axis=0)
             print("Try to concatenate Dataset and EGCM_trainingset and successed!")
         except:
-            Dataset=EGCM_trainingset[:-2]
+            #Dataset=EGCM_trainingset[:-2]
             print("Dataset=EGCM_trainingset and successed!")
         try: 
             if GPARAMS.Esoinn_setting.scalemax==None and GPARAMS.Esoinn_setting.scalemin==None:
