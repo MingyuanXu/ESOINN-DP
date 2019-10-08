@@ -91,6 +91,7 @@ class System_setting:
         self.Traj=""
         self.Initstruc=""
         self.resptrace=[]
+        self.reportcharge=[]
         return 
 
 class MD_setting:

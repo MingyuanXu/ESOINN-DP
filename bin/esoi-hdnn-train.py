@@ -26,6 +26,10 @@ if __name__=="__main__":
     DataQueue=manager.Queue()
     GPUQueue=manager.Queue()
 
+    if os.path.exists('./networks/lastsave'):
+        os.system("rm ./networks/lastsave/* -r")
+        os.system("cp *.ESOINN Sfactor.in ./networks/lastsave ")
+
     UpdateGPARAMS(jsonfile)
     for i in GPARAMS.Compute_setting.Gpulist:
         GPUQueue.put(i)
@@ -34,8 +38,11 @@ if __name__=="__main__":
 
         LoadModel()
         esoinn_train()
+
         LoadModel(ifhdnn=False)
+        
         print ("New ESOINN model has %d clusters"%GPARAMS.Esoinn_setting.Model.class_id)
+        os.system("cp *.ESOINN Sfactor.in ./networks")
         Dataer_Process=Process(target=dataer,args=(DataQueue,))
         Dataer_Process.start()
         TrainerPool=Pool(len(GPARAMS.Compute_setting.Gpulist))
@@ -45,13 +52,6 @@ if __name__=="__main__":
         TrainerPool.close()
         TrainerPool.join()
         Dataer_Process.join()
-        """
-        TMMSet=MSet('PM6_New0')
-        TMMSet.Load()
-        ider=0
-        maxsteps=2000
-        trainer(TMMSet,ider,maxsteps,GPUQueue)
-        """
         for i in range(len(GPARAMS.System_setting)):
             GPARAMS.MD_setting[i].Stageindex+=1
         GPARAMS.Train_setting.Trainstage+=1
