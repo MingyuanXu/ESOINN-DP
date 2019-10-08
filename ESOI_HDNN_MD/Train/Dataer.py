@@ -62,11 +62,11 @@ def dataer(Dataqueue):
         SubTrainList.append(SubTrainSet)
     print('start make cluster for training set')
     for i in range(len(Trainingset.mols)):
-	try:
+        try:
             EGCM=(Trainingset.mols[i].EGCM-GPARAMS.Esoinn_setting.scalemin)/\
                     (GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
         except:
-            EGCM=(Trainingset.mols.Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/\
+            EGCM=(Trainingset.mols[i].Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/\
                     (GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
         EGCM[ ~ np.isfinite( EGCM )] = 0
                     

@@ -30,8 +30,8 @@ def trainer(DataQueue,GPUQueue=None):
         NN_name=GPARAMS.Esoinn_setting.efdnetname+'%d_ANI1_Sym_Direct_RawBP_EE_Charge_DipoleEncode_Update_vdw_DSF_elu_Normalize_Dropout_0'%ider
     else:
         NN_name=None
-
     GPARAMS.Neuralnetwork_setting.Maxsteps=maxsteps 
     SUBNET=BP_HDNN(tset,NN_name)
     SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue)
     GPUQueue.put(GPUid)
+

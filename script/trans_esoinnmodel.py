@@ -8,10 +8,16 @@ import pickle
 from ESOI_HDNN_MD import *
 import json
 import numpy as np
-a=Neuralnetwork.Esoinn("1AAY")
+a=Neuralnetwork.Esoinn("2L30")
 #a.Load()
 #a.Save()
-b=load_object('Model.ESOINN')
-a.__dict__=b.__dict__
-save_object("1AAY.ESOINN",a)
-c=load_object("1AAY.ESOINN") 
+b=load_object('MODEL.ESOINN')
+for i in b.__dict__.keys():
+    if i in a.__dict__.keys():
+        a.__dict__[i]=b.__dict__[i]
+a.Save()
+a.Load()
+print (a.nodes)
+#save_object("2L30.ESOINN",a)
+#c=load_object("2L30.ESOINN") 
+

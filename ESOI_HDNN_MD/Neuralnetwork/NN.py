@@ -173,6 +173,7 @@ class BP_HDNN():
         #MolInstance(Instance):
         #LOGGER.info("MolInstance.inshape %s MolInstance.outshape %s", str(self.inshape) , str(self.outshape))
         self.recorder.write('MaxNAtoms: %d Max Epoch step: %d\tSwtich step: %d\t Training Target: %s\n'%(self.MaxNAtoms,self.max_steps,self.switch_steps, self.Training_Target))
+        self.recorder.flush()
         #self.tf_precision = eval("tf.float64")
         #self.set_symmetry_function_params()
 
@@ -728,7 +729,7 @@ class BP_HDNN():
             print_grads_loss += grads_loss
             print_dipole_loss += dipole_loss
             if (ministep%print_per_mini == 0 and ministep!=0):
-                #print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
+                print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
                 print_loss = 0.0
                 print_energy_loss = 0.0
                 print_dipole_loss = 0.0
@@ -780,7 +781,7 @@ class BP_HDNN():
             print_grads_loss += grads_loss
             print_dipole_loss += dipole_loss
             if (ministep%print_per_mini == 0 and ministep!=0):
-                #print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
+                print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
                 print_loss = 0.0
                 print_energy_loss = 0.0
                 print_dipole_loss = 0.0
