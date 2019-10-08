@@ -21,7 +21,7 @@ from .NNcal import*
 from .DFTBcal import * 
 
 class QMMM_FragSystem:
-    def __init__(self,prmname='',crdname='',Strucdict={},Path='./',Inpath='./',Name=""):
+    def __init__(self,prmname='',crdname='',Strucdict={},Path='./',Inpath='./',Name="",resplist=[]):
         self.prmname=prmname
         self.crdname=crdname
         self.name=Name
@@ -29,6 +29,7 @@ class QMMM_FragSystem:
         self.chnpts=Strucdict['CHNPTS']
         self.chnpte=Strucdict['CHNPTE']
         self.catom=Strucdict['CENTER']
+        self.reportcharge=resplist
         self.path=Path
         self.Inpath=Inpath
         self.qmcutoff=GPARAMS.Compute_setting.Qmradius
@@ -416,8 +417,10 @@ class QMMM_FragSystem:
 
         self.energy+=self.QMarea_QMenergy
         if self.ifresp==True:
-            print ('Step: %d RESP CHARGE OF MBG: %.3f %.3f %.3f %.3f %.3f'\
-               %(self.step,self.RESPCHARGE[58],self.RESPCHARGE[124],self.RESPCHARGE[349],self.RESPCHARGE[428],self.RESPCHARGE[533])) 
+            chargestr="Step: %d RESP CHARGE OF MBG: "%self.step
+            for i in self.reportcharge: 
+                chargestr+="    %f  "%self.RESPCHARGE[i]
+            print (chargestr)
         qmsysname=''
         for i in QMlist:
             qmsysname+=i.aname

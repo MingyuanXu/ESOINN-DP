@@ -5,8 +5,8 @@ from multiprocessing import Queue,Process,Manager
 from ..Neuralnetwork import *
 from ..Comparm import *
      
-def trainer(DataQueue,GPUQueue=None):
-#def trainer(TMMSET,ider,maxsteps,GPUQueue):
+#def trainer(DataQueue,GPUQueue=None):
+def trainer(TMMSET,ider,maxsteps,GPUQueue):
     from   TensorMol import MSet,PARAMS,MolDigester
     import os
     from ..Base import Find_useable_gpu
@@ -15,7 +15,7 @@ def trainer(DataQueue,GPUQueue=None):
 #    os.environ["CUDA_VISIBLE_DEVICES"]=Find_useable_gpu(GPARAMS.Compute_setting.Gpulist)
     print ("Visible CPU ID: %s training Cluster"\
                    %(os.environ["CUDA_VISIBLE_DEVICES"]))
-    TMMSET,ider,maxsteps=DataQueue.get()
+#    TMMSET,ider,maxsteps=DataQueue.get()
     print ("Visible CPU ID: %s training Cluster %d subnet"\
            %(os.environ["CUDA_VISIBLE_DEVICES"],ider))
     TreatedAtoms=TMMSET.AtomTypes()

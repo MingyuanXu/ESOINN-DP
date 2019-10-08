@@ -40,7 +40,8 @@ def productor(GPARAMS_index=0,Queue=None,EGCMQueue=None,GPUQueue=None):
                                 Path=GPARAMS.MD_setting[GPARAMS_index].Name,\
                                 Inpath='./'+GPARAMS.Compute_setting.Traininglevel+\
                                         '/'+GPARAMS.MD_setting[GPARAMS_index].Name+'/',\
-                                 Name=GPARAMS.MD_setting[GPARAMS_index].Name)
+                                 Name=GPARAMS.MD_setting[GPARAMS_index].Name,\
+                                 resplist=GPARAMS.System_setting[GPARAMS_index].reportcharge)
     elif GPARAMS.Compute_setting.Computelevel[GPARAMS_index]=="Full":
         if GPARAMS.System_setting[GPARAMS_index].Forcefield=="Amber":
             prmfile=GPARAMS.System_setting[GPARAMS_index].Systemparm
