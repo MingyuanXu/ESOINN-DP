@@ -24,6 +24,7 @@ class FullQM_System:
             os.system("mkdir %s"%self.Inpath)
         self.step=0
         self.totalcharge=totalcharge 
+
     def Create_DisMap(self):
         d1=np.zeros((self.natom,self.natom),dtype=float)
         np.fill_diagonal(d1,0.00000000001)
@@ -51,7 +52,10 @@ class FullQM_System:
             EGCM=(QMMol.Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-Esoinn_setting.scalemin)
             EGCM[ ~ np.isfinite( EGCM )] = 0
             EGCMlist.append(EGCM)
-            QMMol.belongto=GPARAMS.Esoinn_setting.Model.find_closest_cluster(min(GPARAMS.Train_setting.Modelnumperpoint,GPARAMS.Esoinn_setting.Model.class_id),EGCM)
+            if GPARAMS.Esoinn_setting.Model.class_id<GPARAMS.Train_setting.Modelnumperpoint:
+                QMMol.belongto=[i for i in range(GPARAMS.Train_setting.Modelnumperpoint)]
+            else:
+                QMMol.belongto=GPARAMS.Esoinn_setting.Model.find_closest_cluster(min(GPARAMS.Train_setting.Modelnumperpoint,GPARAMS.Esoinn_setting.Model.class_id),EGCM)
         except:
             EGCM=QMMol.Cal_EGCM()
             EGCMlist.append(EGCM)
@@ -62,16 +66,19 @@ class FullQM_System:
         if self.Theroylevel=="NN":
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
                     Cal_NN_EFQ(QMSet,inpath=self.Inpath)
+
         elif self.Theroylevel=="DFTB3":
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
                     Cal_DFTB_EFQ(QMSet,\
                                 GPARAMS.Software_setting.Dftbparapath,\
                                 inpath=self.Inpath)
+
         elif self.Theroylevel=="Semiqm":
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
                     Cal_Gaussian_EFQ(QMSet,self.Inpath,\
                                      GPARAMS.Compute_setting.Gaussiankeywords,\
                                      GPARAMS.Compute_setting.Ncoresperthreads)
+
         """
         if self.level=='REACX':
             if self.step==0:
@@ -80,6 +87,7 @@ class FullQM_System:
                 NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=Cal_REACX_EFQ(QMSet,parapath=self.parapath,inpath=self.filedir,onlydata=True)
 
         """
+
         if len(ERROR_mols)>0 and self.step-self.err_step>5:
             self.err_step=self.step
         else:
@@ -90,6 +98,7 @@ class FullQM_System:
         self.force=NN_predict[0][1]
         self.energy=NN_predict[0][0]
         return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,AVG_ERR,ERROR_mols,EGCMlist 
+
     def update_crd(self):
         pass
 

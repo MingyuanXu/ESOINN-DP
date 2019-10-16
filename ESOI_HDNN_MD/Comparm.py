@@ -30,6 +30,7 @@ class Esoinn_setting:
         self.scalemax=None
         self.scalemin=None
         self.Mixrate=0.1
+        self.Model=None 
         return
     def Update(self):
         self.Maxnum=np.sum(self.Amax)
@@ -53,8 +54,9 @@ class Compute_setting:
         self.Ompthreads=28
         self.Qmradius=2.8
         self.Ncoresperthreads=1
-        self.Gaussiankeywords=''
+        self.Gaussiankeywords=""
         self.Atomizationlevel=""
+        self.Consumerprocessnum=1
         return
     def Update(self):
         if not os.path.exists(self.Traininglevel):
@@ -135,12 +137,13 @@ class Train_setting:
         self.Ifwithhelp=False
         self.Trainstage=0
         self.Stagenum=1
-        self.Maxepochpertrain=10
-        self.Maxbatchnumpertrain=[6000,10000]
-        self.Batchnumcontrol=[8000,20000]
+        #self.Maxepochpertrain=10
+        #self.Maxbatchnumpertrain=[6000,10000]
+        #self.Batchnumcontrol=[8000,20000]
         self.Modelnumperpoint=3
-        self.Samplecontrol=[2000,8000]
+        #self.Samplecontrol=[2000,8000]
         self.Esoistep=50000
+        self.Maxsteps=10000
         return 
 
 class Neuralnetwork_setting:
@@ -149,7 +152,7 @@ class Neuralnetwork_setting:
         self.Testfreq=1;                        self.tfprec="tf.float64"
         self.Scalar={"E":1,"F":0.05,"D":1}
         self.Neuraltype="sigmoid_with_param";    self.Sigmoidalpha=100.0
-        self.Structure=[160,80,40]
+        self.Initstruc=[160,80,40]
         self.EEcutoff=15.0
         self.EEcutoffon=0
         self.Eluwidth=4.6
@@ -157,10 +160,7 @@ class Neuralnetwork_setting:
         self.DSFAlpha=0.18
         self.AddEcc=True
         self.Keepprob=[1.0,1.0,1.0,0.7]
-        self.Maxsteps=10000
         self.Learningrate=[0.001,0.0001,0.00001]
-        self.Learningratedipole=[0.001,0.0005,0.0001]
-        self.Learningrateenergy=[0.001,0.0005,0.0001]
         self.Learningrateboundary=[0.2,0.5]
         self.Switchrate=0.5
         self.Networkprefix="./networks/"
@@ -188,6 +188,11 @@ class Neuralnetwork_setting:
         self.Maxerr=25 #kcal/mol/angstrom
         self.Miderr=9
         self.Midrate=0.3
+        self.NNstrucrecord=""
+        self.NNstrucselect=[]
+        self.Aime=0.002
+        self.Aimf=0.005
+        self.Aimd=0.05
         return
     def Update(self):
         if not os.path.exists(self.Networkprefix):
@@ -197,10 +202,10 @@ class Neuralnetwork_setting:
         PARAMS["batch_size"]=self.Batchsize ;   PARAMS["test_freq"]=self.Testfreq
         PARAMS["EnergyScalar"]=self.Scalar["E"];PARAMS["GradScalar"]=self.Scalar["F"]
         PARAMS["DipoleScalar"]=self.Scalar["D"];PARAMS["NeuronType"]=self.Neuraltype
-        PARAMS["HiddenLayers"]=self.Structure;  PARAMS["EECutoff"]=self.EEcutoff
+        PARAMS["HiddenLayers"]=self.Initstruc;  PARAMS["EECutoff"]=self.EEcutoff
         PARAMS["EECutoffOn"]=self.EEcutoffon;   PARAMS["EECutoffOff"]=self.EEcutoffoff
         PARAMS["DSFAlpha"]=self.DSFAlpha;       PARAMS["AddEcc"]=self.AddEcc
-        PARAMS["KeepProb"]=self.Keepprob;       PARAMS["max_steps"]=self.Maxsteps
+        PARAMS["KeepProb"]=self.Keepprob;       
         PARAMS["networks_directory"]=self.Networkprefix; PARAMS["max_checkpoints"] =self.Maxcheckpoints
         PARAMS["InNormRoutine"]=self.Innormroutine;PARAMS["OutNormRoutine"]=self.Outnormroutine
         PARAMS["MonitorSet"]=self.Monitorset;   PARAMS["AN1_r_Rc"]=self.AN1_r_Rc
@@ -212,6 +217,18 @@ class Neuralnetwork_setting:
         PARAMS["MxMemPerElement"]=self.Maxmemperelement;
         PARAMS["ChopTo"]=self.Chopto;           PARAMS["TestRatio"]=self.Testratio
         PARAMS["RandomizeData"]=self.Randomizedata
+        if self.NNstrucrecord!="" and os.path.exists(self.NNstrucrecord):
+            file=open(self.NNstrucrecord,'r')
+            for eachline in file:
+                var=eachline.strip().split()
+                if len(var)!=0:
+                    print (var)
+                    ncase=int(var[0])
+                    batchnum=[int(var[1]),int(var[4])]
+                    loss=[float(var[2]),float(var[3]),float(var[5])]
+                    struc=[int(i) for i in var[-3:]]
+                    self.NNstrucselect.append([ncase,batchnum,loss,struc])
+            print(self.NNstrucselect)
         return 
 
 class Common_Parm:

@@ -2,11 +2,12 @@ from  TensorMol import *
 import numpy as np
 import  pickle
 from ..Comparm import *
+import math 
 class BP_HDNN():
     """
     Electrostatic embedding Behler Parinello with van der waals interaction implemented with Grimme C6 scheme.
     """
-    def __init__(self, TData_, Name_=None, Trainable_=True,ForceType_="LJ"):
+    def __init__(self, TData_, Name_=None, Trainable_=True,ForceType_="LJ",Structure=None,LR=None):
         """
         Args:
             TData_: A TensorMolData instance.
@@ -15,6 +16,8 @@ class BP_HDNN():
         self.path = GPARAMS.Neuralnetwork_setting.Networkprefix 
         self.Trainable = Trainable_
         self.need_Newtrain=True
+        self.batchtrainnumd=0
+        self.batchtrainnumf=0
         if Name_!=None:
             self.name=Name_
             self.Load()
@@ -24,17 +27,20 @@ class BP_HDNN():
                 exit
             if self.TData!=None and TData_== None and Trainable_==True:
                 self.TData.LoadDataToScratch(self.tformer)
-                self.max_steps = math.ceil(GPARAMS.Neuralnetwork_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
+                self.max_steps = math.ceil(GPARAMS.Train_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
                 self.switch_steps=math.ceil(self.max_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
                 self.batch_size = GPARAMS.Neuralnetwork_setting.Batchsize
-                self.real_steps=math.ceil(self.max_steps*self.TData.NTrain/self.batch_size)
-                self.real_switch_steps=math.ceil(self.real_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
-                self.learning_rate = np.array(GPARAMS.Neuralnetwork_setting.Learningrate)
-                self.learning_rate_dipole = np.array(GPARAMS.Neuralnetwork_setting.Learningratedipole)
-                self.learning_rate_energy = np.array(GPARAMS.Neuralnetwork_setting.Learningrateenergy)
-                self.LR_boundary=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_steps]
-                self.LR_boundary_dipole=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_switch_steps]
-                self.LR_boundary_EF=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*(self.real_steps-self.real_switch_steps)]#+self.real_switch_steps]
+                if LR!=None:
+                    self.learning_rate=LR
+                else:
+                    self.learning_rate = np.array(GPARAMS.Neuralnetwork_setting.Learningrate)
+                self.learning_rate_dipole =self.learning_rate
+                self.learning_rate_energy =self.learning_rate
+                self.LR_boundary=[math.ceil(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*GPARAMS.Train_setting.Maxsteps]
+                self.LR_boundary_dipole=[math.ceil(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)\
+                                         *GPARAMS.Train_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Switchrate]
+                self.LR_boundary_EF=[math.ceil(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)\
+                                     *GPARAMS.Train_setting.Maxsteps*(1-GPARAMS.Neuralnetwork_setting.Switchrate)]#+self.switch_steps]
                 self.Training_Target = "Dipole"
                 self.recorder.write('MaxNAtoms: %d Max Epoch step: %d\tSwtich step: %d\t Training Target: %s\n'%(self.MaxNAtoms,self.max_steps,self.switch_steps, self.Training_Target))
             if TData_!=None:
@@ -51,17 +57,23 @@ class BP_HDNN():
                         self.need_Newtrain=False
                         self.TData.ele=self.eles_np
                         self.TData.elep=self.eles_pairs_np
-                        self.max_steps = math.ceil(GPARAMS.Neuralnetwork_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
+                        self.max_steps = math.ceil(GPARAMS.Train_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
                         self.switch_steps=math.ceil(self.max_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
                         self.batch_size = GPARAMS.Neuralnetwork_setting.Batchsize
-                        self.real_steps=math.ceil(self.max_steps*self.TData.NTrain/self.batch_size)
-                        self.real_switch_steps=math.ceil(self.real_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
-                        self.learning_rate = np.array(GPARAMS.Neuralnetwork_setting.Learningrate)
-                        self.learning_rate_dipole = np.array(GPARAMS.Neuralnetwork_setting.Learningratedipole)
-                        self.learning_rate_energy = np.array(GPARAMS.Neuralnetwork_setting.Learningrateenergy)
-                        self.LR_boundary=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_steps]
-                        self.LR_boundary_dipole=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_switch_steps]
-                        self.LR_boundary_EF=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*(self.real_steps-self.real_switch_steps)]#+self.real_switch_steps]
+
+                        if LR!=None:
+                            self.learning_rate=LR
+                        else:
+                            self.learning_rate = np.array(GPARAMS.Neuralnetwork_setting.Learningrate)
+
+                        self.learning_rate_dipole =self.learning_rate
+                        self.learning_rate_energy =self.learning_rate
+                        
+                        self.LR_boundary=[math.ceil(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*GPARAMS.Train_setting.Maxsteps]
+                        self.LR_boundary_dipole=[math.ceil(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)\
+                                         *GPARAMS.Train_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Switchrate]
+                        self.LR_boundary_EF=[math.ceil(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)\
+                                     *GPARAMS.Train_setting.Maxsteps*(1-GPARAMS.Neuralnetwork_setting.Switchrate)]#+self.switch_steps]
                         self.Training_Target = "Dipole"
                         self.recorder.write('MaxNAtoms: %d Max Epoch step: %d\tSwtich step: %d\t Training Target: %s\n'%(self.MaxNAtoms,self.max_steps,self.switch_steps, self.Training_Target))
                         return
@@ -108,19 +120,23 @@ class BP_HDNN():
             self.tf_prec = eval(GPARAMS.Neuralnetwork_setting.tfprec)
         self.MaxNAtoms = self.TData.MaxNAtoms
         self.momentum = GPARAMS.Neuralnetwork_setting.Momentum
-
-        self.max_steps = math.ceil(GPARAMS.Neuralnetwork_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
+        self.max_steps = math.ceil(GPARAMS.Train_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
         self.switch_steps=math.ceil(self.max_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
         self.batch_size = GPARAMS.Neuralnetwork_setting.Batchsize
-        self.real_steps=math.ceil(self.max_steps*self.TData.NTrain/self.batch_size)
-        self.real_switch_steps=math.ceil(self.real_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
-        self.learning_rate = np.array(GPARAMS.Neuralnetwork_setting.Learningrate)
-        self.learning_rate_dipole = np.array(GPARAMS.Neuralnetwork_setting.Learningratedipole)
-        self.learning_rate_energy = np.array(GPARAMS.Neuralnetwork_setting.Learningrateenergy)
-        self.LR_boundary=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_steps]
-        self.LR_boundary_dipole=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_switch_steps]
-        self.LR_boundary_EF=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*(self.real_steps-self.real_switch_steps)]#+self.real_switch_steps]
-
+        
+        if LR!=None:
+            self.learning_rate=LR
+        else:
+            self.learning_rate = np.array(GPARAMS.Neuralnetwork_setting.Learningrate)
+        
+        self.learning_rate_dipole =self.learning_rate
+        self.learning_rate_energy =self.learning_rate
+        self.LR_boundary=[math.ceil(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*GPARAMS.Train_setting.Maxsteps]
+        self.LR_boundary_dipole=[math.ceil(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)\
+                         *GPARAMS.Train_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Switchrate]
+        self.LR_boundary_EF=[math.ceil(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)\
+                     *GPARAMS.Train_setting.Maxsteps*(1-GPARAMS.Neuralnetwork_setting.Switchrate)]#+self.switch_steps]
+        
         self.max_checkpoints = GPARAMS.Neuralnetwork_setting.Maxcheckpoints
         self.activation_function_type = GPARAMS.Neuralnetwork_setting.Neuraltype
         self.activation_function = None
@@ -132,7 +148,11 @@ class BP_HDNN():
         self.GradScalar = GPARAMS.Neuralnetwork_setting.Scalar["F"]
         self.EnergyScalar = GPARAMS.Neuralnetwork_setting.Scalar["E"]
         self.DipoleScalar = GPARAMS.Neuralnetwork_setting.Scalar["D"]
-        self.HiddenLayers = GPARAMS.Neuralnetwork_setting.Structure
+        #self.HiddenLayers = GPARAMS.Neuralnetwork_setting.Structure
+        if Structure==None:
+            self.HiddenLayers = GPARAMS.Neuralnetwork_setting.Initstruc
+        else:
+            self.HiddenLayers=Structure
         self.batch_size = GPARAMS.Neuralnetwork_setting.Batchsize
         if (not os.path.isdir(self.path)):
             os.mkdir(self.path)
@@ -211,18 +231,16 @@ class BP_HDNN():
             self.activation_function = tf.nn.relu
         return
     def _variable_with_weight_decay(self, var_name, var_shape, var_stddev, var_wd):
-        """Helper to create an initialized Variable with weight decay.
-
+        """
+        Helper to create an initialized Variable with weight decay.
         Note that the Variable is initialized with a truncated normal distribution.
         A weight decay is added only if one is specified.
-
         Args:
         name: name of the variable
         shape: list of ints
         stddev: standard deviation of a truncated Gaussian
         wd: add L2Loss weight decay multiplied by this float. If None, weight
         decay is not added for this Variable.
-
         Returns:
         Variable Tensor
         """
@@ -718,7 +736,7 @@ class BP_HDNN():
         time_print_mini = time.time()
         duration=time.time()-start_time
         for ministep in range (0, int(Ncase_train/self.batch_size)):
-            
+            self.batchtrainnumf+=1
             t_mini = time.time()
             batch_data = self.TData.GetTrainBatch(self.batch_size)+[GPARAMS.Neuralnetwork_setting.AddEcc] + [self.keep_prob]
             actual_mols  = self.batch_size
@@ -743,7 +761,7 @@ class BP_HDNN():
             num_of_mols += actual_mols
         duration = time.time() - start_time
         self.print_training(step, train_loss, train_energy_loss, train_grads_loss, train_dipole_loss, num_of_mols, duration,lr_ef)
-        return
+        return train_energy_loss/num_of_mols,train_grads_loss/num_of_mols 
 
 
     def train_step_dipole(self, step):
@@ -771,6 +789,7 @@ class BP_HDNN():
         #print (int(Ncase_train/self.batch_size))
         duration=time.time()-start_time
         for ministep in range (0, int(Ncase_train/self.batch_size)):
+            self.batchtrainnumd+=1
             t_mini = time.time()
             batch_data = self.TData.GetTrainBatch(self.batch_size) + [False] + [self.keep_prob]
             actual_mols  = self.batch_size
@@ -795,7 +814,7 @@ class BP_HDNN():
             duration = time.time() - start_time
             num_of_mols += actual_mols
         self.print_training(step, train_loss, train_energy_loss, train_grads_loss, train_dipole_loss, num_of_mols, duration,lr_dipole)
-        return
+        return train_dipole_loss/num_of_mols  
 
     def test_dipole(self, step):
         """
@@ -824,7 +843,7 @@ class BP_HDNN():
             num_of_mols += actual_mols
         #print ("testing...")
         self.print_training(step, test_loss, test_energy_loss, test_grads_loss, test_dipole_loss, num_of_mols, duration,0,False)
-        return  test_loss
+        return  test_dipole_loss 
 
     def test_EandG(self, step):
         """
@@ -853,12 +872,13 @@ class BP_HDNN():
             num_of_mols += actual_mols
         #print ("testing...")
         self.print_training(step, test_loss, test_energy_loss, test_grads_loss, test_dipole_loss, num_of_mols, duration,0,False)
-        return  test_loss
+        return  test_energy_loss,test_grads_loss
 
-    def train(self, mxsteps, continue_training= False,chk_file=''):
+    def train(self, mxsteps, continue_training= False,chk_file='',AimE=0.001,AimF=0.001,AimD=0.05):
         """
         This the training loop for the united model.
         """
+        maxsteps=mxsteps 
         LOGGER.info("running the TFMolInstance.train()")
         if self.need_Newtrain==True:
             continue_training=False
@@ -868,18 +888,36 @@ class BP_HDNN():
         mini_dipole_test_loss = float('inf') # some big numbers
         mini_energy_test_loss = float('inf')
         mini_test_loss = float('inf')
-        for step in  range (0, mxsteps):
+#        for step in  range (0, mxsteps):
+        ifcontinue=True;step=0 
+        recordlossf=[];recordlossd=[]
+        while ifcontinue :
             if self.Training_Target == "EandG":
-                self.train_step_EandG(step)
+                Losse,Lossf=self.train_step_EandG(step)
+                recordlossf.append(Lossf)
                 if step%test_freq==0 and step!=0 :
                     if self.monitor_mset != None:
                         self.InTrainEval(self.monitor_mset, self.Rr_cut, self.Ra_cut, self.Ree_off, step=step)
-                    test_energy_loss = self.test_EandG(step)
+                    test_energy_loss,test_grads_loss = self.test_EandG(step)
                     if test_energy_loss < mini_energy_test_loss:
                         mini_energy_test_loss = test_energy_loss
                         self.save_chk(step)
+                if Lossf<=AimF and Losse<=AimE:
+                    self.record.write("Training of %s stop due to achieve Force aim or beyond max training steps "%self.name)
+                    ifcontinue=False 
+                #if len(recordlossf)>20:
+                #    self.recorder.write("Avg Lossf in last 5-10 steps: %f , Lossf in lass 1-5 steps: %f judge value: %f\n"\
+                #                             %(np.mean(recordlossf[-10:-5]),np.mean(recordlossf[-5:-1]),(recordlossf[-1]-AimF)/50))
+                #    if np.mean(recordlossf[-20:-10])-np.mean(recordlossf[-10:-1])<(recordlossf[-1]-AimF)/50:
+                #        self.recorder.write("Training of %s stop due to convegency of Loss\n"%self.name)
+                #        self.recorder.write("Avg Lossf in last 5-10 steps: %f , Lossf in lass 1-5 steps: %f judge value: %f\n"\
+                #                             %(np.mean(recordlossf[-10:-5]),np.mean(recordlossf[-5:-1]),(recordlossf[-1]-AimF)/50))
+                #        ifcontinue=False 
+                if step > maxsteps:
+                    ifcontinue=False
             elif self.Training_Target == "Dipole":
-                self.train_step_dipole(step)
+                Lossd=self.train_step_dipole(step)
+                recordlossd.append(Lossd)
                 if step%test_freq==0 and step!=0 :
                     if self.monitor_mset != None:
                         self.InTrainEval(self.monitor_mset, self.Rr_cut, self.Ra_cut, self.Ree_off, step=step)
@@ -887,21 +925,21 @@ class BP_HDNN():
                     if test_dipole_loss < mini_dipole_test_loss:
                         mini_dipole_test_loss = test_dipole_loss
                         self.save_chk(step)
-                    if step >= self.switch_steps:
+                    if Lossd<=AimD or step>=math.ceil(maxsteps*GPARAMS.Neuralnetwork_setting.Switchrate):
+                        self.recorder.write("Training of %s switch to E&G due to achieve Dipole aim or beyond max training steps %d\n"%(self.name,self.max_steps*GPARAMS.Neuralnetwork_setting.Switchrate))
                         self.saver.restore(self.sess, self.chk_file)
                         self.Training_Target = "EandG"
                         self.recorder.write("Switching to Energy and Gradient Learning...\n")
-            else:
-                self.train_step(step)
-                if step%test_freq==0 and step!=0 :
-                    if self.monitor_mset != None:
-                        self.InTrainEval(self.monitor_mset, self.Rr_cut, self.Ra_cut, self.Ree_off, step=step)
-                    test_loss = self.test(step)
-                    if test_loss < mini_test_loss:
-                        mini_test_loss = test_loss
-                        self.save_chk(step)
+                    #if len(recordlossd)>20:
+                    #    self.recorder.write("Avg Lossd in last 5-10 steps: %f , Lossd in lass 1-5 steps: %f judge value: %f\n"\
+                    #                         %(np.mean(recordlossd[-20:-10]),np.mean(recordlossd[-10:-1]),(recordlossd[-1]-AimD)/50))
+                    #    if np.mean(recordlossd[-10:5])-np.mean(recordlossd[-5:-1])<(recordlossd[-1]-Aimf)/50:
+                    #        self.saver.restore(self.sess, self.chk_file)
+                    #        self.Training_Target = "EandG"
+                    #        self.recorder.write("Switching to Energy and Gradient Learning...\n")
+            step+=1
         self.SaveAndClose()
-        return
+        return  self.TData.NTrain,self.batchtrainnumf,Losse,Lossf,self.batchtrainnumd,Lossd,self.HiddenLayers
 
     def InTrainEval(self, mol_set, Rr_cut, Ra_cut, Ree_cut, step=0):
         """

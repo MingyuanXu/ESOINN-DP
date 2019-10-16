@@ -20,12 +20,10 @@ class Thermo:
         print("Using ", self.name, " thermostat at ",self.T, " degrees Kelvin")
         self.Rescale(v_)
         return
-
     def step(self,m,v,dt):
         self.Teff = (2./3.)*KineticEnergy(v,self.m)/IDEALGASR
         v *= np.sqrt(self.T/self.Teff)
         return v
-
     def Rescale(self,v_):
         # Do this elementwise otherwise H's blow off.
         for i in range(self.N):
@@ -46,7 +44,7 @@ class Andersen(Thermo):
         self.tau = 30*dt 
         print("Using ", self.name, " thermostat at ",self.T, " degrees Kelvin")
         self.Rescale(v)
-         
+
     def step(self,m,v,dt):
         self.kT=IDEALGASR*pow(10.0,-10.0)*self.T
         s=np.sqrt(2.0*self.gamma*self.kT/self.m)

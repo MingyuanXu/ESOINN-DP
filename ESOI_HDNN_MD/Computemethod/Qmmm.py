@@ -357,7 +357,10 @@ class QMMM_FragSystem:
             EGCM[ ~ np.isfinite( EGCM )] = 0
             EGCMlist.append(EGCM)
             #QMMol.belongto=GPARAMS.Esoinn_setting.Model.find_closest_cluster(GPARAMS.Train_setting.Modelnumperpoint,EGCM)
-            QMMol.belongto=GPARAMS.Esoinn_setting.Model.find_closest_cluster(min(GPARAMS.Train_setting.Modelnumperpoint,GPARAMS.Esoinn_setting.Model.class_id),EGCM)
+            if GPARAMS.Esoinn_setting.Model.class_id<GPARAMS.Train_setting.Modelnumperpoint:
+                QMMol.belongto=[i for i in range(GPARAMS.Train_setting.Modelnumperpoint)]
+            else:
+                QMMol.belongto=GPARAMS.Esoinn_setting.Model.find_closest_cluster(min(GPARAMS.Train_setting.Modelnumperpoint,GPARAMS.Esoinn_setting.Model.class_id),EGCM)
         except:
             EGCM=QMMol.Cal_EGCM()
             EGCMlist.append(EGCM)
@@ -381,8 +384,6 @@ class QMMM_FragSystem:
                     Cal_Gaussian_EFQ(QMSet,self.Inpath,GPARAMS.Compute_setting.Gaussiankeywords,GPARAMS.Compute_setting.Ncoresperthreads)
         if self.stepmethod=="NN":
             if len(ERROR_mols)>0 and self.step-self.record_err_step>5:
-                print (ERROR_mols[0])
-                print ('ERR_step:',self.record_err_step)
                 self.record_err_step=self.step    
             else:
                 self.ERROR_mols=[]

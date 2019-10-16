@@ -2,8 +2,6 @@ from   .Neuralnetwork import *
 from   .Comparm import GPARAMS 
 import pickle
 import random 
-
-
 def UpdateGPARAMS(jsonfile,Onlymodel=False):
     with open(jsonfile,'r') as f:
         jsondict=json.load(f)
@@ -12,7 +10,7 @@ def UpdateGPARAMS(jsonfile,Onlymodel=False):
             GPARAMS.Esoinn_setting.Update()
         if 'Compute' in jsondict.keys():
             Loaddict2obj(jsondict['Compute'],GPARAMS.Compute_setting)
-            print (GPARAMS.Compute_setting.Traininglevel)
+            print (GPARAMS.Compute_setting.Gaussiankeywords)
             GPARAMS.Compute_setting.Update() 
         if 'HDNN' in jsondict.keys():
             Loaddict2obj(jsondict['HDNN'],GPARAMS.Neuralnetwork_setting)
@@ -38,29 +36,30 @@ def UpdateGPARAMS(jsonfile,Onlymodel=False):
     return
 
 def LoadModel(ifhdnn=True):
-        nnlist=None;respnet=None
-        if GPARAMS.Esoinn_setting.Modelfile!="":
-            GPARAMS.Esoinn_setting.Model=Esoinn(GPARAMS.Esoinn_setting.Modelfile,\
-                                                dim=GPARAMS.Esoinn_setting.Maxnum,\
-                                                iteration_threshold=GPARAMS.Esoinn_setting.Traininterval)
-            if os.path.exists(GPARAMS.Esoinn_setting.Modelfile+".ESOINN"):
-                GPARAMS.Esoinn_setting.Model.Load()
-        if GPARAMS.Esoinn_setting.Scalefactorfile!="":
-            if os.path.exists(GPARAMS.Esoinn_setting.Scalefactorfile):
-                with open(GPARAMS.Esoinn_setting.Scalefactorfile,'rb') as f:
-                    GPARAMS.Esoinn_setting.scalemax,GPARAMS.Esoinn_setting.scalemin=pickle.load(f)
-                    #print (GPARAMS.Esoinn_setting.scalemax,GPARAMS.Esoinn_setting.scalemin)
-            else:
-                GPARAMS.Esoinn_setting.scalemax=None
-                GPARAMS.Esoinn_setting.scalemin=None
-        if ifhdnn==True:
-            if GPARAMS.Esoinn_setting.Loadefdnet==True and GPARAMS.Esoinn_setting.Model!=None:
-                nnlist=Get_neuralnetwork_instance(GPARAMS.Esoinn_setting.Model.class_id)
-            if GPARAMS.Esoinn_setting.Loadrespnet==True and GPARAMS.Esoinn_setting.respnetname!="":
-                respnet=Get_resp_instance(GPARAMS.Esoinn_setting.respnetname)
-            GPARAMS.Esoinn_setting.NNdict={"NN":nnlist,"RESP":respnet}
+    nnlist=None;respnet=None
+    if GPARAMS.Esoinn_setting.Modelfile!="":
+        GPARAMS.Esoinn_setting.Model=Esoinn(GPARAMS.Esoinn_setting.Modelfile,\
+                                            dim=GPARAMS.Esoinn_setting.Maxnum,\
+                                            iteration_threshold=GPARAMS.Esoinn_setting.Traininterval)
+        if os.path.exists(GPARAMS.Esoinn_setting.Modelfile+".ESOINN"):
+            GPARAMS.Esoinn_setting.Model.Load()
+        print (GPARAMS.Esoinn_setting.Model.class_id)
+    if GPARAMS.Esoinn_setting.Scalefactorfile!="":
+        if os.path.exists(GPARAMS.Esoinn_setting.Scalefactorfile):
+            with open(GPARAMS.Esoinn_setting.Scalefactorfile,'rb') as f:
+                GPARAMS.Esoinn_setting.scalemax,GPARAMS.Esoinn_setting.scalemin=pickle.load(f)
+                #print (GPARAMS.Esoinn_setting.scalemax,GPARAMS.Esoinn_setting.scalemin)
         else:
-            GPARAMS.Esoinn_setting.NNdict={"NN":nnlist,"RESP":nnlist}
+            GPARAMS.Esoinn_setting.scalemax=None
+            GPARAMS.Esoinn_setting.scalemin=None
+    if ifhdnn==True:
+        if GPARAMS.Esoinn_setting.Loadefdnet==True and GPARAMS.Esoinn_setting.Model!=None:
+            nnlist=Get_neuralnetwork_instance(max(GPARAMS.Esoinn_setting.Model.class_id,GPARAMS.Train_setting.Modelnumperpoint))
+        if GPARAMS.Esoinn_setting.Loadrespnet==True and GPARAMS.Esoinn_setting.respnetname!="":
+            respnet=Get_resp_instance(GPARAMS.Esoinn_setting.respnetname)
+        GPARAMS.Esoinn_setting.NNdict={"NN":nnlist,"RESP":respnet}
+    else:
+        GPARAMS.Esoinn_setting.NNdict={"NN":nnlist,"RESP":nnlist}
 
 def Loaddict2obj(dict,obj):
     objdict=obj.__dict__
@@ -76,6 +75,7 @@ def Get_neuralnetwork_instance(Class_num):
     for i in range(Class_num):
         SUBNET=BP_HDNN(None,GPARAMS.Esoinn_setting.efdnetname+'%d_ANI1_Sym_Direct_RawBP_EE_Charge_DipoleEncode_Update_vdw_DSF_elu_Normalize_Dropout_0'%i,False)
         subnet_list.append(SUBNET)
+    print ("Loaded %d subnet in Neural Layer!"%(len(subnet_list)))
         #SUBNET.SaveAndClose()
     return subnet_list
 
@@ -83,4 +83,14 @@ def Get_resp_instance(Name):
     SUBNET=BP_HDNN_charge(None,Name,False)
     #SUBNET.SaveAndClose()
     return SUBNET
+
+def Added_MSet(filename):
+    TotalMSet=MSet(GPARAMS.Compute_setting.Traininglevel)
+    if os.path.exists('./datasets/'+GPARAMS.Compute_setting.Traininglevel+'.pdb'):
+        TotalMSet.Load()
+    NewaddedSet=MSet(filename)
+    NewaddedSet.Load()
+    TotalMSet.mols+=NewaddedSet.mols
+    TotalMSet.Save()
+    return
 

@@ -40,10 +40,10 @@ class Molnew:
         file.close()
         return 
     def Cal_Gaussian(self,inpath='./'):
-        os.system('cd '+inpath+' && g16 '+self.name+'.com && rm '+self.name+'.chk && cd -')
+        os.system('cd '+inpath+' && g16 '+self.name+'.com && rm '+self.name+'.chk && cd - >/dev/null')
         flag=self.Update_from_Gaulog(inpath)
-        if flag==True:
-            self.CalculateAtomization(GPARAMS.Compute_setting.Atomizationlevel)
+        #if flag==True:
+        #    self.CalculateAtomization(GPARAMS.Compute_setting.Atomizationlevel)
         return flag 
     def Update_from_Gaulog(self,inpath='./'):
         file=open(inpath+self.name+'.log','r') 
@@ -108,6 +108,7 @@ class Molnew:
             line=file.readline()
         self.atoms=np.array(atoms)
         self.coords=np.array(coords) 
+        self.atomnamelist=[Element_Table[i] for i in self.atoms]
         self.Total_charge=totalcharge
         self.properties['energy']=energy
         self.properties['force']=np.array(force)
@@ -199,10 +200,10 @@ class Molnew:
         DFTB_input.close()
     def Cal_DFTB(self,inpath='./'):
         if inpath!='./':
-            print ('cd %s && dftb+ > dftb+.log'%inpath)
+            #print ('cd %s && dftb+ > dftb+.log'%inpath)
             os.system('cd %s && dftb+ > dftb+.log'%inpath)
         else:
-            print ('cd %s && dftb+ > dftb+.log')
+            #print ('cd %s && dftb+ > dftb+.log')
             os.system('dftb+ > dftb+.log') 
         flag=os.path.isfile(inpath+'detailed.out')
         if flag==True:
@@ -233,7 +234,6 @@ class Molnew:
             charge=np.array(charge)
             self.properties["energy"]=energy
             self.CalculateAtomization('DFTB3')
-            print (self.properties["atomization"])
             self.properties["force"]=force
             self.properties["gradients"]=-force
             try:

@@ -41,7 +41,7 @@ class Simulation():
         self.Midrate=GPARAMS.Neuralnetwork_setting.Midrate 
         return
 
-    def MD(self,QMQueue=None,ESOINNQueue=None):
+    def MD(self,QMQueue=None):
         self.sys.Create_DisMap()
         self.sys.Update_DisMap()
         self.sys.update_crd()
@@ -113,8 +113,6 @@ class Simulation():
                         QMQueue.put(ERROR_mols)
                     elif miderr_num<self.maxstep*self.Midrate:
                         QMQueue.put(ERROR_mols)
-                if ESOINNQueue!=None:
-                    ESOINNQueue.put(EGCMlist)
             self.EPot=EPot
             if self.icap==True:
                 Vec=(self.sys.Distance_Matrix[self.center]-self.radius)/self.radius

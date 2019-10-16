@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # coding=utf-8
-
 from .DFTBcal import *
 from ..Neuralnetwork import *
 from ..Base import *
 from ..Comparm import *
 import numpy as np
+
 def Cal_NN_EFQ(NNSet,inpath='./'):
     ERROR_mols=[]
     MSet_list=[MSet('ID%d'%i) for i in range(len(GPARAMS.Esoinn_setting.NNdict['NN']))]
@@ -34,6 +34,7 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
             for j in range(N_Times):
                 TMMSET=MSet('tmp')
                 TMMSET.mols=MSet_list[i].mols[j*GPARAMS.Neuralnetwork_setting.Batchsize:(j+1)*GPARAMS.Neuralnetwork_setting.Batchsize]
+                print ("NN Calculation at here!")
                 Etotal,Ebp,Ebp_atom,Ecc,Evdw,mol_dipole,atom_charge,gradient=\
                     EvalSet(TMMSET,GPARAMS.Esoinn_setting.NNdict["NN"][i])
                 E_tmp+=list(Etotal);F_tmp+=list(gradient);Dipole_tmp+=list(mol_dipole);Charge_tmp+=list(atom_charge)
@@ -82,8 +83,9 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
         method='NN'
         if MAX_MSE_F > GPARAMS.Neuralnetwork_setting.Maxerr :
             ERROR_str+='%dth mol in NNSet is not believable, MAX_MSE_F: %f\n '%(i,MAX_MSE_F)
+            print(ERROR_str)
             ERROR_mols.append([NNSet.mols[i],MAX_MSE_F])
-         
+#         
 #        if MAX_MSE_F>=50 or MAX_MSE_F-tmperr>30:
 #            ERROR_str+='%dth mol will be calculated with DFTB!'
 #            NNSet.mols[i].Write_DFTB_input(parapath,False,inpath)
@@ -98,6 +100,7 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
 #            NNSet.mols[i].properties={}
 #            ERROR_mols.append(NNSet.mols[i])
 #            method='DFTB'
+#
         NN_predict.append([E_avg,F_avg,D_avg,Q_avg])
     AVG_ERR=np.mean(np.array(MAX_ERR))
     if GPARAMS.Esoinn_setting.NNdict["RESP"]!=None:

@@ -134,7 +134,14 @@ class Esoinn(BaseEstimator, ClusterMixin):
 #            plt.plot(pos[i][0], pos[i][1], 'ro', c=color_dict[self.node_labels[i]])
         plt.grid(True)
         plt.show()
-
+    def cut_cluster(self,clusteridlist):
+        indexlist=[]
+        for i in range(len(self.nodes)):
+            if self.node_labels[i] in clusteridlist:
+                indexlist.append(i)
+        self.__delete_nodes(indexlist)
+        self.__classify()
+        
     def predict(self,signal_list):
         """
         """
@@ -144,11 +151,17 @@ class Esoinn(BaseEstimator, ClusterMixin):
             signal=self.__check_signal(signal_list[i])
             winner,dists=self.__find_nearest_nodes(2,signal)
             sim_thresholds=self.__calculate_similarity_thresholds(winner)
-            if dists[0] > sim_thresholds[0] or dists[1] > sim_thresholds[1]:
+            if dists[0] > 2*sim_thresholds[0] or dists[1] > 2*sim_thresholds[1]:
                 noise_signal.append(signal)
                 signal_node_label.append(winner)
                 signal_cluster_label.append([self.node_labels[winner[0]],self.node_labels[winner[1]]])
                 signal_mask.append('Noise')
+                noise_signal_index.append(i)
+            elif (dists[0] < 2*sim_thresholds[0] and dists[1]>sim_thresholds[0]) and (dists[1] <2*sim_thresholds[1] and dists[1]>sim_thresholds[1]):
+                noise_signal.append(signal)
+                signal_node_label.append(winner)
+                signal_cluster_label.append([self.node_labels[winner[0]],self.node_labels[winner[1]]])
+                signal_mask.append('Edge')
                 noise_signal_index.append(i)
             else:
                 signal_node_label.append(winner)
@@ -276,8 +289,6 @@ class Esoinn(BaseEstimator, ClusterMixin):
         class_id = 0
         while len(density_dict) > 0:
             apex = max(density_dict, key=lambda x: density_dict[x])
-            # print("len", len(density_dict))
-            # print("apex", apex)
             ids = []
             ids.append(apex)
             self.__get_nodes_by_apex(apex, ids, density_dict)
@@ -287,8 +298,6 @@ class Esoinn(BaseEstimator, ClusterMixin):
                 self.node_labels[i] = class_id
                 density_dict.pop(i)
             class_id += 1
-
-        # print("class_id", class_id)
 
     def __get_nodes_by_apex(self, apex, ids, density_dict):
         new_ids = []
@@ -574,6 +583,7 @@ class Esoinn(BaseEstimator, ClusterMixin):
     def Save(self):
         with open(self.Name+".ESOINN",'wb') as f:
             pickle.dump(self,f)
+            print ("Save ESOINN MODEL to %s.ESOINN"%self.Name)
 
     def Load(self):
         with open(self.Name+".ESOINN",'rb') as f:
@@ -582,14 +592,4 @@ class Esoinn(BaseEstimator, ClusterMixin):
                 if i in self.__dict__.keys():
                     self.__dict__[i]=b.__dict__[i]
 
-#def save_object(filename,object):
-#    file=open(filename,'wb')
-#    pickle.dump(object,file)
-#    file.close()
-#    return 
-#def load_object(filename):
-#    file=open(filename,'rb')
-#    object=pickle.load(file)
-#    file.close()
-#    return object
 

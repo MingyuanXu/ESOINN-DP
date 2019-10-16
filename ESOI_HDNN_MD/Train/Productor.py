@@ -1,7 +1,7 @@
 from ..Comparm import *
 import os
 
-def productor(GPARAMS_index=0,Queue=None,EGCMQueue=None,GPUQueue=None):
+def productor(GPARAMS_index=0,Queue=None,GPUQueue=None):
     from ..Computemethod import QMMM_FragSystem
     from ..Computemethod import FullQM_System_Amber 
     from ..MD import Simulation
@@ -13,10 +13,8 @@ def productor(GPARAMS_index=0,Queue=None,EGCMQueue=None,GPUQueue=None):
     GPUid=GPUQueue.get()
     os.environ["CUDA_VISIBLE_DEVICES"]=str(GPUid)
     print (os.environ["CUDA_VISIBLE_DEVICES"])
-
     if GPARAMS.Compute_setting.Theroylevel=="DFTB+":
         os.environ["OMP_NUM_THREADS"]=GPARAMS.Compute_setting.Ncoresperthreads
-
     if GPARAMS.Compute_setting.Computelevel[GPARAMS_index]=="QM/MM":
         if GPARAMS.System_setting[GPARAMS_index].Forcefield=="Amber":
             prmfile=GPARAMS.System_setting[GPARAMS_index].Systemparm
@@ -66,12 +64,11 @@ def productor(GPARAMS_index=0,Queue=None,EGCMQueue=None,GPUQueue=None):
                                           '/'+GPARAMS.MD_setting[GPARAMS_index].Name+'/',\
                                         Name=GPARAMS.MD_setting[GPARAMS_index].Name\
                                          ) 
-
     if GPARAMS.MD_setting[GPARAMS_index].MDmethod=="Normal MD":
         print (GPARAMS.MD_setting[GPARAMS_index].Name)
         MD_simulation=Simulation(sys=qmsys,\
                                  MD_setting=GPARAMS.MD_setting[GPARAMS_index])
-        MDdeviation=MD_simulation.MD(Queue,EGCMQueue)
+        MDdeviation=MD_simulation.MD(Queue)
     GPUQueue.put(GPUid)
         
 

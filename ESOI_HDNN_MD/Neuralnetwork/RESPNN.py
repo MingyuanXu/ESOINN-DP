@@ -7,7 +7,7 @@ class BP_HDNN_charge():
     """
     Electrostatic embedding Behler Parinello with van der waals interaction implemented with Grimme C6 scheme.
     """
-    def __init__(self, TData_, Name_=None, Trainable_=True,ForceType_="LJ"):
+    def __init__(self, TData_, Name_=None, Trainable_=True,ForceType_="LJ",Structure=None):
         self.path = GPARAMS.Neuralnetwork_setting.Networkprefix
         self.Trainable = Trainable_
         self.need_Newtrain=True
@@ -20,17 +20,15 @@ class BP_HDNN_charge():
                 exit
             if self.TData!=None and TData_== None and Trainable_==True:
                 self.TData.LoadDataToScratch(self.tformer)
-                self.max_steps = math.ceil(GPARAMS.Neuralnetwork_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
+                self.max_steps = math.ceil(GPARAMS.Train_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
                 self.switch_steps=math.ceil(self.max_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
                 self.batch_size = GPARAMS.Neuralnetwork_setting.Batchsize
-                self.real_steps=math.ceil(self.max_steps*self.TData.NTrain/self.batch_size)
-                self.real_switch_steps=math.ceil(self.real_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
                 self.learning_rate = np.array(GPARAMS.Neuralnetwork_setting.Learningrate)
                 self.learning_rate_dipole = np.array(GPARAMS.Neuralnetwork_setting.Learningratedipole)
                 self.learning_rate_energy = np.array(GPARAMS.Neuralnetwork_setting.Learningrateenergy)
-                self.LR_boundary=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_steps]
-                self.LR_boundary_dipole=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_switch_steps]
-                self.LR_boundary_EF=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*(self.real_steps-self.real_switch_steps)]#+self.real_switch_steps]
+                self.LR_boundary=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.max_steps]
+                self.LR_boundary_dipole=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.switch_steps]
+                self.LR_boundary_EF=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*(self.max_steps-self.switch_steps)]#+self.switch_steps]
 
                 self.Training_Target = "Dipole"
                 self.recorder.write('MaxNAtoms: %d Max Epoch step: %d\tSwtich step: %d\t Training Target: %s\n'%(self.MaxNAtoms,self.max_steps,self.switch_steps, self.Training_Target))
@@ -48,17 +46,15 @@ class BP_HDNN_charge():
                         self.need_Newtrain=False
                         self.TData.ele=self.eles_np
                         self.TData.elep=self.eles_pairs_np
-                        self.max_steps = math.ceil(GPARAMS.Neuralnetwork_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
+                        self.max_steps = math.ceil(GPARAMS.Train_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
                         self.switch_steps=math.ceil(self.max_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
                         self.batch_size = GPARAMS.Neuralnetwork_setting.Batchsize
-                        self.real_steps=math.ceil(self.max_steps*self.TData.NTrain/self.batch_size)
-                        self.real_switch_steps=math.ceil(self.real_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
                         self.learning_rate = np.array(GPARAMS.Neuralnetwork_setting.Learningrate)
                         self.learning_rate_dipole = np.array(GPARAMS.Neuralnetwork_setting.Learningratedipole)
                         self.learning_rate_energy = np.array(GPARAMS.Neuralnetwork_setting.Learningrateenergy)
-                        self.LR_boundary=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_steps]
-                        self.LR_boundary_dipole=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_switch_steps]
-                        self.LR_boundary_EF=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*(self.real_steps-self.real_switch_steps)]#+self.real_switch_steps]
+                        self.LR_boundary=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.max_steps]
+                        self.LR_boundary_dipole=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.switch_steps]
+                        self.LR_boundary_EF=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*(self.max_steps-self.switch_steps)]#+self.switch_steps]
                         self.Training_Target = "Dipole"
                         self.recorder.write('MaxNAtoms: %d Max Epoch step: %d\tSwtich step: %d\t Training Target: %s\n'%(self.MaxNAtoms,self.max_steps,self.switch_steps, self.Training_Target))
                         return
@@ -106,18 +102,16 @@ class BP_HDNN_charge():
         self.MaxNAtoms = self.TData.MaxNAtoms
         self.momentum = GPARAMS.Neuralnetwork_setting.Momentum
         
-        self.max_steps = math.ceil(GPARAMS.Neuralnetwork_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
+        self.max_steps = math.ceil(GPARAMS.Train_setting.Maxsteps*GPARAMS.Neuralnetwork_setting.Batchsize/self.TData.NTrain)
         self.switch_steps=math.ceil(self.max_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
         self.batch_size = GPARAMS.Neuralnetwork_setting.Batchsize
-        self.real_steps=math.ceil(self.max_steps*self.TData.NTrain/self.batch_size)
-        self.real_switch_steps=math.ceil(self.real_steps*GPARAMS.Neuralnetwork_setting.Switchrate)
 
         self.learning_rate = np.array(GPARAMS.Neuralnetwork_setting.Learningrate)
         self.learning_rate_dipole = np.array(GPARAMS.Neuralnetwork_setting.Learningratedipole)
         self.learning_rate_energy = np.array(GPARAMS.Neuralnetwork_setting.Learningrateenergy)
-        self.LR_boundary=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_steps]
-        self.LR_boundary_dipole=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.real_switch_steps]
-        self.LR_boundary_EF=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*(self.real_steps-self.real_switch_steps)]#+self.real_switch_steps]
+        self.LR_boundary=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.max_steps]
+        self.LR_boundary_dipole=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*self.switch_steps]
+        self.LR_boundary_EF=[int(m) for m in np.array(GPARAMS.Neuralnetwork_setting.Learningrateboundary)*(self.max_steps-self.switch_steps)]#+self.switch_steps]
 
 
         self.max_checkpoints = GPARAMS.Neuralnetwork_setting.Maxcheckpoints
@@ -131,7 +125,10 @@ class BP_HDNN_charge():
         self.GradScalar = GPARAMS.Neuralnetwork_setting.Scalar["F"]
         self.EnergyScalar = GPARAMS.Neuralnetwork_setting.Scalar["E"]
         self.DipoleScalar = GPARAMS.Neuralnetwork_setting.Scalar["D"]
-        self.HiddenLayers = GPARAMS.Neuralnetwork_setting.Structure
+        if Structure==None:
+            self.HiddenLayers = GPARAMS.Neuralnetwork_setting.Initstruc
+        else:
+            self.HiddenLayers = Structure 
         self.batch_size = GPARAMS.Neuralnetwork_setting.Batchsize
         if (not os.path.isdir(self.path)):
             os.mkdir(self.path)
