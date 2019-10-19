@@ -31,12 +31,14 @@ def esoinner():
                 pickle.dump((GPARAMS.Esoinn_setting.scalemax,GPARAMS.Esoinn_setting.scalemin),f)
     except:
         pass
+
     Dataset=(Dataset-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
     Dataset[~np.isfinite(Dataset)]=0
     if len(GPARAMS.Esoinn_setting.Model.nodes)!=0:
         Noiseset,a,b,c,d=GPARAMS.Esoinn_setting.Model.predict(Dataset)
     else:
-        Noiseset=Dataset  
+        Noiseset=Dataset 
+
     GPARAMS.Esoinn_setting.Model.fit(Noiseset,iteration_times=GPARAMS.Train_setting.Esoistep,if_reset=False)
     GPARAMS.Esoinn_setting.Model.Save()
     Noiseset,Noiseindex,nodelabel,cluster_label,signalmask=GPARAMS.Esoinn_setting.Model.predict(Dataset)
@@ -47,12 +49,15 @@ def esoinner():
     signal_num_list=[len(i) for i in signal_cluster]
     judgenum=math.ceil(sum(signal_num_list)*0.05)
     print ("signal_num_list:",signal_num_list,"judgenum",judgenum)
-    removecluster=[i for i in range(len(signal_num_list)) if not(signal_num_list[i] > judgenum and signal_num_list[i] >1000)]
+
+    removecluster=[i for i in range(len(signal_num_list)) if not(signal_num_list[i] > judgenum and signal_num_list[i] >500)]
     print ("removeclusteid:",removecluster)
+
     GPARAMS.Esoinn_setting.Model.cut_cluster(removecluster)
     GPARAMS.Esoinn_setting.Model.Save()
     print (GPARAMS.Esoinn_setting.Model.Name,GPARAMS.Esoinn_setting.Model.class_id)  
     print("Class id after Cut action:",GPARAMS.Esoinn_setting.Model.class_id)
+
     cluster_center_after=GPARAMS.Esoinn_setting.Model.cal_cluster_center()
     if cluster_center_before!=None:# and GPARAMS.Esoinn_setting.NNdict["NN"]!=None:
         print ("Update HDNN")

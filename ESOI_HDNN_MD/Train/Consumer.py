@@ -21,7 +21,7 @@ def consumer(Queue):
             Newaddedset.Save()  
     Dataset=[]
     Newaddedset.mols=Check_MSet(Newaddedset.mols)
-    if len(GPARAMS.Esoinn_setting.Model.nodes)!=0:
+    if len(GPARAMS.Esoinn_setting.Model.nodes)!=0 and GPARAMS.Esoinn_setting.Model.class_id > GPARAMS.Train_setting.Modelnumperpoint:
         for i in Newaddedset.mols:
             try:
                 Dataset.append(i.EGCM)
@@ -74,9 +74,6 @@ def parallel_caljob(MSetname,manager):
         os.environ["OMP_NUM_THREADS"]=GPARAMS.Compute_setting.Ncoresperthreads
         para_path=GPARAMS.Software_setting.Dftbparapath
     input_path='./'+GPARAMS.Compute_setting.Traininglevel+'/Consumer/'
-#    print ("==========================================")
-#    print (GPARAMS.Compute_setting.Gaussiankeywords)
-#    print ("==========================================")
     if not os.path.exists(input_path):
         os.system("mkdir -p "+input_path)
     TMPSet=MSet(MSetname)

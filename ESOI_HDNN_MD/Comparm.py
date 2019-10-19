@@ -137,13 +137,17 @@ class Train_setting:
         self.Ifwithhelp=False
         self.Trainstage=0
         self.Stagenum=1
-        #self.Maxepochpertrain=10
-        #self.Maxbatchnumpertrain=[6000,10000]
-        #self.Batchnumcontrol=[8000,20000]
         self.Modelnumperpoint=3
-        #self.Samplecontrol=[2000,8000]
         self.Esoistep=50000
         self.Maxsteps=10000
+        self.helpcpunodeip=''
+        self.helpgpunodeip=''
+        self.helpcpuaccount=''
+        self.helpgpuaccount=''
+        self.helpcpuport=''
+        self.helpgpuport=''
+        self.helpcpupath=''
+        self.helpgpupath=''
         return 
 
 class Neuralnetwork_setting:

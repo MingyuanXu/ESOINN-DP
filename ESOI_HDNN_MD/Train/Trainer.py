@@ -31,6 +31,7 @@ def trainer(DataQueue,GPUQueue=None):
     print("Delta struc:",deltastruc)
     changevector=[random.randint(-5,5) for i in range(3)]
     evostruc=[basestruc[i]+deltastruc[i]*changevector[i] for i in range(3)]
+
     print("evo struc:",evostruc)
     #try:
     TreatedAtoms=TMMSET.AtomTypes()
@@ -42,15 +43,17 @@ def trainer(DataQueue,GPUQueue=None):
     print (SUBNET.max_steps)
     #print("===========================================")
     #print("===========================================")
-    Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,structure=SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue)
-    #print("===========================================")
-    #print("===========================================")
-    strucstr=" ".join([str(i) for i in structure])
-    NNstrucfile=open(GPARAMS.Neuralnetwork_setting.NNstrucrecord,'a')
-    NNstrucfile.write("%d %d %f %f %d %f %s\n"\
+    try:
+        Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,structure=SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue)
+        #print("===========================================")
+        #print("===========================================")
+        strucstr=" ".join([str(i) for i in structure])
+        NNstrucfile=open(GPARAMS.Neuralnetwork_setting.NNstrucrecord,'a')
+        NNstrucfile.write("%d %d %f %f %d %f %s\n"\
                         %(Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,strucstr))
-    NNstrucfile.close()
-    #except:
+        NNstrucSaveAndClose()
+    except:
+        SUBNET.Save()
     #    print("Trainer Process %d GPUID %d is wrong!"%(ider,GPUid))
     GPUQueue.put(GPUid)
 def get_best_struc(candidate_num):

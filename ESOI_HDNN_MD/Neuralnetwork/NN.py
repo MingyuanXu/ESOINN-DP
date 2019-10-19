@@ -874,7 +874,7 @@ class BP_HDNN():
         self.print_training(step, test_loss, test_energy_loss, test_grads_loss, test_dipole_loss, num_of_mols, duration,0,False)
         return  test_energy_loss,test_grads_loss
 
-    def train(self, mxsteps, continue_training= False,chk_file='',AimE=0.001,AimF=0.001,AimD=0.05):
+    def train(self, mxsteps, continue_training= False,chk_file='',AimE=0.1,AimF=0.02,AimD=0.05):
         """
         This the training loop for the united model.
         """
@@ -903,7 +903,7 @@ class BP_HDNN():
                         mini_energy_test_loss = test_energy_loss
                         self.save_chk(step)
                 if Lossf<=AimF and Losse<=AimE:
-                    self.record.write("Training of %s stop due to achieve Force aim or beyond max training steps "%self.name)
+                    self.recorder.write("Training of %s stop due to achieve Force aim or beyond max training steps "%self.name)
                     ifcontinue=False 
                 #if len(recordlossf)>20:
                 #    self.recorder.write("Avg Lossf in last 5-10 steps: %f , Lossf in lass 1-5 steps: %f judge value: %f\n"\
