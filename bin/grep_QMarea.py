@@ -24,7 +24,6 @@ if __name__=="__main__":
         sys=Qmmm.QMMM_FragSystem(GPARAMS.System_setting[i].Systemparm,\
                                 GPARAMS.System_setting[i].Initstruc,\
                                 Strucdict)
-        print (sys.natom)
         natom=sys.natom
         crd=AmberMdcrd(GPARAMS.System_setting[i].Traj,natom,False)
         sys.Create_DisMap()

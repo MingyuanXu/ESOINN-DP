@@ -50,7 +50,7 @@ def esoinner():
     judgenum=math.ceil(sum(signal_num_list)*0.05)
     print ("signal_num_list:",signal_num_list,"judgenum",judgenum)
 
-    removecluster=[i for i in range(len(signal_num_list)) if not(signal_num_list[i] > judgenum and signal_num_list[i] >500)]
+    removecluster=[i for i in range(len(signal_num_list)) if not(signal_num_list[i] > judgenum)]
     print ("removeclusteid:",removecluster)
 
     GPARAMS.Esoinn_setting.Model.cut_cluster(removecluster)

@@ -31,7 +31,12 @@ def trainer(DataQueue,GPUQueue=None):
     print("Delta struc:",deltastruc)
     changevector=[random.randint(-5,5) for i in range(3)]
     evostruc=[basestruc[i]+deltastruc[i]*changevector[i] for i in range(3)]
-
+    #if ider==0:
+    #    evostruc=[144,338,144]
+    #if ider==1:
+    #    evostruc=[144,338,144]
+    #if ider==2:
+    #    evostruc=[112,208,270]
     print("evo struc:",evostruc)
     #try:
     TreatedAtoms=TMMSET.AtomTypes()
@@ -51,9 +56,9 @@ def trainer(DataQueue,GPUQueue=None):
         NNstrucfile=open(GPARAMS.Neuralnetwork_setting.NNstrucrecord,'a')
         NNstrucfile.write("%d %d %f %f %d %f %s\n"\
                         %(Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,strucstr))
-        NNstrucSaveAndClose()
+        #SUBNET.SaveAndClose()
     except:
-        SUBNET.Save()
+        SUBNET.SaveAndClose()
     #    print("Trainer Process %d GPUID %d is wrong!"%(ider,GPUid))
     GPUQueue.put(GPUid)
 def get_best_struc(candidate_num):

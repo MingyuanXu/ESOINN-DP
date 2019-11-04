@@ -21,7 +21,7 @@ def Cal_Gaussian_EFQ(NNSet,inpath,keywords,nproc=14,mem=600):
     for i in range(len(NNSet.mols)):
         NNSet.mols[i].Write_Gaussian_input(keywords,inpath,nproc,mem)
         NNSet.mols[i].Cal_Gaussian(inpath)
-        NNSet.mols[i].CalAtomization(GPARAMS.Compute_setting.Atomizationlevel)
+        NNSet.mols[i].CalculateAtomization(GPARAMS.Compute_setting.Atomizationlevel)
         E_avg=NNSet.mols[i].properties['atomization']*627.51
         F_avg=NNSet.mols[i].properties['force']*627.51
         D_avg=NNSet.mols[i].properties['dipole']

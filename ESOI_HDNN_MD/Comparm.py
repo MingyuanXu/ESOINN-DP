@@ -145,9 +145,14 @@ class Train_setting:
         self.helpcpuaccount=''
         self.helpgpuaccount=''
         self.helpcpuport=''
+        self.helpcpupasswd=''
         self.helpgpuport=''
+        self.helpgpupasswd=''
         self.helpcpupath=''
         self.helpgpupath=''
+        self.helpcpuenv=''
+        self.queuetype=''
+        self.framenumperjob=100
         return 
 
 class Neuralnetwork_setting:

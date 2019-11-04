@@ -34,10 +34,10 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
             for j in range(N_Times):
                 TMMSET=MSet('tmp')
                 TMMSET.mols=MSet_list[i].mols[j*GPARAMS.Neuralnetwork_setting.Batchsize:(j+1)*GPARAMS.Neuralnetwork_setting.Batchsize]
-                print ("NN Calculation at here!")
+                #print ("NN Calculation at here!")
                 Etotal,Ebp,Ebp_atom,Ecc,Evdw,mol_dipole,atom_charge,gradient=\
                     EvalSet(TMMSET,GPARAMS.Esoinn_setting.NNdict["NN"][i])
-                print ("NN Calculation at over!")
+                #print ("NN Calculation at over!")
                 E_tmp+=list(Etotal);F_tmp+=list(gradient);Dipole_tmp+=list(mol_dipole);Charge_tmp+=list(atom_charge)
             E.append(E_tmp)
             F.append(F_tmp)

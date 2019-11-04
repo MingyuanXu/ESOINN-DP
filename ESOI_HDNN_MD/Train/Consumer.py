@@ -1,6 +1,9 @@
 from ..Comparm import *
 import os
 from .Dataer import Check_MSet 
+import paramiko as pko 
+from .Jobqueue import pbsstr
+
 def consumer(Queue):
     import time
     from ..Base import Molnew
@@ -63,12 +66,13 @@ def calculator(para):
             flag=mol.Cal_DFTB(input_path)
             mol.CalculateAtomization(Atomizationlevel)
         else:
+            print ("HHHHHHHHHHHHHHH")
             mol.Write_Gaussian_input(keywords,input_path,ncores,600)
             flag=mol.Cal_Gaussian(input_path)
             mol.CalculateAtomization(Atomizationlevel)
     return (flag,mol)
 
-def parallel_caljob(MSetname,manager):
+def parallel_caljob(MSetname,manager,ctrlfile):
     para_path='./'
     if GPARAMS.Compute_setting.Traininglevel=="DFTB+":    
         os.environ["OMP_NUM_THREADS"]=GPARAMS.Compute_setting.Ncoresperthreads
@@ -79,22 +83,84 @@ def parallel_caljob(MSetname,manager):
     TMPSet=MSet(MSetname)
     TMPSet.Load()
     mols=TMPSet.mols
-    inpathlist=[input_path]*len(mols)
-    parapathlist=[para_path]*len(mols)
-    corenumperjob=[GPARAMS.Compute_setting.Ncoresperthreads]*len(mols)
-    keywordslist=[GPARAMS.Compute_setting.Gaussiankeywords]*len(mols)
-    Atomizationlist=[GPARAMS.Compute_setting.Atomizationlevel]*len(mols)
-    inputlist=list(zip(mols,inpathlist,parapathlist,keywordslist,corenumperjob,Atomizationlist))
-    paracal_pool=manager.Pool(GPARAMS.Compute_setting.Consumerprocessnum)
-    results=paracal_pool.map(calculator,inputlist)
-    paracal_pool.close()
-    paracal_pool.join()
-    mollist=[]
-    for i in range(len(results)):
-        if results[i][0]==True:
-            mollist.append(results[i][1])
-            mollist[-1].Cal_EGCM()
-    TMPSet.mols=mollist
-    TMPSet.Save()
+    print ('Nmols in Newaddedset:',len(mols))
+    if GPARAMS.Train_setting.Ifwithhelp==True:
+        nstage=math.ceil(len(mols)/GPARAMS.Train_setting.framenumperjob)
+        print (nstage)
+        submollist=[mols[i*GPARAMS.Train_setting.framenumperjob:(i+1)*GPARAMS.Train_setting.framenumperjob] for i in range(nstage)]
+        subMSetlist=[MSet(MSetname+'_part%d'%i) for i in range(nstage)]
+        subMSetresult=[False for i in range(nstage)]
+        for i in range(nstage):
+            subMSetlist[i].mols=submollist[i]
+            subMSetlist[i].Save()
+        trans=pko.Transport((GPARAMS.Train_setting.helpcpunodeip,GPARAMS.Train_setting.helpcpuport))
+        trans.connect(username=GPARAMS.Train_setting.helpcpuaccount,password=GPARAMS.Train_setting.helpcpupasswd)
+        ssh=pko.SSHClient()
+        ssh._transport=trans
+        sftp=pko.SFTPClient.from_transport(trans)
+        workpath=os.getcwd()
+        print (workpath)
+        for i in range(nstage):
+            subMSetlist[i].mols=submollist[i]
+            subMSetlist[i].Save()
+            remotepath=GPARAMS.Train_setting.helpcpupath+'/'+MSetname+'/part%d'%i
+            srcpath=workpath+'/datasets/%s.pdb'%(MSetname+'_part%d'%i)
+            print (" Put pdb file:")
+            print (remotepath,srcpath)
+            stdin,stdout,stderr=ssh.exec_command('mkdir -p %s/datasets'%remotepath)
+            print (stdout.read().decode)
+            sftp.put(srcpath,remotepath+'/datasets/%s.pdb'%(MSetname+'_part%d'%i))
+            if GPARAMS.Train_setting.queuetype=='PBS':
+                pbsrun=open('pbs.run','w')
+                pbsrun.write(pbsstr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
+                pbsrun.write(GPARAMS.Train_setting.helpcpuenv)
+                pbsrun.write("python -u Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
+                pbsrun.write("rm *.chk\n")
+                pbsrun.write("touch finished\n")
+                pbsrun.close()
+                sftp.put(localpath=workpath+'/pbs.run',remotepath=remotepath+'/pbs.run')
+                sftp.put(localpath=workpath+'/'+ctrlfile,remotepath=remotepath+'/'+ctrlfile)
+                #ssh.exec_command('cd %s && qsub pbs.run')
+        t=0
+        while False in subMSetresult:
+            time.sleep(300)
+            t+=300
+            for i in range(nstage):
+                remotepath=GPARAMS.Train_setting.helpcpupath+'/'+MSetname+'/part%d'%i
+                stdin,stdout,stderr=ssh.exec_command("cd %s && ls fininshed"%(remotepath))
+                if 'finished' in stdout.read().decode():
+                    subMSetresult[i]=True
+            print (t,subMSetresult)
+        finishmols=[]
+        subMSetlist=[MSet(MSetname+'_part%d'%i) for i in range(nstage)]
+        for i in range(nstage):
+            srcpath=workpath+'/datasets/%s.pdb'%(MSetname+'_part%d'%i)
+            remotepath=GPARAMS.Train_setting.helpcpupath+'/'+MSetname+'/part%d'%i
+            os.system('rm %s'%srcpath)
+            sftp.get(localpath=srcpath,remotepath=remotepath+'/'+MSetname+'_part%d.pdb'%i)
+            subMSetlist[i].Load()
+            finishmols+=subMSetlist[i].mols
+        for i in range(len(finishmols)):
+            finishmols[i].Cal_EGCM()
+        TMPSet.mols=finishmols
+        TMPSet.Save()
+    else:
+        inpathlist=[input_path]*len(mols)
+        parapathlist=[para_path]*len(mols)
+        corenumperjob=[GPARAMS.Compute_setting.Ncoresperthreads]*len(mols)
+        keywordslist=[GPARAMS.Compute_setting.Gaussiankeywords]*len(mols)
+        Atomizationlist=[GPARAMS.Compute_setting.Atomizationlevel]*len(mols)
+        inputlist=list(zip(mols,inpathlist,parapathlist,keywordslist,corenumperjob,Atomizationlist))
+        paracal_pool=manager.Pool(GPARAMS.Compute_setting.Consumerprocessnum)
+        results=paracal_pool.map(calculator,inputlist)
+        paracal_pool.close()
+        paracal_pool.join()
+        mollist=[]
+        for i in range(len(results)):
+            if results[i][0]==True:
+                mollist.append(results[i][1])
+                mollist[-1].Cal_EGCM()
+        TMPSet.mols=mollist
+        TMPSet.Save()
     return 
 
