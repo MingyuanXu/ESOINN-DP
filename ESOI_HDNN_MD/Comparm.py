@@ -151,7 +151,11 @@ class Train_setting:
         self.helpcpupath=''
         self.helpgpupath=''
         self.helpcpuenv=''
-        self.queuetype=''
+        self.helpgpuenv=''
+        self.cpuqueuetype=''
+        self.gpuqueuetype=''
+        self.cpuqueuename=''
+        self.gpuqueuename=''
         self.framenumperjob=100
         return 
 

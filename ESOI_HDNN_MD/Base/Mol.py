@@ -35,7 +35,7 @@ class Molnew:
         file.write('\n')
         file.write('%d %d\n'%(self.totalcharge,self.spin))
         for i in range(len(self.atoms)):
-            file.write('%s %.3f %.3f %.3f\n'%(element_dict[self.atoms[i]],self.coords[i][0],self.coords[i][1],self.coords[i][2]))
+            file.write('%s %.3f %.3f %.3f\n'%(Element_Table[self.atoms[i]],self.coords[i][0],self.coords[i][1],self.coords[i][2]))
         file.write('\n')
         file.close()
         return 

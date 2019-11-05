@@ -2,7 +2,7 @@ from ..Comparm import *
 import os
 from .Dataer import Check_MSet 
 import paramiko as pko 
-from .Jobqueue import pbscpustr 
+from .Jobqueue import pbsstr
 
 def consumer(Queue):
     import time
@@ -108,29 +108,27 @@ def parallel_caljob(MSetname,manager,ctrlfile):
             print (" Put pdb file:")
             print (remotepath,srcpath)
             stdin,stdout,stderr=ssh.exec_command('mkdir -p %s/datasets'%remotepath)
-            print (stdout.read().decode())
+            print (stdout.read().decode)
             sftp.put(srcpath,remotepath+'/datasets/%s.pdb'%(MSetname+'_part%d'%i))
-            if GPARAMS.Train_setting.cpuqueuetype=='PBS':
+            if GPARAMS.Train_setting.queuetype=='PBS':
                 pbsrun=open('pbs.run','w')
-                pbsrun.write(pbscpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
+                pbsrun.write(pbsstr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
                 pbsrun.write(GPARAMS.Train_setting.helpcpuenv)
-                pbsrun.write("Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
+                pbsrun.write("python -u Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
                 pbsrun.write("rm *.chk\n")
                 pbsrun.write("touch finished\n")
                 pbsrun.close()
                 sftp.put(localpath=workpath+'/pbs.run',remotepath=remotepath+'/pbs.run')
                 sftp.put(localpath=workpath+'/'+ctrlfile,remotepath=remotepath+'/'+ctrlfile)
-                ssh.exec_command('cd %s && qsub pbs.run'%remotepath)
+                #ssh.exec_command('cd %s && qsub pbs.run')
         t=0
         while False in subMSetresult:
-            time.sleep(30)
-            t+=30
+            time.sleep(300)
+            t+=300
             for i in range(nstage):
                 remotepath=GPARAMS.Train_setting.helpcpupath+'/'+MSetname+'/part%d'%i
-                stdin,stdout,stderr=ssh.exec_command("cd %s && ls "%(remotepath))
-                tmpstr=stdout.read().decode()
-                print ('finished' in tmpstr)
-                if 'finished' in tmpstr:
+                stdin,stdout,stderr=ssh.exec_command("cd %s && ls fininshed"%(remotepath))
+                if 'finished' in stdout.read().decode():
                     subMSetresult[i]=True
             print (t,subMSetresult)
         finishmols=[]
@@ -139,7 +137,7 @@ def parallel_caljob(MSetname,manager,ctrlfile):
             srcpath=workpath+'/datasets/%s.pdb'%(MSetname+'_part%d'%i)
             remotepath=GPARAMS.Train_setting.helpcpupath+'/'+MSetname+'/part%d'%i
             os.system('rm %s'%srcpath)
-            sftp.get(localpath=srcpath,remotepath=remotepath+'/datasets/'+MSetname+'_part%d.pdb'%i)
+            sftp.get(localpath=srcpath,remotepath=remotepath+'/'+MSetname+'_part%d.pdb'%i)
             subMSetlist[i].Load()
             finishmols+=subMSetlist[i].mols
         for i in range(len(finishmols)):

@@ -31,7 +31,6 @@ class BumpHolder(ForceHolder):
             init=tf.global_variables_initializer()
         self.Bumpsess=tf.Session(graph=self.Bumpgraph,config=tf.ConfigProto(allow_soft_placement=True))
         #self.sess.run(self.dis,{self.xyzs_pl:})
-            
 
 class Meta_Simulation():
     def __init__(self,sys,MD_name,MDctrl,CVs):
@@ -157,7 +156,6 @@ class Meta_Simulation():
             AVG_ERR=np.mean(np.array(ERROR_record[-1:-50]))
             if AVG_ERR>200:
                 MD_Flag=False
-
             if MD_Flag==True:
                 self.Outfile.write("%s Step: %i time: %.1f(fs) KE(kJ): %.5f PotE(Eh): %.5f ETot(kJ/mol): %.5f Teff(K): %.5f MAX ERROR: %.3f Method: %s\n" %(self.name, step, self.t, self.KE*len(self.m)/1000.0, self.EPot, self.KE*len(self.m)/1000.0+(self.EPot)*KJPERHARTREE, Teff,ERROR,self.sys.stepmethod))
                 self.Outfile.flush()
