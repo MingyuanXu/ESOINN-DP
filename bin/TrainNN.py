@@ -4,9 +4,12 @@ from TensorMol import  *
 from ESOI_HDNN_MD import *
 from ESOI_HDNN_MD import UpdateGPARAMS,GPARAMS 
 from ESOI_HDNN_MD.Train import calculator 
+from ESOI_HDNN_MD.Base import Find_useable_gpu 
+from ESOI_HDNN_MD.Neuralnetwork import *
 import os
 import math
 import argparse as arg
+
 parser=arg.ArgumentParser(description="Training Neural Network Potentials for MSet")
 parser.add_argument('-i',"--ctrlfile")
 parser.add_argument('-d',"--dataset")
@@ -19,9 +22,12 @@ evostruc=[int(i) for i in args.struc.split('_')]
 print (evostruc)
 TMPset=MSet(args.dataset)
 TMPset.Load()
+if len(TMPset.mols)< GPARAMS.Neuralnetwork_setting.Batchsize*20 :
+    num=math.ceil(GPARAMS.Neuralnetwork_setting.Batchsize*20/len(TMPset.mols))
+    TMPset.mols=TMPset.mols*num
 TreatedAtoms=TMPset.AtomTypes()
 d=MolDigester(TreatedAtoms,name_="ANI1_Sym_Direct",OType_="EnergyAndDipole")
-tset=TData_BP_Direct_EE_WithEle(TMMSET,d,order_=1,num_indis_=1,type_="mol",WithGrad_=True,MaxNAtoms=100)
+tset=TData_BP_Direct_EE_WithEle(TMPset,d,order_=1,num_indis_=1,type_="mol",WithGrad_=True,MaxNAtoms=100)
 NN_name=None 
 ifcontinue=False
 SUBNET=BP_HDNN(tset,NN_name,Structure=evostruc)

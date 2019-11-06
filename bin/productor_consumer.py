@@ -11,7 +11,6 @@ from multiprocessing import Queue,Process,Manager,Pool
 import time
 #import sys
 #sys.path.append("./Oldmodule")
-
 parser=arg.ArgumentParser(description='Grep qm area from an Amber MDcrd trajory to make training dataset!')
 parser.add_argument('-i','--input')
 
@@ -36,7 +35,6 @@ if __name__=="__main__":
         GPUQueue.put(i)
     for stage in range(GPARAMS.Train_setting.Trainstage,\
                        GPARAMS.Train_setting.Stagenum+GPARAMS.Train_setting.Trainstage):
-        
         LoadModel()
         #productor(0,GPUQueue=GPUQueue)
         ProductPool=Pool(len(GPARAMS.Compute_setting.Gpulist))
@@ -48,7 +46,6 @@ if __name__=="__main__":
         for i in range(len(GPARAMS.System_setting)):
             tmp=Resultlist[i].get()
             print (tmp)
-        
         Consumer_Process=Process(target=consumer,args=(QMQueue,))
         Consumer_Process.start()
         Esoinner_Process=Process(target=esoinner,args=(EsoinnQueue,))

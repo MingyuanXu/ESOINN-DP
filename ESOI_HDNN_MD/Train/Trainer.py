@@ -18,24 +18,20 @@ def trainer(DataQueue,GPUQueue=None,jsonfile=''):
     if len(TMMSET.mols)< GPARAMS.Neuralnetwork_setting.Batchsize*20 :
         num=math.ceil(GPARAMS.Neuralnetwork_setting.Batchsize*20/len(TMMSET.mols))
         TMMSET.mols=TMMSET.mols*num
-
     if GPARAMS.Train_setting.Ifwithhelp==False:
         print ("Visible CPU ID: %s training Cluster %d subnet"\
            %(os.environ["CUDA_VISIBLE_DEVICES"],ider))
-
     if len(GPARAMS.Neuralnetwork_setting.NNstrucselect)!=0:
         candidate_struc=get_best_struc(2)
         print ("Candidate_NNSTRUC:",candidate_struc) 
         basestruc=[math.ceil(i) for i in np.mean(candidate_struc,axis=0)] 
     else:
         basestruc=GPARAMS.Neuralnetwork_setting.Initstruc 
-
     deltastruc=[math.ceil(i*0.10) for i in basestruc]
     print("Delta struc:",deltastruc)
     changevector=[random.randint(-5,5) for i in range(3)]
     evostruc=[basestruc[i]+deltastruc[i]*changevector[i] for i in range(3)]
     print("evo struc:",evostruc)
-
     #try:
     if GPARAMS.Train_setting.Ifwithhelp==False:
         print ("xxxxxxxxxxxxxxxxxxxiiiiiiiiiiiiiixxxxxxxxxxxxxxxxx")
@@ -75,19 +71,20 @@ def trainer(DataQueue,GPUQueue=None,jsonfile=''):
             lsfrun=open('lsf_gpu.run','w')
             lsfrun.write(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Cluster%d'%ider))
             lsfrun.write(GPARAMS.Train_setting.helpgpuenv)
-            lsfrun.write('TrainNN.py -i %s\n'%jsonfile)
+            strucstr="_".join([str(i) for i in evostruc])
+            lsfrun.write('TrainNN.py -i %s -d %s -s %s\n'%(jsonfile,MSetname,strucstr))
             lsfrun.write('touch finished\n')
             lsfrun.close()
             sftp.put(localpath=workpath+'/lsf_gpu.run',remotepath=remotepath+'/lsf_gpu.run')
             sftp.put(localpath=workpath+'/%s'%jsonfile,remotepath=remotepath+'/%s'%jsonfile)
-            #stdin,stdout,stderr=ssh.exec_command("cd %s&& bsub <lsf_gpu.run"%remotepath)
+            #stdin,stdout,stderr=ssh.exec_command("cd %s && bsub <lsf_gpu.run"%remotepath)
             """
             flag=True 
             while flag:
                 stdin,stdout,stderr=ssh.exec_command("cd %s&& ls"%remotepath)
                 tmpstr=stdout.read().decode()
                 flag=('finished' in tmpstr)
-            ssh.exec_command("cd %s && mv *.record networks")
+            ssh.exec_command("cd %s && mv %s/*.record networks"%(remotepath,GPARAMS.Compute_setting.Traininglevel))
             ssh.exec_command("cd %s && tar zcvf Cluster%d.tar.gz networks/*")
             sftp.get(localpath=workpath+'/networks/Cluster%d.tar.gz'%ider,\
                     remotepath=remotepath+'/networks/Cluster%d.tar.gz'%ider)
