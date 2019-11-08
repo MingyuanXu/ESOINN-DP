@@ -370,8 +370,13 @@ class QMMM_FragSystem:
         QMSet.mols.append(QMMol)
         QMSet.mols[-1].name="Stage_%d_MDStep_%d_%d"%(GPARAMS.Train_setting.Trainstage,self.step,len(QMSet.mols))
         if self.Theroylevel=='NN':
-            NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
+            try:
+                NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
                     Cal_NN_EFQ(QMSet,inpath=self.Inpath)
+            except:
+                NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
+                    Cal_Gaussian_EFQ(QMSet,self.Inpath,GPARAMS.Compute_setting.Gaussiankeywords,GPARAMS.Compute_setting.Ncoresperthreads)
+
             
         if self.Theroylevel=='DFTB3':
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
@@ -379,9 +384,10 @@ class QMMM_FragSystem:
                                  GPARAMS.Software_setting.Dftbparapath,\
                                  inpath=self.Inpath)
 
-        if self.Theroylevel=="Semiqm":
+        if self.Theroylevel=="Semiqm" or self.Theroylevel=="DFT":
             NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
                     Cal_Gaussian_EFQ(QMSet,self.Inpath,GPARAMS.Compute_setting.Gaussiankeywords,GPARAMS.Compute_setting.Ncoresperthreads)
+
         if self.stepmethod=="NN":
             if len(ERROR_mols)>0 and self.step-self.record_err_step>5:
                 self.record_err_step=self.step    
