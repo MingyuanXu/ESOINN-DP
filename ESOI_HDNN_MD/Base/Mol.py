@@ -272,7 +272,9 @@ class Molnew:
             else:
                 lines = lines+(atom_name+"   "+str(self.coords[i][0])+ "  "+str(self.coords[i][1])+ "  "+str(self.coords[i][2]))
         return lines
-    
+    def transstr(self):
+        str=self.__str__()
+        return str 
     def __repr__(self):
         return self.__str__()
          
