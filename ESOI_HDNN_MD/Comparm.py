@@ -233,14 +233,16 @@ class Neuralnetwork_setting:
         if self.NNstrucrecord!="" and os.path.exists(self.NNstrucrecord):
             file=open(self.NNstrucrecord,'r')
             for eachline in file:
-                var=eachline.strip().split()
-                if len(var)!=0:
-                    print (var)
-                    ncase=int(var[0])
-                    batchnum=[int(var[1]),int(var[4])]
-                    loss=[float(var[2]),float(var[3]),float(var[5])]
-                    struc=[int(i) for i in var[-3:]]
-                    self.NNstrucselect.append([ncase,batchnum,loss,struc])
+                if "Data" not in eachline:
+                    var=eachline.strip().split(',')
+                    if len(var)!=0:
+                        print (var)
+                        ncase=int(var[0])
+                        batchnum=[int(var[1]),int(var[4])]
+                        loss=[float(var[2]),float(var[3]),float(var[5])]
+                        struc=[int(i) for i in var[-3].split()]
+			paranum=(self.AN1_num_a_As+self.AN1_num_a_Rs+self.AN1_num_r_Rs)*struc[0]+struc[0]*struc[1]+struc[1]*struc[2]+struc[2]*1
+                        self.NNstrucselect.append([ncase,batchnum,loss,struc,paranum])
             print(self.NNstrucselect)
         return 
 

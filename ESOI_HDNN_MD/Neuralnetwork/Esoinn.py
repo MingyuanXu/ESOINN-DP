@@ -172,6 +172,19 @@ class Esoinn(BaseEstimator, ClusterMixin):
                     signal_mask.append('Edge')
         return noise_signal,noise_signal_index,signal_node_label,signal_cluster_label,signal_mask
 
+    def select_represent_struc(self,signallist):
+        #self.represent_dataset=tmpset.name
+        self.represent_strucid=np.zeros(len(self.nodes),dtype=int)
+        #signallist=[mol.EGCM for mol in tmpset.mols]
+        for  i in range(len(self.nodes)):
+            n=len(signallist)
+            D=np.sum((np.array([list(self.nodes[i])]*n)-np.array(signallist))**2,1)
+            #print (D)
+            index=np.nanargmin(D)
+            self.represent_strucid[i]=index
+        print(self.represent_strucid)
+        return self.represent_strucid 
+        
     def cal_cluster_center(self):
         class_center=[[] for m in range(self.class_id)]
         class_nodelist=[[] for i in range(self.class_id)]
@@ -201,7 +214,6 @@ class Esoinn(BaseEstimator, ClusterMixin):
         return self.class_edge 
 
     def input_signal(self, signal: np.ndarray):
-
         """
         Input a new signal one by one, which means training in online manner.
         fit() calls __init__() before training, which means resetting the
