@@ -55,7 +55,9 @@ class Molnew:
             if 'Charge' in line and 'Multiplicity' in line:
                 var=line.split()
                 totalcharge=int(var[2]);spin=int(var[-1])
-            if 'Coordinates (Angstroms)' in line:
+            if 'Input orientation:' in line:
+                line=file.readline()
+                line=file.readline()
                 line=file.readline()
                 line=file.readline()
                 line=file.readline()
