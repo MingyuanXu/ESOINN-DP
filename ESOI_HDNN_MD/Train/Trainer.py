@@ -23,7 +23,7 @@ def trainer(DataQueue,GPUQueue=None,jsonfile=''):
     if GPARAMS.Train_setting.Ifgpuwithhelp==False:
         print ("Visible CPU ID: %s training Cluster %d subnet"\
            %(os.environ["CUDA_VISIBLE_DEVICES"],ider))
-    if len(GPARAMS.Neuralnetwork_setting.NNstrucsele11yyct)!=0:
+    if len(GPARAMS.Neuralnetwork_setting.NNstrucselect)!=0:
         candidate_struc=get_best_struc(2)
         print ("Candidate_NNSTRUC:",candidate_struc) 
         basestruc=[math.ceil(i) for i in np.mean(candidate_struc,axis=0)] 

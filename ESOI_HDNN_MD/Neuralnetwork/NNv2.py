@@ -434,8 +434,7 @@ class BP_HDNNv2():
             self.total_loss, self.loss, self.energy_loss, self.grads_loss, self.dipole_loss = self.loss_op(self.Etotal, self.gradient, self.dipole, self.Elabel_pl, self.grads_pl, self.Dlabel_pl, self.natom_pl)
             self.total_loss_dipole, self.loss_dipole, self.energy_loss_dipole, self.grads_loss_dipole, self.dipole_loss_dipole\
                 = self.loss_op_dipole(self.Etotal, self.gradient, self.dipole, self.Elabel_pl, self.grads_pl, self.Dlabel_pl, self.natom_pl)
-            self.total_loss_EandG, self.loss_EandG, self.energy_loss_EandG, self.grads_loss_EandG, self.dipole_loss_EandG\ 
-                = self.loss_op_EandG (self.Etotal, self.gradient, self.dipole, self.Elabel_pl, self.grads_pl, self.Dlabel_pl,self.natom_pl)
+            self.total_loss_EandG, self.loss_EandG, self.energy_loss_EandG, self.grads_loss_EandG, self.dipole_loss_EandG = self.loss_op_EandG (self.Etotal, self.gradient, self.dipole, self.Elabel_pl, self.grads_pl, self.Dlabel_pl,self.natom_pl)
             self.total_loss_charge, self.loss_charge,self.dipole_loss_charge,self.charge_loss_charge\
                 = self.loss_op_dipole(self.gradient, self.charge, self.Qlabel_pl, self.natom_pl)
             tf.summary.scalar("loss", self.loss)
@@ -644,7 +643,7 @@ class BP_HDNNv2():
         #dipole_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="DipoleNet")
         return  cc_energy, dipole, scaled_charge, dipole_wb
 
-    def charge_inference(self, inp, indexs, xyzs, natom, masks, total_c, Elu_Width, EE_cutoff, Reep, AddEcc, keep_prob,b    atch_size_ctrl):
+    def charge_inference(self, inp, indexs, xyzs, natom, masks, total_c, Elu_Width, EE_cutoff, Reep, AddEcc, keep_prob,batch_size_ctrl):
         xyzsInBohr = tf.multiply(xyzs,BOHRPERA)
         Dbranches=[]
         atom_outputs_charge = []
@@ -1062,7 +1061,7 @@ class BP_HDNNv2():
                         self.saver.restore(self.sess, self.chk_file)
                         self.Training_Target = "EandG"
                         self.recorder.write("Switching to Energy and Gradient Learning...\n")
-             elif self.Training_Target == "Charge":
+            elif self.Training_Target == "Charge":
                 Lossq=self.train_step_charge(step)
                 recordlossq.append(Lossq)
                 if step%test_freq==0 and step!=0 :
