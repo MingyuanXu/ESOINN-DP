@@ -8,8 +8,8 @@ import os
 import pickle
 from TensorMol import * # it will be remove soon
 
-Element_Table={30:'Zn',6:'C',8:'O',1:'H',7:'N',15:'P',16:'S',12:'Mg',20:'Ca',80:'Hg',29:'Cu'}
-Table_Element={'ZN':30,'Zn':30,'C':6,'O':8,'H':1,'N':7,'P':15,'S':16,'Mg':12,'Ca':20,'Hg':80,'Cu':29}
+Element_Table={30:'Zn',6:'C',8:'O',1:'H',7:'N',15:'P',16:'S',12:'Mg',20:'Ca',80:'Hg',29:'Cu',9:'F'}
+Table_Element={'ZN':30,'Zn':30,'C':6,'O':8,'H':1,'N':7,'P':15,'S':16,'Mg':12,'Ca':20,'Hg':80,'Cu':29,'F':9}
 Lettertable={1:'A',2:'B',3:'C',4:'D',5:'E',6:'F',7:'G',8:'H',9:'I',10:'J',11:'K'}
 
 class Esoinn_setting:
@@ -134,7 +134,8 @@ class Dataset_setting:
 
 class Train_setting:
     def __init__(self):
-        self.Ifwithhelp=False
+        self.Ifcpuwithhelp=False
+        self.Ifgpuwithhelp=False
         self.Trainstage=0
         self.Stagenum=1
         self.Modelnumperpoint=3
@@ -235,13 +236,14 @@ class Neuralnetwork_setting:
             for eachline in file:
                 if "Data" not in eachline:
                     var=eachline.strip().split(',')
+                    print (var)
                     if len(var)!=0:
-                        print (var)
                         ncase=int(var[0])
                         batchnum=[int(var[1]),int(var[4])]
                         loss=[float(var[2]),float(var[3]),float(var[5])]
-                        struc=[int(i) for i in var[-3].split()]
-			paranum=(self.AN1_num_a_As+self.AN1_num_a_Rs+self.AN1_num_r_Rs)*struc[0]+struc[0]*struc[1]+struc[1]*struc[2]+struc[2]*1
+                        struc=[int(i) for i in var[-2].split()]
+                        print (struc)
+                        paranum=(self.AN1_num_a_As+self.AN1_num_a_Rs+self.AN1_num_r_Rs)*struc[0]+struc[0]*struc[1]+struc[1]*struc[2]+struc[2]*1
                         self.NNstrucselect.append([ncase,batchnum,loss,struc,paranum])
             print(self.NNstrucselect)
         return 

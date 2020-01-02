@@ -31,9 +31,9 @@ tset=TData_BP_Direct_EE_Withcharge(TMPset,d,order_=1,num_indis_=1,type_="mol",Wi
 NN_name=None 
 ifcontinue=False
 SUBNET=BP_HDNN_charge(tset,NN_name,Structure=evostruc)
-Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,structure=SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue)
+Ncase,batchnumf,Lossf,Losse,batchnumd,Lossq,structure=SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue)
 strucstr=" ".join([str(i) for i in structure])
 NNstrucfile=open(GPARAMS.Neuralnetwork_setting.NNstrucrecord,'w')
 NNstrucfile.write("%d, %d, %f, %f, %d, %f, %s,\n"\
-            %(Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,strucstr))
+            %(Ncase,batchnumf,Lossf,Losse,batchnumd,Lossq,strucstr))
 

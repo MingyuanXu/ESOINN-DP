@@ -69,22 +69,6 @@ if __name__=="__main__":
             print ("Create HDNN subnet for class %d"%i)
             result=TrainerPool.apply_async(trainer,(DataQueue,GPUQueue,jsonfile))
             Resultlist.append(result)
-        def respnet_train(MSetname,GPUQueue):
-            GPUID=GPUQueue.get()
-            os.environ["CUDA_VISIBLE_DEVICES"]=GPUID 
-            RespMset=MSet("HF_resp")
-            RespMset.Load()
-            if len(RespMset.mols)<GPARAMS.Neuralnetwork_setting.Batchsize*20:
-                num=math.ceil(GPARAMS.Neuralnetwork_setting.Batchsize*20/len(TMPset.mols))
-                TMPset.mols=TMPset.mols*num
-            TreatedAtoms=TMPset.AtomTypes()
-            d=MolDigester(TreatedAtoms,name_="ANI1_Sym_Direct", OType_="EnergyAndDipole")
-            tset=TData_BP_Direct_EE_Withcharge(TMPset,d,order_=1,num_inids_=1,type="mol",WithGrad_=True,MaxNAtoms=100)
-            NN_name=None
-            ifcontinue=False
-            SUBNet=BP_HDNN_charge(tset,NN_name,Structure=[200,200,200])
-            SUBNET.train(SUBNET.maxsteps,continue_training=ifcontinue)
-            return 
         result=TrainerPool.apply_async(respnet_train,("HF_resp",))
         Resultlist.append(result)
         TrainerPool.close()

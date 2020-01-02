@@ -92,6 +92,6 @@ def dataer(Dataqueue):
     for i in range(ClusNum):
         Dataqueue.put((SubTrainList[i],i,GPARAMS.Train_setting.Maxsteps))
         print ('%dth cluster is put in queue, mol num: %d!'%(i,len(SubTrainList[i].mols)))
-    for j in range(len(GPARAMS.Compute_setting.Gpulist)):
-        Dataqueue.put((None,j,0))
+#    for j in range(len(GPARAMS.Compute_setting.Gpulist)):
+#        Dataqueue.put((None,j,0))
      

@@ -2,6 +2,7 @@ from   .Neuralnetwork import *
 from   .Comparm import GPARAMS 
 import pickle
 import random 
+
 def UpdateGPARAMS(jsonfile,Onlymodel=False):
     with open(jsonfile,'r') as f:
         jsondict=json.load(f)
@@ -76,7 +77,6 @@ def Get_neuralnetwork_instance(Class_num):
         SUBNET=BP_HDNN(None,GPARAMS.Esoinn_setting.efdnetname+'%d_ANI1_Sym_Direct_RawBP_EE_Charge_DipoleEncode_Update_vdw_DSF_elu_Normalize_Dropout_0'%i,False)
         subnet_list.append(SUBNET)
     print ("Loaded %d subnet in Neural Layer!"%(len(subnet_list)))
-        #SUBNET.SaveAndClose()
     return subnet_list
 
 def Get_resp_instance(Name):
@@ -86,11 +86,16 @@ def Get_resp_instance(Name):
 
 def Added_MSet(filename):
     TotalMSet=MSet(GPARAMS.Compute_setting.Traininglevel)
+    RespMSet=MSet('HF_RESP')
     if os.path.exists('./datasets/'+GPARAMS.Compute_setting.Traininglevel+'.pdb'):
         TotalMSet.Load()
     NewaddedSet=MSet(filename)
     NewaddedSet.Load()
+    if os.path.exists('./datasets/HF_RESP.pdb'):
+        RespMSet.Load()
+    Resp.MSet.mols+=NewaddedSet.mols
     TotalMSet.mols+=NewaddedSet.mols
     TotalMSet.Save()
+    Resp.MSet.Save()
     return
 

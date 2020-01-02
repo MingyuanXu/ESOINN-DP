@@ -14,6 +14,7 @@ parser=arg.ArgumentParser(description="Training Neural Network Potentials for MS
 parser.add_argument('-i',"--ctrlfile")
 parser.add_argument('-d',"--dataset")
 parser.add_argument('-s',"--struc")
+parser.add_argument('-t',"--type")
 args=parser.parse_args()
 GPUID=Find_useable_gpu([0,1,2,3,4,5,6,7,8])
 os.environ["CUDA_VISIBLE_DEVICES"]=str(GPUID)
@@ -27,13 +28,23 @@ if len(TMPset.mols)< GPARAMS.Neuralnetwork_setting.Batchsize*20 :
     TMPset.mols=TMPset.mols*num
 TreatedAtoms=TMPset.AtomTypes()
 d=MolDigester(TreatedAtoms,name_="ANI1_Sym_Direct",OType_="EnergyAndDipole")
-tset=TData_BP_Direct_EE_WithEle(TMPset,d,order_=1,num_indis_=1,type_="mol",WithGrad_=True,MaxNAtoms=100)
+if args.type=="bpresp":
+
+    tset=TData_BP_Direct_EE_WithCharge(TMPset,d,order_=1,num_indis_=1,type_="mol",WithGrad_=True,MaxNAtoms=100)
+else:
+    tset=TData_BP_Direct_EE_WithEle(TMPset,d,order_=1,num_indis_=1,type_="mol",WithGrad_=True,MaxNAtoms=100)
 NN_name=None 
 ifcontinue=False
-SUBNET=BP_HDNN(tset,NN_name,Structure=evostruc)
+if args.type=="bpresp":
+    SUBNET=BP_HDNN_charge(tset,NN_name,Structure=evostruc)
+
+else:
+    SUBNET=BP_HDNN(tset,NN_name,Structure=evostruc)
 Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,structure=SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue)
-strucstr=" ".join([str(i) for i in structure])
-NNstrucfile=open(GPARAMS.Neuralnetwork_setting.NNstrucrecord,'w')
-NNstrucfile.write("%d, %d, %f, %f, %d, %f, %s,\n"\
+
+if args.type!="bpresp":
+    strucstr=" ".join([str(i) for i in structure])
+    NNstrucfile=open(GPARAMS.Neuralnetwork_setting.NNstrucrecord,'w')
+    NNstrucfile.write("%d, %d, %f, %f, %d, %f, %s,\n"\
             %(Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,strucstr))
 

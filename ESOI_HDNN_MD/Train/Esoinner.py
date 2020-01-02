@@ -47,7 +47,7 @@ def esoinner():
     for i in range(len(Dataset)):
         signal_cluster[cluster_label[i][0]].append(Dataset[i])
     signal_num_list=[len(i) for i in signal_cluster]
-    judgenum=math.ceil(sum(signal_num_list)*0.05)
+    judgenum=math.ceil(sum(signal_num_list)*0.02)
     print ("signal_num_list:",signal_num_list,"judgenum",judgenum)
 
     removecluster=[i for i in range(len(signal_num_list)) if not(signal_num_list[i] > judgenum)]
