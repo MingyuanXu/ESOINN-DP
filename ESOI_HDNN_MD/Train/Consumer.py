@@ -59,7 +59,9 @@ def calculator(para):
     ncores=para[4]
     Atomizationlevel=para[5]
     #print (mol,input_path,para_path)
+
     flag=True
+
     if 'energy' not in mol.properties.keys():
         if GPARAMS.Compute_setting.Traininglevel=="DFTB3":
             mol.Write_DFTB_input(para_path,False,input_path)
@@ -84,7 +86,7 @@ def parallel_caljob(MSetname,manager,ctrlfile):
     TMPSet.Load()
     mols=TMPSet.mols
     print ('Nmols in Newaddedset:',len(mols))
-    if GPARAMS.Train_setting.Ifwithhelp==True:
+    if GPARAMS.Train_setting.Ifcpuwithhelp==True:
         nstage=math.ceil(len(mols)/GPARAMS.Train_setting.framenumperjob)
         print (nstage)
         submollist=[mols[i*GPARAMS.Train_setting.framenumperjob:(i+1)*GPARAMS.Train_setting.framenumperjob] for i in range(nstage)]

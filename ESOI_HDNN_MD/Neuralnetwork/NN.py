@@ -88,7 +88,6 @@ class BP_HDNN():
         self.TData = TData_
         self.element=0
         self.name = self.TData.name+"_"+self.TData.dig.name+"_"+self.NetType+"_"+str(self.element)
-        #print ("./"+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+".record")
         self.recorder=open('./'+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+'.record','a')
         self.train_dir = GPARAMS.Neuralnetwork_setting.Networkprefix+self.name
         self.PreparedFor=0
@@ -148,7 +147,6 @@ class BP_HDNN():
         self.GradScalar = GPARAMS.Neuralnetwork_setting.Scalar["F"]
         self.EnergyScalar = GPARAMS.Neuralnetwork_setting.Scalar["E"]
         self.DipoleScalar = GPARAMS.Neuralnetwork_setting.Scalar["D"]
-        #self.HiddenLayers = GPARAMS.Neuralnetwork_setting.Structure
         if Structure==None:
             self.HiddenLayers = GPARAMS.Neuralnetwork_setting.Initstruc
         else:
@@ -358,6 +356,73 @@ class BP_HDNN():
         self.run_metadata = None
         self.batch_size_ctrl=None 
 
+    def train(self, mxsteps, continue_training= False,chk_file='',AimE=0.05,AimF=0.005,AimD=0.02):
+        """
+        This the training loop for the united model.
+        """
+        maxsteps=mxsteps 
+        LOGGER.info("running the TFMolInstance.train()")
+        if self.need_Newtrain==True:
+            continue_training=False
+            chk_file=''
+        self.TrainPrepare(continue_training,chk_file)
+        test_freq = GPARAMS.Neuralnetwork_setting.Testfreq
+        mini_dipole_test_loss = float('inf') # some big numbers
+        mini_energy_test_loss = float('inf')
+        mini_test_loss = float('inf')
+#        for step in  range (0, mxsteps):
+        ifcontinue=True;step=0 
+        recordlossf=[];recordlossd=[]
+        while ifcontinue :
+            if self.Training_Target == "EandG":
+                Losse,Lossf=self.train_step_EandG(step)
+                recordlossf.append(Lossf)
+                if step%test_freq==0 and step!=0 :
+                    if self.monitor_mset != None:
+                        self.InTrainEval(self.monitor_mset, self.Rr_cut, self.Ra_cut, self.Ree_off, step=step)
+                    test_energy_loss,test_grads_loss = self.test_EandG(step)
+                    if test_energy_loss < mini_energy_test_loss:
+                        mini_energy_test_loss = test_energy_loss
+                        self.save_chk(step)
+                if Lossf<=AimF and Losse<=AimE:
+                    self.recorder.write("Training of %s stop due to achieve Force aim or beyond max training steps "%self.name)
+                    ifcontinue=False 
+                #if len(recordlossf)>20:
+                #    self.recorder.write("Avg Lossf in last 5-10 steps: %f , Lossf in lass 1-5 steps: %f judge value: %f\n"\
+                #                             %(np.mean(recordlossf[-10:-5]),np.mean(recordlossf[-5:-1]),(recordlossf[-1]-AimF)/50))
+                #    if np.mean(recordlossf[-20:-10])-np.mean(recordlossf[-10:-1])<(recordlossf[-1]-AimF)/50:
+                #        self.recorder.write("Training of %s stop due to convegency of Loss\n"%self.name)
+                #        self.recorder.write("Avg Lossf in last 5-10 steps: %f , Lossf in lass 1-5 steps: %f judge value: %f\n"\
+                #                             %(np.mean(recordlossf[-10:-5]),np.mean(recordlossf[-5:-1]),(recordlossf[-1]-AimF)/50))
+                #        ifcontinue=False 
+                if step > maxsteps:
+                    ifcontinue=False
+            elif self.Training_Target == "Dipole":
+                Lossd=self.train_step_dipole(step)
+                recordlossd.append(Lossd)
+                if step%test_freq==0 and step!=0 :
+                    if self.monitor_mset != None:
+                        self.InTrainEval(self.monitor_mset, self.Rr_cut, self.Ra_cut, self.Ree_off, step=step)
+                    test_dipole_loss = self.test_dipole(step)
+                    if test_dipole_loss < mini_dipole_test_loss:
+                        mini_dipole_test_loss = test_dipole_loss
+                        self.save_chk(step)
+                    if Lossd<=AimD or step>=math.ceil(maxsteps*GPARAMS.Neuralnetwork_setting.Switchrate):
+                        self.recorder.write("Training of %s switch to E&G due to achieve Dipole aim or beyond max training steps %d\n"%(self.name,self.max_steps*GPARAMS.Neuralnetwork_setting.Switchrate))
+                        self.saver.restore(self.sess, self.chk_file)
+                        self.Training_Target = "EandG"
+                        self.recorder.write("Switching to Energy and Gradient Learning...\n")
+                    #if len(recordlossd)>20:
+                    #    self.recorder.write("Avg Lossd in last 5-10 steps: %f , Lossd in lass 1-5 steps: %f judge value: %f\n"\
+                    #                         %(np.mean(recordlossd[-20:-10]),np.mean(recordlossd[-10:-1]),(recordlossd[-1]-AimD)/50))
+                    #    if np.mean(recordlossd[-10:5])-np.mean(recordlossd[-5:-1])<(recordlossd[-1]-Aimf)/50:
+                    #        self.saver.restore(self.sess, self.chk_file)
+                    #        self.Training_Target = "EandG"
+                    #        self.recorder.write("Switching to Energy and Gradient Learning...\n")
+            step+=1
+        self.SaveAndClose()
+        return  self.TData.NTrain,self.batchtrainnumf,Losse,Lossf,self.batchtrainnumd,Lossd,self.HiddenLayers
+
     def TrainPrepare(self,  continue_training =False,chk_file=''):
         """
         Get placeholders, graph and losses in order to begin training.
@@ -474,68 +539,6 @@ class BP_HDNN():
         feed_dict[self.batch_size_ctrl]=[batch_data[2].shape[0]]
         #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
         return feed_dict
-
-    def energy_inference(self, inp, indexs,  cc_energy, xyzs, Zs, eles, c6, R_vdw, Reep, EE_cuton, EE_cutoff, keep_prob,batch_size_ctrl):
-        """
-        Builds a Behler-Parinello graph
-
-        Args:
-            inp: a list of (num_of atom type X flattened input shape) matrix of input cases.
-            index: a list of (num_of atom type X batchsize) array which linearly combines the elements
-        Returns:
-            The BP graph output
-        """
-        # convert the index matrix from bool to float
-        xyzsInBohr = tf.multiply(xyzs,BOHRPERA)
-        Ebranches=[]
-        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-        #output = tf.zeros([self.batch_size, self.MaxNAtoms], dtype=self.tf_prec)
-        output=tf.zeros(tf.concat([batch_size_ctrl,[self.MaxNAtoms]],axis=0),dtype=self.tf_prec)
-        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-        atom_outputs = []
-        with tf.name_scope("EnergyNet"):
-            for e in range(len(self.eles)):
-                Ebranches.append([])
-                inputs = inp[e]
-                shp_in = tf.shape(inputs)
-                index = tf.cast(indexs[e], tf.int64)
-                for i in range(len(self.HiddenLayers)):
-                    if i == 0:
-                        with tf.name_scope(str(self.eles[e])+'_hidden1'):
-                            weights = self._variable_with_weight_decay(var_name='weights', var_shape=[self.inshape, self.HiddenLayers[i]], var_stddev=1.0/(10+math.sqrt(float(self.inshape))), var_wd=0.001)
-                            biases = tf.Variable(tf.zeros([self.HiddenLayers[i]], dtype=self.tf_prec), name='biaseslayer'+str(i))
-                            Ebranches[-1].append(self.activation_function(tf.matmul(tf.nn.dropout(inputs, keep_prob[i]), weights) + biases))
-                            #Ebranches[-1].append(self.activation_function(tf.matmul(inputs, weights) + biases))
-                    else:
-                        with tf.name_scope(str(self.eles[e])+'_hidden'+str(i+1)):
-                            weights = self._variable_with_weight_decay(var_name='weights', var_shape=[self.HiddenLayers[i-1], self.HiddenLayers[i]], var_stddev=1.0/(10+math.sqrt(float(self.HiddenLayers[i-1]))), var_wd=0.001)
-                            biases = tf.Variable(tf.zeros([self.HiddenLayers[i]], dtype=self.tf_prec), name='biaseslayer'+str(i))
-                            Ebranches[-1].append(self.activation_function(tf.matmul(tf.nn.dropout(Ebranches[-1][-1], keep_prob[i]), weights) + biases))
-                            #Ebranches[-1].append(self.activation_function(tf.matmul(Ebranches[-1][-1], weights) + biases))
-                with tf.name_scope(str(self.eles[e])+'_regression_linear'):
-                    shp = tf.shape(inputs)
-                    weights = self._variable_with_weight_decay(var_name='weights', var_shape=[self.HiddenLayers[-1], 1], var_stddev=1.0/(10+math.sqrt(float(self.HiddenLayers[-1]))), var_wd=None)
-                    biases = tf.Variable(tf.zeros([1], dtype=self.tf_prec), name='biases')
-                    Ebranches[-1].append(tf.matmul(tf.nn.dropout(Ebranches[-1][-1], keep_prob[-1]), weights) + biases)
-                    shp_out = tf.shape(Ebranches[-1][-1])
-                    cut = tf.slice(Ebranches[-1][-1],[0,0],[shp_out[0],1])
-                    rshp = tf.reshape(cut,[1,shp_out[0]])
-                    atom_outputs.append(rshp)
-                    rshpflat = tf.reshape(cut,[shp_out[0]])
-                    atom_indice = tf.slice(index, [0,1], [shp_out[0],1])
-                    #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-                    #ToAdd = tf.reshape(tf.scatter_nd(atom_indice, rshpflat, [self.batch_size*self.MaxNAtoms]),[-1, self.MaxNAtoms])
-                    ToAdd = tf.reshape(tf.scatter_nd(atom_indice, rshpflat, batch_size_ctrl*self.MaxNAtoms),[-1, self.MaxNAtoms]) 
-                    #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-                    output = tf.add(output, ToAdd)
-                tf.verify_tensor_all_finite(output,"Nan in output!!!")
-            bp_energy = tf.reshape(tf.reduce_sum(output, axis=1), [-1])
-        total_energy = tf.add(bp_energy, cc_energy)
-        vdw_energy = TFVdwPolyLR(xyzsInBohr, Zs, eles, c6, R_vdw, EE_cuton*BOHRPERA, Reep)
-        total_energy_with_vdw = tf.add(total_energy, vdw_energy)
-        energy_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="EnergyNet")
-        return total_energy_with_vdw, bp_energy, vdw_energy, energy_vars, output
-
     def dipole_inference(self, inp, indexs, xyzs, natom, Elu_Width, EE_cutoff, Reep, AddEcc, keep_prob,batch_size_ctrl):
         """
         Builds a Behler-Parinello graph
@@ -624,29 +627,6 @@ class BP_HDNN():
         #dipole_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="DipoleNet")
         return  cc_energy, dipole, scaled_charge, dipole_wb
 
-    def loss_op(self, energy, energy_grads, dipole, Elabels, grads, Dlabels, natom):
-        maxatom=tf.cast(tf.shape(energy_grads)[2], self.tf_prec)
-        energy_diff  = tf.multiply(tf.subtract(energy, Elabels,name="EnDiff"), natom*maxatom)
-        energy_loss = tf.nn.l2_loss(energy_diff,name="EnL2")
-        
-        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-        #grads_diff = tf.multiply(tf.subtract(energy_grads, grads,name="GradDiff"), tf.reshape(natom*maxatom, [1, self.batch_size, 1, 1]))
-        grads_diff = tf.multiply(tf.subtract(energy_grads, grads,name="GradDiff"), tf.reshape(natom*maxatom, [1, -1, 1, 1]))
-        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-        grads_loss = tf.nn.l2_loss(grads_diff,name="GradL2")
-        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-        #dipole_diff = tf.multiply(tf.subtract(dipole, Dlabels,name="DipoleDiff"), tf.reshape(natom*maxatom,[self.batch_size,1]))
-        dipole_diff = tf.multiply(tf.subtract(dipole, Dlabels,name="DipoleDiff"), tf.reshape(natom*maxatom,[-1,1]))
-        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-        
-        dipole_loss = tf.nn.l2_loss(dipole_diff,name="DipL2")
-        #loss = tf.multiply(grads_loss, energy_loss)
-        EandG_loss = tf.add(tf.multiply(energy_loss, self.EnergyScalar), tf.multiply(grads_loss, self.GradScalar),name="MulLoss")
-        loss = tf.add(EandG_loss, tf.multiply(dipole_loss, self.DipoleScalar))
-        #loss = tf.identity(dipole_loss)
-        tf.add_to_collection('losses', loss)
-        return tf.add_n(tf.get_collection('losses'), name='total_loss'), loss, energy_loss, grads_loss, dipole_loss
-
     def loss_op_dipole(self, energy, energy_grads, dipole, Elabels, grads, Dlabels, natom):
         maxatom=tf.cast(tf.shape(energy_grads)[2], self.tf_prec)
         energy_diff  = tf.multiply(tf.subtract(energy, Elabels), natom*maxatom)
@@ -664,28 +644,6 @@ class BP_HDNN():
         #loss = tf.multiply(grads_loss, energy_loss)
         EandG_loss = tf.add(tf.multiply(energy_loss, self.EnergyScalar), tf.multiply(grads_loss, self.GradScalar))
         loss = tf.identity(dipole_loss)
-        tf.add_to_collection('losses', loss)
-        return tf.add_n(tf.get_collection('losses'), name='total_loss'), loss, energy_loss, grads_loss, dipole_loss
-
-    def loss_op_EandG(self, energy, energy_grads, dipole, Elabels, grads, Dlabels, natom):
-        maxatom=tf.cast(tf.shape(energy_grads)[2], self.tf_prec)
-        energy_diff  = tf.multiply(tf.subtract(energy, Elabels), natom*maxatom)
-        energy_loss = tf.nn.l2_loss(energy_diff)
-        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-        #grads_diff = tf.multiply(tf.subtract(energy_grads, grads), tf.reshape(natom*maxatom, [1, self.batch_size, 1, 1]))
-        grads_diff = tf.multiply(tf.subtract(energy_grads, grads), tf.reshape(natom*maxatom, [1, -1, 1, 1]))
-        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-        grads_loss = tf.nn.l2_loss(grads_diff)
-        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-        #dipole_diff = tf.multiply(tf.subtract(dipole, Dlabels), tf.reshape(natom*maxatom,[self.batch_size,1]))
-        dipole_diff = tf.multiply(tf.subtract(dipole, Dlabels), tf.reshape(natom*maxatom,[-1,1]))
-        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
-        dipole_loss = tf.nn.l2_loss(dipole_diff)
-        #loss = tf.multiply(grads_loss, energy_loss)
-        EandG_loss = tf.add(tf.multiply(energy_loss, self.EnergyScalar), tf.multiply(grads_loss, self.GradScalar))
-        #loss = tf.add(EandG_loss, tf.multiply(dipole_loss, self.DipoleScalar))
-        loss = tf.identity(EandG_loss)
-        #loss = tf.identity(energy_loss)
         tf.add_to_collection('losses', loss)
         return tf.add_n(tf.get_collection('losses'), name='total_loss'), loss, energy_loss, grads_loss, dipole_loss
 
@@ -711,58 +669,6 @@ class BP_HDNN():
         else:
             train_op = optimizer.minimize(loss, global_step=global_step, var_list=update_var, name="trainop")
         return train_op,learning_rate
-
-
-    def train_step_EandG(self, step):
-        """
-        Perform a single training step (complete processing of all input), using minibatches of size self.batch_size
-        Args:
-            step: the index of this step.
-        """
-        Ncase_train = self.TData.NTrain
-        #print ('NTrain:',self.TData.NTrain,'N ministep per epoch:',int(Ncase_train/self.batch_size))
-        start_time = time.time()
-        train_loss =  0.0
-        train_energy_loss = 0.0
-        train_dipole_loss = 0.0
-        train_grads_loss = 0.0
-        num_of_mols = 0
-        print_per_mini = 100
-        print_loss = 0.0
-        print_energy_loss = 0.0
-        print_dipole_loss = 0.0
-        print_grads_loss = 0.0
-        print_time = 0.0
-        time_print_mini = time.time()
-        duration=time.time()-start_time
-        for ministep in range (0, int(Ncase_train/self.batch_size)):
-            self.batchtrainnumf+=1
-            t_mini = time.time()
-            batch_data = self.TData.GetTrainBatch(self.batch_size)+[GPARAMS.Neuralnetwork_setting.AddEcc] + [self.keep_prob]
-            actual_mols  = self.batch_size
-            t = time.time()
-            dump_2, total_loss_value, loss_value, energy_loss, grads_loss,  dipole_loss,  Etotal, Ecc, Evdw, mol_dipole, atom_charge,lr_ef = self.sess.run([self.train_op_EandG, self.total_loss_EandG, self.loss_EandG, self.energy_loss_EandG, self.grads_loss_EandG, self.dipole_loss_EandG, self.Etotal, self.Ecc, self.Evdw,  self.dipole, self.charge,self.lr_ef], feed_dict=self.fill_feed_dict(batch_data))
-            print_loss += loss_value
-            print_energy_loss += energy_loss
-            print_grads_loss += grads_loss
-            print_dipole_loss += dipole_loss
-            if (ministep%print_per_mini == 0 and ministep!=0):
-                print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
-                print_loss = 0.0
-                print_energy_loss = 0.0
-                print_dipole_loss = 0.0
-                print_grads_loss = 0.0
-                print_time = 0.0
-                time_print_mini = time.time()
-            train_loss = train_loss + loss_value
-            train_energy_loss += energy_loss
-            train_grads_loss += grads_loss
-            train_dipole_loss += dipole_loss
-            num_of_mols += actual_mols
-        duration = time.time() - start_time
-        self.print_training(step, train_loss, train_energy_loss, train_grads_loss, train_dipole_loss, num_of_mols, duration,lr_ef)
-        return train_energy_loss/num_of_mols,train_grads_loss/num_of_mols 
-
 
     def train_step_dipole(self, step):
         """
@@ -790,11 +696,14 @@ class BP_HDNN():
         duration=time.time()-start_time
         for ministep in range (0, int(Ncase_train/self.batch_size)):
             self.batchtrainnumd+=1
+
             t_mini = time.time()
             batch_data = self.TData.GetTrainBatch(self.batch_size) + [False] + [self.keep_prob]
             actual_mols  = self.batch_size
             t = time.time()
             dump_2, total_loss_value, loss_value, energy_loss, grads_loss,  dipole_loss,  Etotal, Ecc, mol_dipole, atom_charge,lr_dipole = self.sess.run([self.train_op_dipole, self.total_loss_dipole, self.loss_dipole, self.energy_loss_dipole, self.grads_loss_dipole, self.dipole_loss_dipole, self.Etotal, self.Ecc,  self.dipole,self.charge,self.lr_dipole], feed_dict=self.fill_feed_dict(batch_data))
+
+
             print_loss += loss_value
             print_energy_loss += energy_loss
             print_grads_loss += grads_loss
@@ -835,15 +744,192 @@ class BP_HDNN():
             actual_mols  = self.batch_size
             t = time.time()
             total_loss_value, loss_value, energy_loss, grads_loss,  dipole_loss,  Etotal, Ecc, mol_dipole, atom_charge = self.sess.run([self.total_loss_dipole, self.loss_dipole, self.energy_loss_dipole, self.grads_loss_dipole, self.dipole_loss_dipole, self.Etotal, self.Ecc, self.dipole, self.charge], feed_dict=self.fill_feed_dict(batch_data))
+
+
             test_loss = test_loss + loss_value
             test_energy_loss += energy_loss
             test_grads_loss += grads_loss
             test_dipole_loss += dipole_loss
+
             duration = time.time() - start_time
             num_of_mols += actual_mols
         #print ("testing...")
         self.print_training(step, test_loss, test_energy_loss, test_grads_loss, test_dipole_loss, num_of_mols, duration,0,False)
         return  test_dipole_loss 
+
+    def print_training_DandQ(self, step, charge_loss, Ncase, duration,lr=0, Train=True):
+        if Train:
+            self.recorder.write("step: %7d L_rate: %.6f duration: %.5f  Train Loss: Q: %.6f "%(step,lr, duration, (float(charge_loss)/(Ncase))))
+            self.recorder.flush()
+        else:
+            self.recorder.write("Test Loss: Q: %.6f\n"%( float(charge_loss)/Ncase))
+            self.recorder.flush()
+        return
+
+
+
+
+    def energy_inference(self, inp, indexs,  cc_energy, xyzs, Zs, eles, c6, R_vdw, Reep, EE_cuton, EE_cutoff, keep_prob,batch_size_ctrl):
+        """
+        Builds a Behler-Parinello graph
+
+        Args:
+            inp: a list of (num_of atom type X flattened input shape) matrix of input cases.
+            index: a list of (num_of atom type X batchsize) array which linearly combines the elements
+        Returns:
+            The BP graph output
+        """
+        # convert the index matrix from bool to float
+        xyzsInBohr = tf.multiply(xyzs,BOHRPERA)
+        Ebranches=[]
+        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        #output = tf.zeros([self.batch_size, self.MaxNAtoms], dtype=self.tf_prec)
+        output=tf.zeros(tf.concat([batch_size_ctrl,[self.MaxNAtoms]],axis=0),dtype=self.tf_prec)
+        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        atom_outputs = []
+        with tf.name_scope("EnergyNet"):
+            for e in range(len(self.eles)):
+                Ebranches.append([])
+                inputs = inp[e]
+                shp_in = tf.shape(inputs)
+                index = tf.cast(indexs[e], tf.int64)
+                for i in range(len(self.HiddenLayers)):
+                    if i == 0:
+                        with tf.name_scope(str(self.eles[e])+'_hidden1'):
+                            weights = self._variable_with_weight_decay(var_name='weights', var_shape=[self.inshape, self.HiddenLayers[i]], var_stddev=1.0/(10+math.sqrt(float(self.inshape))), var_wd=0.001)
+                            biases = tf.Variable(tf.zeros([self.HiddenLayers[i]], dtype=self.tf_prec), name='biaseslayer'+str(i))
+                            Ebranches[-1].append(self.activation_function(tf.matmul(tf.nn.dropout(inputs, keep_prob[i]), weights) + biases))
+                            #Ebranches[-1].append(self.activation_function(tf.matmul(inputs, weights) + biases))
+                    else:
+                        with tf.name_scope(str(self.eles[e])+'_hidden'+str(i+1)):
+                            weights = self._variable_with_weight_decay(var_name='weights', var_shape=[self.HiddenLayers[i-1], self.HiddenLayers[i]], var_stddev=1.0/(10+math.sqrt(float(self.HiddenLayers[i-1]))), var_wd=0.001)
+                            biases = tf.Variable(tf.zeros([self.HiddenLayers[i]], dtype=self.tf_prec), name='biaseslayer'+str(i))
+                            Ebranches[-1].append(self.activation_function(tf.matmul(tf.nn.dropout(Ebranches[-1][-1], keep_prob[i]), weights) + biases))
+                            #Ebranches[-1].append(self.activation_function(tf.matmul(Ebranches[-1][-1], weights) + biases))
+                with tf.name_scope(str(self.eles[e])+'_regression_linear'):
+                    shp = tf.shape(inputs)
+                    weights = self._variable_with_weight_decay(var_name='weights', var_shape=[self.HiddenLayers[-1], 1], var_stddev=1.0/(10+math.sqrt(float(self.HiddenLayers[-1]))), var_wd=None)
+                    biases = tf.Variable(tf.zeros([1], dtype=self.tf_prec), name='biases')
+                    Ebranches[-1].append(tf.matmul(tf.nn.dropout(Ebranches[-1][-1], keep_prob[-1]), weights) + biases)
+                    shp_out = tf.shape(Ebranches[-1][-1])
+                    cut = tf.slice(Ebranches[-1][-1],[0,0],[shp_out[0],1])
+                    rshp = tf.reshape(cut,[1,shp_out[0]])
+                    atom_outputs.append(rshp)
+                    rshpflat = tf.reshape(cut,[shp_out[0]])
+                    atom_indice = tf.slice(index, [0,1], [shp_out[0],1])
+                    #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+                    #ToAdd = tf.reshape(tf.scatter_nd(atom_indice, rshpflat, [self.batch_size*self.MaxNAtoms]),[-1, self.MaxNAtoms])
+                    ToAdd = tf.reshape(tf.scatter_nd(atom_indice, rshpflat, batch_size_ctrl*self.MaxNAtoms),[-1, self.MaxNAtoms]) 
+                    #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+                    output = tf.add(output, ToAdd)
+                tf.verify_tensor_all_finite(output,"Nan in output!!!")
+            bp_energy = tf.reshape(tf.reduce_sum(output, axis=1), [-1])
+        total_energy = tf.add(bp_energy, cc_energy)
+        vdw_energy = TFVdwPolyLR(xyzsInBohr, Zs, eles, c6, R_vdw, EE_cuton*BOHRPERA, Reep)
+        total_energy_with_vdw = tf.add(total_energy, vdw_energy)
+        energy_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="EnergyNet")
+        return total_energy_with_vdw, bp_energy, vdw_energy, energy_vars, output
+
+
+    def loss_op(self, energy, energy_grads, dipole, Elabels, grads, Dlabels, natom):
+        maxatom=tf.cast(tf.shape(energy_grads)[2], self.tf_prec)
+        energy_diff  = tf.multiply(tf.subtract(energy, Elabels,name="EnDiff"), natom*maxatom)
+        energy_loss = tf.nn.l2_loss(energy_diff,name="EnL2")
+        
+        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        #grads_diff = tf.multiply(tf.subtract(energy_grads, grads,name="GradDiff"), tf.reshape(natom*maxatom, [1, self.batch_size, 1, 1]))
+        grads_diff = tf.multiply(tf.subtract(energy_grads, grads,name="GradDiff"), tf.reshape(natom*maxatom, [1, -1, 1, 1]))
+        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        grads_loss = tf.nn.l2_loss(grads_diff,name="GradL2")
+        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        #dipole_diff = tf.multiply(tf.subtract(dipole, Dlabels,name="DipoleDiff"), tf.reshape(natom*maxatom,[self.batch_size,1]))
+        dipole_diff = tf.multiply(tf.subtract(dipole, Dlabels,name="DipoleDiff"), tf.reshape(natom*maxatom,[-1,1]))
+        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        
+        dipole_loss = tf.nn.l2_loss(dipole_diff,name="DipL2")
+        #loss = tf.multiply(grads_loss, energy_loss)
+        EandG_loss = tf.add(tf.multiply(energy_loss, self.EnergyScalar), tf.multiply(grads_loss, self.GradScalar),name="MulLoss")
+        loss = tf.add(EandG_loss, tf.multiply(dipole_loss, self.DipoleScalar))
+        #loss = tf.identity(dipole_loss)
+        tf.add_to_collection('losses', loss)
+        return tf.add_n(tf.get_collection('losses'), name='total_loss'), loss, energy_loss, grads_loss, dipole_loss
+
+
+    def loss_op_EandG(self, energy, energy_grads, dipole, Elabels, grads, Dlabels, natom):
+        maxatom=tf.cast(tf.shape(energy_grads)[2], self.tf_prec)
+        energy_diff  = tf.multiply(tf.subtract(energy, Elabels), natom*maxatom)
+        energy_loss = tf.nn.l2_loss(energy_diff)
+        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        #grads_diff = tf.multiply(tf.subtract(energy_grads, grads), tf.reshape(natom*maxatom, [1, self.batch_size, 1, 1]))
+        grads_diff = tf.multiply(tf.subtract(energy_grads, grads), tf.reshape(natom*maxatom, [1, -1, 1, 1]))
+        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        grads_loss = tf.nn.l2_loss(grads_diff)
+        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        #dipole_diff = tf.multiply(tf.subtract(dipole, Dlabels), tf.reshape(natom*maxatom,[self.batch_size,1]))
+        dipole_diff = tf.multiply(tf.subtract(dipole, Dlabels), tf.reshape(natom*maxatom,[-1,1]))
+        #IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        dipole_loss = tf.nn.l2_loss(dipole_diff)
+        #loss = tf.multiply(grads_loss, energy_loss)
+        EandG_loss = tf.add(tf.multiply(energy_loss, self.EnergyScalar), tf.multiply(grads_loss, self.GradScalar))
+        #loss = tf.add(EandG_loss, tf.multiply(dipole_loss, self.DipoleScalar))
+        loss = tf.identity(EandG_loss)
+        #loss = tf.identity(energy_loss)
+        tf.add_to_collection('losses', loss)
+        return tf.add_n(tf.get_collection('losses'), name='total_loss'), loss, energy_loss, grads_loss, dipole_loss
+
+
+
+    def train_step_EandG(self, step):
+        """
+        Perform a single training step (complete processing of all input), using minibatches of size self.batch_size
+        Args:
+            step: the index of this step.
+        """
+        Ncase_train = self.TData.NTrain
+        #print ('NTrain:',self.TData.NTrain,'N ministep per epoch:',int(Ncase_train/self.batch_size))
+        start_time = time.time()
+        train_loss =  0.0
+        train_energy_loss = 0.0
+        train_dipole_loss = 0.0
+        train_grads_loss = 0.0
+        num_of_mols = 0
+        print_per_mini = 100
+        print_loss = 0.0
+        print_energy_loss = 0.0
+        print_dipole_loss = 0.0
+        print_grads_loss = 0.0
+        print_time = 0.0
+        time_print_mini = time.time()
+        duration=time.time()-start_time
+        for ministep in range (0, int(Ncase_train/self.batch_size)):
+            self.batchtrainnumf+=1
+            t_mini = time.time()
+            batch_data = self.TData.GetTrainBatch(self.batch_size)+[GPARAMS.Neuralnetwork_setting.AddEcc] + [self.keep_prob]
+            actual_mols  = self.batch_size
+            t = time.time()
+            dump_2, total_loss_value, loss_value, energy_loss, grads_loss,  dipole_loss,  Etotal, Ecc, Evdw, mol_dipole, atom_charge,lr_ef = self.sess.run([self.train_op_EandG, self.total_loss_EandG, self.loss_EandG, self.energy_loss_EandG, self.grads_loss_EandG, self.dipole_loss_EandG, self.Etotal, self.Ecc, self.Evdw,  self.dipole, self.charge,self.lr_ef], feed_dict=self.fill_feed_dict(batch_data))
+
+
+            print_loss += loss_value
+            print_energy_loss += energy_loss
+            print_grads_loss += grads_loss
+            print_dipole_loss += dipole_loss
+            if (ministep%print_per_mini == 0 and ministep!=0):
+                print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
+                print_loss = 0.0
+                print_energy_loss = 0.0
+                print_dipole_loss = 0.0
+                print_grads_loss = 0.0
+                print_time = 0.0
+                time_print_mini = time.time()
+            train_loss = train_loss + loss_value
+            train_energy_loss += energy_loss
+            train_grads_loss += grads_loss
+            train_dipole_loss += dipole_loss
+            num_of_mols += actual_mols
+        duration = time.time() - start_time
+        self.print_training(step, train_loss, train_energy_loss, train_grads_loss, train_dipole_loss, num_of_mols, duration,lr_ef)
+        return train_energy_loss/num_of_mols,train_grads_loss/num_of_mols 
 
     def test_EandG(self, step):
         """
@@ -864,6 +950,7 @@ class BP_HDNN():
             actual_mols  = self.batch_size
             t = time.time()
             total_loss_value, loss_value, energy_loss, grads_loss,  dipole_loss,  Etotal, Ecc, mol_dipole, atom_charge = self.sess.run([self.total_loss_EandG, self.loss_EandG, self.energy_loss_EandG, self.grads_loss_EandG, self.dipole_loss_EandG, self.Etotal, self.Ecc, self.dipole, self.charge], feed_dict=self.fill_feed_dict(batch_data))
+
             test_loss = test_loss + loss_value
             test_energy_loss += energy_loss
             test_grads_loss += grads_loss
@@ -874,72 +961,6 @@ class BP_HDNN():
         self.print_training(step, test_loss, test_energy_loss, test_grads_loss, test_dipole_loss, num_of_mols, duration,0,False)
         return  test_energy_loss,test_grads_loss
 
-    def train(self, mxsteps, continue_training= False,chk_file='',AimE=0.1,AimF=0.02,AimD=0.05):
-        """
-        This the training loop for the united model.
-        """
-        maxsteps=mxsteps 
-        LOGGER.info("running the TFMolInstance.train()")
-        if self.need_Newtrain==True:
-            continue_training=False
-            chk_file=''
-        self.TrainPrepare(continue_training,chk_file)
-        test_freq = GPARAMS.Neuralnetwork_setting.Testfreq
-        mini_dipole_test_loss = float('inf') # some big numbers
-        mini_energy_test_loss = float('inf')
-        mini_test_loss = float('inf')
-#        for step in  range (0, mxsteps):
-        ifcontinue=True;step=0 
-        recordlossf=[];recordlossd=[]
-        while ifcontinue :
-            if self.Training_Target == "EandG":
-                Losse,Lossf=self.train_step_EandG(step)
-                recordlossf.append(Lossf)
-                if step%test_freq==0 and step!=0 :
-                    if self.monitor_mset != None:
-                        self.InTrainEval(self.monitor_mset, self.Rr_cut, self.Ra_cut, self.Ree_off, step=step)
-                    test_energy_loss,test_grads_loss = self.test_EandG(step)
-                    if test_energy_loss < mini_energy_test_loss:
-                        mini_energy_test_loss = test_energy_loss
-                        self.save_chk(step)
-                if Lossf<=AimF and Losse<=AimE:
-                    self.recorder.write("Training of %s stop due to achieve Force aim or beyond max training steps "%self.name)
-                    ifcontinue=False 
-                #if len(recordlossf)>20:
-                #    self.recorder.write("Avg Lossf in last 5-10 steps: %f , Lossf in lass 1-5 steps: %f judge value: %f\n"\
-                #                             %(np.mean(recordlossf[-10:-5]),np.mean(recordlossf[-5:-1]),(recordlossf[-1]-AimF)/50))
-                #    if np.mean(recordlossf[-20:-10])-np.mean(recordlossf[-10:-1])<(recordlossf[-1]-AimF)/50:
-                #        self.recorder.write("Training of %s stop due to convegency of Loss\n"%self.name)
-                #        self.recorder.write("Avg Lossf in last 5-10 steps: %f , Lossf in lass 1-5 steps: %f judge value: %f\n"\
-                #                             %(np.mean(recordlossf[-10:-5]),np.mean(recordlossf[-5:-1]),(recordlossf[-1]-AimF)/50))
-                #        ifcontinue=False 
-                if step > maxsteps:
-                    ifcontinue=False
-            elif self.Training_Target == "Dipole":
-                Lossd=self.train_step_dipole(step)
-                recordlossd.append(Lossd)
-                if step%test_freq==0 and step!=0 :
-                    if self.monitor_mset != None:
-                        self.InTrainEval(self.monitor_mset, self.Rr_cut, self.Ra_cut, self.Ree_off, step=step)
-                    test_dipole_loss = self.test_dipole(step)
-                    if test_dipole_loss < mini_dipole_test_loss:
-                        mini_dipole_test_loss = test_dipole_loss
-                        self.save_chk(step)
-                    if Lossd<=AimD or step>=math.ceil(maxsteps*GPARAMS.Neuralnetwork_setting.Switchrate):
-                        self.recorder.write("Training of %s switch to E&G due to achieve Dipole aim or beyond max training steps %d\n"%(self.name,self.max_steps*GPARAMS.Neuralnetwork_setting.Switchrate))
-                        self.saver.restore(self.sess, self.chk_file)
-                        self.Training_Target = "EandG"
-                        self.recorder.write("Switching to Energy and Gradient Learning...\n")
-                    #if len(recordlossd)>20:
-                    #    self.recorder.write("Avg Lossd in last 5-10 steps: %f , Lossd in lass 1-5 steps: %f judge value: %f\n"\
-                    #                         %(np.mean(recordlossd[-20:-10]),np.mean(recordlossd[-10:-1]),(recordlossd[-1]-AimD)/50))
-                    #    if np.mean(recordlossd[-10:5])-np.mean(recordlossd[-5:-1])<(recordlossd[-1]-Aimf)/50:
-                    #        self.saver.restore(self.sess, self.chk_file)
-                    #        self.Training_Target = "EandG"
-                    #        self.recorder.write("Switching to Energy and Gradient Learning...\n")
-            step+=1
-        self.SaveAndClose()
-        return  self.TData.NTrain,self.batchtrainnumf,Losse,Lossf,self.batchtrainnumd,Lossd,self.HiddenLayers
 
     def InTrainEval(self, mol_set, Rr_cut, Ra_cut, Ree_cut, step=0):
         """

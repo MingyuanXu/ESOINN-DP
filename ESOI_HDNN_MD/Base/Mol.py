@@ -5,9 +5,9 @@ from ..Comparm import GPARAMS
 from ..Comparm import * 
 import numpy as np
 import time
-
+from .Resp import *
 class Molnew:
-    def __init__(self,atoms=np.array([1],dtype=int),crd=np.array([0.0,0.0,0.0],dtype=float),charge=np.array([0.0],dtype=float),name=''):
+    def __init__(self,atoms=np.array([1],dtype=int),crd=np.array([[0.0,0.0,0.0]],dtype=float),charge=np.array([0.0],dtype=float),name=''):
         #Mol.__init__(self,atoms,crd)
         self.atoms=atoms
         self.atomnamelist=[Element_Table[i] for i in self.atoms]
@@ -22,11 +22,28 @@ class Molnew:
         self.belongto=[]
         self.spin=1
     def Write_Gaussian_input(self,keywords,inpath,nproc=14,mem=600,spin=1):
-        file=open(inpath+self.name+'.com','w')
+        file=open(inpath+self.name+'_ef.com','w')
         file.write('%'+'nproc=%d\n'%nproc)
         file.write('%mem='+'%dMW\n'%mem)
-        file.write('%'+'chk=%s.chk\n'%self.name)
+        file.write('%'+'chk=%s_ef.chk\n'%self.name)
         file.write("# "+keywords+'\n')
+        file.write('\n')
+        try: 
+            file.write('MODEL ERROR: %f'%self.properties['ERR'])
+        except:
+            file.write('Hello world\n')
+        file.write('\n')
+        file.write('%d %d\n'%(self.totalcharge,self.spin))
+        for i in range(len(self.atoms)):
+            file.write('%s %.3f %.3f %.3f\n'%(Element_Table[self.atoms[i]],self.coords[i][0],self.coords[i][1],self.coords[i][2]))
+        file.write('\n')
+        file.close()
+        
+        file=open(inpath+self.name+'_q.com','w')
+        file.write('%'+'nproc=%d\n'%nproc)
+        file.write('%mem='+'%dMW\n'%mem)
+        file.write('%'+'chk=%s_q.chk\n'%self.name)
+        file.write("# HF/6-31g* SCF=Tight force Pop=MK IOp(6/33=2,6/41=10,6/42=17)\n")
         file.write('\n')
         try: 
             file.write('MODEL ERROR: %f'%self.properties['ERR'])
@@ -40,11 +57,15 @@ class Molnew:
         file.close()
         return 
     def Cal_Gaussian(self,inpath='./'):
-        os.system('cd '+inpath+' && g16 '+self.name+'.com && rm '+self.name+'.chk && cd - >/dev/null')
-        flag=self.Update_from_Gaulog(inpath)
+        os.system('cd '+inpath+' && g16 '+self.name+'_ef.com && g16 '+self.name+'_q.com && rm '+self.name+'*.chk && cd - >/dev/null')
+        flag1=self.Update_from_Gaulog(inpath)
+        flag2,respcharge=cal_resp_charge(filename)
+        flag=(flag1 and flag2)
+        if flag==True: 
+            self.properties['resp_charge']=respcharge 
         #if flag==True:
         #    self.CalculateAtomization(GPARAMS.Compute_setting.Atomizationlevel)
-        return flag 
+        return  
     def Update_from_Gaulog(self,inpath='./'):
         file=open(inpath+self.name+'.log','r') 
         line=file.readline()
@@ -55,7 +76,7 @@ class Molnew:
             if 'Charge' in line and 'Multiplicity' in line:
                 var=line.split()
                 totalcharge=int(var[2]);spin=int(var[-1])
-            if 'Input orientation:' in line:
+            if 'Standard orientation:' in line:
                 line=file.readline()
                 line=file.readline()
                 line=file.readline()

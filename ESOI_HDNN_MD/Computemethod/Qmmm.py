@@ -214,7 +214,7 @@ class QMMM_FragSystem:
                             ucutbond[-1].append([selectCA[resindex[j]+1],selectC[resindex[j]+1]])
                             ucuttype[-1].append('CC')    
                         if residue[resindex[j]+1]!='PRO':
-                            tmpupt=np.zero(2,dtype=int)
+                            tmpupt=np.zeros(2,dtype=int)
                             tmpupt[0]=j
                             tmpupt[1]=selectCA[resindex[j]+1]-1
                             upt.append(tmpupt)
