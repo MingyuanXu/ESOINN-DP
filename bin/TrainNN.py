@@ -29,7 +29,7 @@ if len(TMPset.mols)< GPARAMS.Neuralnetwork_setting.Batchsize*20 :
 TreatedAtoms=TMPset.AtomTypes()
 d=MolDigester(TreatedAtoms,name_="ANI1_Sym_Direct",OType_="EnergyAndDipole")
 if args.type=="bpresp":
-
+    GPARAMS.Neuralnetwork_setting.Switchrate=0.9
     tset=TData_BP_Direct_EE_WithCharge(TMPset,d,order_=1,num_indis_=1,type_="mol",WithGrad_=True,MaxNAtoms=100)
 else:
     tset=TData_BP_Direct_EE_WithEle(TMPset,d,order_=1,num_indis_=1,type_="mol",WithGrad_=True,MaxNAtoms=100)
