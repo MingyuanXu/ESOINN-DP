@@ -38,12 +38,11 @@ class Molnew:
             file.write('%s %.3f %.3f %.3f\n'%(Element_Table[self.atoms[i]],self.coords[i][0],self.coords[i][1],self.coords[i][2]))
         file.write('\n')
         file.close()
-        
         file=open(inpath+self.name+'_q.com','w')
         file.write('%'+'nproc=%d\n'%nproc)
         file.write('%mem='+'%dMW\n'%mem)
         file.write('%'+'chk=%s_q.chk\n'%self.name)
-        file.write("# HF/6-31g* SCF=Tight force Pop=MK IOp(6/33=2,6/41=10,6/42=17)\n")
+        file.write("# HF/6-31g* SCF=Tight force nosymm Pop=MK IOp(6/33=2,6/41=10,6/42=17)\n")
         file.write('\n')
         try: 
             file.write('MODEL ERROR: %f'%self.properties['ERR'])
@@ -57,17 +56,18 @@ class Molnew:
         file.close()
         return 
     def Cal_Gaussian(self,inpath='./'):
-        os.system('cd '+inpath+' && g16 '+self.name+'_ef.com && g16 '+self.name+'_q.com && rm '+self.name+'*.chk && cd - >/dev/null')
+        #os.system('cd '+inpath+' && g16 '+self.name+'_ef.com && g16 '+self.name+'_q.com && rm '+self.name+'*.chk && cd - >/dev/null')
         flag1=self.Update_from_Gaulog(inpath)
-        flag2,respcharge=cal_resp_charge(filename)
+        flag2,respcharge=cal_resp_charge(inpath+self.name+'_q.log')
         flag=(flag1 and flag2)
+        print (flag1,flag2,flag,self)
         if flag==True: 
             self.properties['resp_charge']=respcharge 
         #if flag==True:
         #    self.CalculateAtomization(GPARAMS.Compute_setting.Atomizationlevel)
-        return  
+        return flag 
     def Update_from_Gaulog(self,inpath='./'):
-        file=open(inpath+self.name+'.log','r') 
+        file=open(inpath+self.name+'_ef.log','r') 
         line=file.readline()
         natom=0
         atoms=[];coords=[];charge=[];force=[];dipole=[];energy=0
@@ -76,7 +76,7 @@ class Molnew:
             if 'Charge' in line and 'Multiplicity' in line:
                 var=line.split()
                 totalcharge=int(var[2]);spin=int(var[-1])
-            if 'Standard orientation:' in line:
+            if 'Input orientation:' in line:
                 line=file.readline()
                 line=file.readline()
                 line=file.readline()

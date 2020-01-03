@@ -68,7 +68,6 @@ def calculator(para):
             flag=mol.Cal_DFTB(input_path)
             mol.CalculateAtomization(Atomizationlevel)
         else:
-            print ("HHHHHHHHHHHHHHH")
             mol.Write_Gaussian_input(keywords,input_path,ncores,600)
             flag=mol.Cal_Gaussian(input_path)
             mol.CalculateAtomization(Atomizationlevel)
@@ -166,5 +165,10 @@ def parallel_caljob(MSetname,manager,ctrlfile):
                 mollist[-1].Cal_EGCM()
         TMPSet.mols=mollist
         TMPSet.Save()
+        print ("HHHHHHHHHHHHHHHHHHHH")
+        print ("HHHHHHHHHHHHHHHHHHHH")
+        print (len(TMPSet.mols))
+        print ("HHHHHHHHHHHHHHHHHHHH")
+        print ("HHHHHHHHHHHHHHHHHHHH")
     return 
 
