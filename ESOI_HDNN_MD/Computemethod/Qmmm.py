@@ -364,11 +364,10 @@ class QMMM_FragSystem:
         except:
             EGCM=QMMol.Cal_EGCM()
             EGCMlist.append(EGCM)
-            
         QMMol.properties['clabel']=QMcharge
         QMSet=MSet()
         QMSet.mols.append(QMMol)
-        QMSet.mols[-1].name="Stage_%d_MDStep_%d_%d"%(GPARAMS.Train_setting.Trainstage,self.step,len(QMSet.mols))
+        QMSet.mols[-1].name="%s_stage_%d_MDStep_%d_%d"%(self.name,GPARAMS.Train_setting.Trainstage,self.step,len(QMSet.mols))
         if self.Theroylevel=='NN':
             try:
                 NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
