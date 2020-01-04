@@ -427,7 +427,6 @@ class QMMM_FragSystem:
             chargestr="Step: %d RESP CHARGE OF MBG: "%self.step
             for i in self.reportcharge: 
                 chargestr+="    %f  "%self.RESPCHARGE[i]
-            print (chargestr)
         qmsysname=''
         for i in QMlist:
             qmsysname+=i.aname
