@@ -35,6 +35,7 @@ class Simulation():
         self.MDV0=MD_setting.Mdv0 
         self.stageindex=MD_setting.Stageindex
         self.Outfile=open(self.path+MD_setting.Name+'_%d.mdout'%self.stageindex,'w')
+        self.Respfile=open(self.path+MD_setting.Name+'_%d.resp'%self.stageindex,'w')
         self.Nprint=MD_setting.Nprint
         self.Maxerr=GPARAMS.Neuralnetwork_setting.Maxerr 
         self.Miderr=GPARAMS.Neuralnetwork_setting.Miderr 
@@ -45,7 +46,7 @@ class Simulation():
         self.sys.Create_DisMap()
         self.sys.Update_DisMap()
         self.sys.update_crd()
-        f,e,AVG_ERR,ERROR_mols,EGCMlist=self.sys.Cal_EFQ()
+        f,e,AVG_ERR,ERROR_mols,EGCMlist,chargestr=self.sys.Cal_EFQ()
         self.EPot0=e
         self.EPot=e
         self.EnergyStat=OnlineEstimator(self.EPot0) 
@@ -103,7 +104,7 @@ class Simulation():
             f=x_new;EPot=0;ERROR_mols=[]
             self.sys.Update_DisMap()
             self.sys.update_crd()
-            f,EPot,ERROR,ERROR_mols,EGCMlist=self.sys.Cal_EFQ()
+            f,EPot,ERROR,ERROR_mols,EGCMlist,chargestr=self.sys.Cal_EFQ()
             ERROR_record.append(ERROR)
             if ERROR>self.Miderr and ERROR<self.Maxerr:
                 miderr_num+=1
@@ -153,9 +154,12 @@ class Simulation():
                 self.Outfile.write("%s Step: %i time: %.1f(fs) KE(kJ): %.5f PotE(Eh): %.5f ETot(kJ/mol): %.5f Teff(K): %.5f MAX ERROR: %.3f Method: %s\n"\
                                    %(self.name, step, self.t, self.KE*len(self.m)/1000.0, self.EPot, self.KE*len(self.m)/1000.0+(self.EPot)*KJPERHARTREE, Teff,ERROR,self.sys.stepmethod))
                 self.Outfile.flush()
+                self.Respfile.write(chargestr)
+                self.Respfile.write(chargestr)
             else:
                 self.Outfile.write("AVG ERR: %.3f , MD will stop~~!!"%AVG_ERR)
                 self.Outfile.flush()
         self.Outfile.close()
+        self.Respfile.close()
         return 
 
