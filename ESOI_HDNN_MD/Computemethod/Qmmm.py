@@ -422,6 +422,7 @@ class QMMM_FragSystem:
                         self.RESPCHARGE[QMlist_withg[i].realpt]+=self.QMarea_respcharge[i]
 
         self.energy+=self.QMarea_QMenergy
+        chargestr=''
         if self.ifresp==True:
             chargestr="Step: %d RESP CHARGE OF MBG: "%self.step
             for i in self.reportcharge: 
@@ -490,7 +491,7 @@ class QMMM_FragSystem:
         #            print (realpt,QMlist_withg[i].aname,self.coords[realpt],self.force[realpt],self.FullMM_force[realpt],self.QMarea_MMforce[num],self.QMarea_QMforce[i])
         #            num+=1
         self.step+=1
-        return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,AVG_ERR,ERROR_mols,EGCMlist 
+        return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,AVG_ERR,ERROR_mols,EGCMlist,chargestr 
 
     def update_crd(self):
         for i in range(self.natom):

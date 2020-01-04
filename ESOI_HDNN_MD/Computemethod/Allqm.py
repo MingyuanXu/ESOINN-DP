@@ -97,7 +97,7 @@ class FullQM_System:
         self.ERROR_file.write(ERROR_str) 
         self.force=NN_predict[0][1]
         self.energy=NN_predict[0][0]
-        return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,AVG_ERR,ERROR_mols,EGCMlist 
+        return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,AVG_ERR,ERROR_mols,EGCMlist,'' 
 
     def update_crd(self):
         pass

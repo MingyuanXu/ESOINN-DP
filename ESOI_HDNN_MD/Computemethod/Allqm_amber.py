@@ -144,7 +144,7 @@ class FullQM_System_Amber:
         else:
             ERROR_mols=[]
             EGCMlist=[]
-        return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,AVG_ERR,ERROR_mols,EGCMlist 
+        return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,AVG_ERR,ERROR_mols,EGCMlist,"" 
     def update_crd(self):
         pass
 
