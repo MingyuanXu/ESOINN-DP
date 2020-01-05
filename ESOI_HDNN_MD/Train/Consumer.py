@@ -39,11 +39,13 @@ def consumer(Queue):
                 edgemollist.append(Newaddedset.mols[i])
             if signalmask[i]=='Normal':
                 normalmollist.append(Newaddedset.mols[i])
+        print ("Select Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist))
         if len(Newaddedset.mols)>1000:
             edgemollist=random.sample(edgemollist,min(600,len(edgemollist)))
             noisemollist=random.sample(noisemollist,min(200,len(noisemollist)))
             normalmollist=random.sample(normalmollist,min(20,len(normalmollist)))
             Newaddedset.mols=edgemollist+noisemollist+normalmollist 
+        print ("After selecting Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist))
     else:
         if len(Newaddedset.mols)>1000:
             Newaddedset.mols=random.sample(Newaddedset.mols,1000)

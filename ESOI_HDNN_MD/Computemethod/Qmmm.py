@@ -33,8 +33,8 @@ class QMMM_FragSystem:
         self.path=Path
         self.Inpath=Inpath
         self.qmcutoff=GPARAMS.Compute_setting.Qmradius
-        if GPARAMS.Esoinn_setting.Loadrespnet ==True:
-            self.ifresp=True 
+        if GPARAMS.Esoinn_setting.Loadrespnet ==True and 'IFRESP' in Strucdict.keys():
+            self.ifresp=Strucdict['IFRESP']
         else:
             self.ifresp=False
         self.QMparmdict={}
