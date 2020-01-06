@@ -42,10 +42,12 @@ def consumer(Queue):
         print ("Select Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist))
         if len(Newaddedset.mols)>1000:
             edgemollist=random.sample(edgemollist,min(600,len(edgemollist)))
-            noisemollist=random.sample(noisemollist,min(200,len(noisemollist)))
-            normalmollist=random.sample(normalmollist,min(20,len(normalmollist)))
-            Newaddedset.mols=edgemollist+noisemollist+normalmollist 
-        print ("After selecting Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist))
+            noisemollist_tmp=random.sample(noisemollist,min(200,len(noisemollist)))
+            normalmollist=random.sample(normalmollist,min(200,len(normalmollist)))
+            allnum=len(noisemollist_tmp)+len(edgemollist)+len(normalmollist)
+            othermollist+=random.sample(Newaddedset.mols,max(100,allnum))
+            Newaddedset.mols=edgemollist+noisemollist_tmp+normalmollist+othermollist  
+        print ("After selecting Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist),len(othermollist))
     else:
         if len(Newaddedset.mols)>1000:
             Newaddedset.mols=random.sample(Newaddedset.mols,1000)
@@ -67,12 +69,18 @@ def calculator(para):
     if 'energy' not in mol.properties.keys():
         if GPARAMS.Compute_setting.Traininglevel=="DFTB3":
             mol.Write_DFTB_input(para_path,False,input_path)
-            flag=mol.Cal_DFTB(input_path)
-            mol.CalculateAtomization(Atomizationlevel)
+            try:
+                flag=mol.Cal_DFTB(input_path)
+                mol.CalculateAtomization(Atomizationlevel)
+            except:
+                flag=False
         else:
             mol.Write_Gaussian_input(keywords,input_path,ncores,600)
-            flag=mol.Cal_Gaussian(input_path)
-            mol.CalculateAtomization(Atomizationlevel)
+            try:
+                flag=mol.Cal_Gaussian(input_path)
+                mol.CalculateAtomization(Atomizationlevel)
+            except:
+                flag=False
     return (flag,mol)
 
 def parallel_caljob(MSetname,manager,ctrlfile):

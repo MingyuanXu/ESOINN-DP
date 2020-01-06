@@ -7,6 +7,7 @@ from ..Comparm import *
 from math import *
 import paramiko as pko     
 from .Jobqueue import lsfgpustr,pbsgpustr 
+import time 
 def trainer(DataQueue,GPUQueue=None,jsonfile=''):
     from   TensorMol import MSet,PARAMS,MolDigester
     import os
@@ -15,6 +16,7 @@ def trainer(DataQueue,GPUQueue=None,jsonfile=''):
         GPUid=GPUQueue.get()
         os.environ["CUDA_VISIBLE_DEVICES"]=str(GPUid)
     TMMSET,ider,maxsteps=DataQueue.get()
+    time.sleep(random.randint(1,60))
     print ("OOOOOOOOOOOOXXXXXXXXXXXXXXXXXXXXXOOOOOOOOOOOOOOOOO")
     print ("Name:",TMMSET.name,ider)
     if len(TMMSET.mols)< GPARAMS.Neuralnetwork_setting.Batchsize*20 :
@@ -190,6 +192,7 @@ def respnet_train(MSetname,GPUQueue,jsonfile):
         elif GPARAMS.Train_setting.gpuqueuetype=="PBS":
             stdin,stdout,stderr=ssh.exec_command("cd %s && qsub <gpu.run"%remotepath)
         flag=True 
+
         while flag:
             stdin,stdout,stderr=ssh.exec_command("cd %s&& ls"%remotepath)
             tmpstr=stdout.read().decode()

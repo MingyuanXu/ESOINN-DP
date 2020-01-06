@@ -56,7 +56,7 @@ class Molnew:
         file.close()
         return 
     def Cal_Gaussian(self,inpath='./'):
-        #os.system('cd '+inpath+' && g16 '+self.name+'_ef.com && g16 '+self.name+'_q.com && rm '+self.name+'*.chk && cd - >/dev/null')
+        os.system('cd '+inpath+' && g16 '+self.name+'_ef.com && g16 '+self.name+'_q.com && rm '+self.name+'*.chk && cd - >/dev/null')
         flag1=self.Update_from_Gaulog(inpath)
         flag2,respcharge=cal_resp_charge(inpath+self.name+'_q.log')
         flag=(flag1 and flag2)
