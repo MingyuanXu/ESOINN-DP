@@ -6,7 +6,7 @@ from ..Neuralnetwork import *
 from ..Comparm import *
 from math import *
 import paramiko as pko     
-from .Jobqueue import lsfgpustr 
+from .Jobqueue import lsfgpustr,pbsgpustr 
 def trainer(DataQueue,GPUQueue=None,jsonfile=''):
     from   TensorMol import MSet,PARAMS,MolDigester
     import os
@@ -68,33 +68,41 @@ def trainer(DataQueue,GPUQueue=None,jsonfile=''):
         stdin,stdout,stderr=ssh.exec_command('mkdir -p %s'%(remotepath+'/datasets'))
         print (stdout.read().decode())
         sftp.put(srcpath,remotepath+'/datasets/%s.pdb'%(MSetname))
+        shellrun=open('gpu%d.run'%ider,'w')
         if GPARAMS.Train_setting.gpuqueuetype=='LSF':
-            lsfrun=open('lsf_gpu%d.run'%ider,'w')
-            lsfrun.write(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Cluster%d'%ider))
+            shellrun.write(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Cluster%d'%ider))
             print(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Cluster%d'%ider),TMMSET.name,ider)
-            lsfrun.write(GPARAMS.Train_setting.helpgpuenv)
-            strucstr="_".join([str(i) for i in evostruc])
-            lsfrun.write('TrainNN.py -i %s -d %s -s %s -t bp\n'%(jsonfile,MSetname,strucstr))
-            lsfrun.write('touch finished\n')
-            lsfrun.close()
-            sftp.put(localpath=workpath+'/lsf_gpu%d.run'%ider,remotepath=remotepath+'/lsf_gpu.run')
-            sftp.put(localpath=workpath+'/%s'%jsonfile,remotepath=remotepath+'/%s'%jsonfile)
-            #stdin,stdout,stderr=ssh.exec_command("cd %s && bsub <lsf_gpu.run"%remotepath)
-            flag=True 
-            while flag:
-                stdin,stdout,stderr=ssh.exec_command("cd %s&& ls"%remotepath)
-                tmpstr=stdout.read().decode()
-                flag=not ('finished' in tmpstr)
-            stdin,stdout,stderr=ssh.exec_command("cd %s && mv %s/Cluster*.record networks/Cluster%d.record"%(remotepath,remotepath,ider))
-            print (stdout.read().decode())
-            stdin,stdout,stderr=ssh.exec_command("cd %s/networks && tar zcvf Cluster%d.tar.gz *"%(remotepath,ider))
-            print (stdout.read().decode())
-            sftp.get(localpath=workpath+'/networks/Cluster%d.tar.gz'%ider,\
-                    remotepath=remotepath+'/networks/Cluster%d.tar.gz'%ider)
-            os.system('cd ./networks && tar zxvf Cluster%d.tar.gz && mv *.record ../%s/Stage%d/'%(ider,GPARAMS.Compute_setting.Traininglevel,GPARAMS.Train_setting.Trainstage))
-            sftp.get(localpath=workpath+'/Cluster%d_struc.record'%ider,remotepath=remotepath+'/NNstruc.record')
-            os.system('cat Cluster%d_struc.record >> NNstruc.record'%ider)
-            os.system('rm lsf_*.run Cluster*_struc.record')
+        elif GPARAMS.Train_setting.gpuqueuetype=='PBS':
+            shellrun.write(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Cluster%d'%ider))
+            print(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Cluster%d'%ider),TMMSET.name,ider)
+        shellrun.write(GPARAMS.Train_setting.helpgpuenv)
+
+        strucstr="_".join([str(i) for i in evostruc])
+        shellrun.write('TrainNN.py -i %s -d %s -s %s -t bp\n'%(jsonfile,MSetname,strucstr))
+        shellrun.write('touch finished\n')
+        shellrun.close()
+        sftp.put(localpath=workpath+'/gpu%d.run'%ider,remotepath=remotepath+'/gpu.run')
+        sftp.put(localpath=workpath+'/%s'%jsonfile,remotepath=remotepath+'/%s'%jsonfile)
+        if GPARAMS.Train_setting.gpuqueuetype=="LSF":
+            stdin,stdout,stderr=ssh.exec_command("cd %s && bsub <gpu.run"%remotepath)
+        if GPARAMS.Train_setting.gpuqueuetype=="PBS":
+            stdin,stdout,stderr=ssh.exec_command("cd %s && qsub <gpu.run"%remotepath)
+        flag=True 
+        while flag:
+            stdin,stdout,stderr=ssh.exec_command("cd %s&& ls"%remotepath)
+            tmpstr=stdout.read().decode()
+            flag=not ('finished' in tmpstr)
+        stdin,stdout,stderr=ssh.exec_command("cd %s && mv %s/Cluster*.record networks/Cluster%d.record"%(remotepath,remotepath,ider))
+        print (stdout.read().decode())
+        stdin,stdout,stderr=ssh.exec_command("cd %s/networks && tar zcvf Cluster%d.tar.gz *"%(remotepath,ider))
+        print (stdout.read().decode())
+        sftp.get(localpath=workpath+'/networks/Cluster%d.tar.gz'%ider,\
+                remotepath=remotepath+'/networks/Cluster%d.tar.gz'%ider)
+        os.system('cd ./networks && tar zxvf Cluster%d.tar.gz && mv *.record ../%s/Stage%d/'%(ider,GPARAMS.Compute_setting.Traininglevel,GPARAMS.Train_setting.Trainstage))
+        sftp.get(localpath=workpath+'/Cluster%d_struc.record'%ider,remotepath=remotepath+'/NNstruc.record')
+        os.system('cat Cluster%d_struc.record >> NNstruc.record'%ider)
+        os.system('rm gpu*.run Cluster*_struc.record')
+
 def get_best_struc(candidate_num):
     score=np.zeros(len(GPARAMS.Neuralnetwork_setting.NNstrucselect))
     floss=[i[2][0] for i in GPARAMS.Neuralnetwork_setting.NNstrucselect]
@@ -160,31 +168,39 @@ def respnet_train(MSetname,GPUQueue,jsonfile):
         stdin,stdout,stderr=ssh.exec_command('mkdir -p %s'%(remotepath+'/datasets'))
         print (stdout.read().decode())
         sftp.put(srcpath,remotepath+'/datasets/%s.pdb'%(MSetname))
+        shellrun=open('gpu_resp.run','w')
         if GPARAMS.Train_setting.gpuqueuetype=='LSF':
-            lsfrun=open('lsf_gpu_resp.run','w')
-            lsfrun.write(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Resp'))
+            shellrun.write(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Resp'))
             print(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Resp'),MSetname)
-            lsfrun.write(GPARAMS.Train_setting.helpgpuenv)
-            strucstr="_".join([str(i) for i in evostruc])
-            lsfrun.write('TrainNN.py -i %s -d %s -s %s -t bpresp \n'%(jsonfile,MSetname,strucstr))
-            lsfrun.write('touch finished\n')
-            lsfrun.close()
-            sftp.put(localpath=workpath+'/lsf_gpu_resp.run',remotepath=remotepath+'/lsf_gpu.run')
-            sftp.put(localpath=workpath+'/%s'%jsonfile,remotepath=remotepath+'/%s'%jsonfile)
-            #stdin,stdout,stderr=ssh.exec_command("cd %s && bsub <lsf_gpu.run"%remotepath)
-            flag=True 
-            while flag:
-                stdin,stdout,stderr=ssh.exec_command("cd %s&& ls"%remotepath)
-                tmpstr=stdout.read().decode()
-                flag=not ('finished' in tmpstr)
-                print (tmpstr,remotepath)
-            stdin,stdout,stderr=ssh.exec_command("cd %s && mv %s/%s/*.record networks/resp.record"%(remotepath,remotepath,GPARAMS.Compute_setting.Traininglevel))
-            print (stdout.read().decode())
-            stdin,stdout,stderr=ssh.exec_command("cd %s/networks && tar zcvf resp.tar.gz * && mv resp.tar.gz .."%remotepath)
-            print (stdout.read().decode())
-            sftp.get(localpath=workpath+'/networks/resp.tar.gz',\
-                    remotepath=remotepath+'/resp.tar.gz')
-            os.system('cd ./networks && tar zxvf resp.tar.gz && mv *.record ../%s/Stage%d/ && rm resp.tar.gz'%(GPARAMS.Compute_setting.Traininglevel,GPARAMS.Train_setting.Trainstage))
-            os.system('rm lsf_*.run')
+            shellrun.write(GPARAMS.Train_setting.helpgpuenv)
+        elif GPARAMS.Train_setting.gpuqueuetype=="PBS":
+            shellrun=open('gpu_resp.run','w')
+            shellrun.write(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Resp'))
+            print(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Resp'),MSetname)
+            shellrun.write(GPARAMS.Train_setting.helpgpuenv)
+        strucstr="_".join([str(i) for i in evostruc])
+        shellrun.write('TrainNN.py -i %s -d %s -s %s -t bpresp \n'%(jsonfile,MSetname,strucstr))
+        shellrun.write('touch finished\n')
+        shellrun.close()
+
+        sftp.put(localpath=workpath+'/gpu_resp.run',remotepath=remotepath+'/gpu.run')
+        sftp.put(localpath=workpath+'/%s'%jsonfile,remotepath=remotepath+'/%s'%jsonfile)
+        if GPARAMS.Train_setting.gpuqueuetype=='LSF':
+            stdin,stdout,stderr=ssh.exec_command("cd %s && bsub <gpu.run"%remotepath)
+        elif GPARAMS.Train_setting.gpuqueuetype=="PBS":
+            stdin,stdout,stderr=ssh.exec_command("cd %s && qsub <gpu.run"%remotepath)
+        flag=True 
+        while flag:
+            stdin,stdout,stderr=ssh.exec_command("cd %s&& ls"%remotepath)
+            tmpstr=stdout.read().decode()
+            flag=not ('finished' in tmpstr)
+        stdin,stdout,stderr=ssh.exec_command("cd %s && mv %s/%s/*.record networks/resp.record"%(remotepath,remotepath,GPARAMS.Compute_setting.Traininglevel))
+        print (stdout.read().decode())
+        stdin,stdout,stderr=ssh.exec_command("cd %s/networks && tar zcvf resp.tar.gz * && mv resp.tar.gz .."%remotepath)
+        print (stdout.read().decode())
+        sftp.get(localpath=workpath+'/networks/resp.tar.gz',\
+                remotepath=remotepath+'/resp.tar.gz')
+        os.system('cd ./networks && tar zxvf resp.tar.gz && mv *.record ../%s/Stage%d/ && rm resp.tar.gz'%(GPARAMS.Compute_setting.Traininglevel,GPARAMS.Train_setting.Trainstage))
+        os.system('rm gpu_*.run')
     return 
 
