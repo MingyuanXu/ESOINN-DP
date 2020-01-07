@@ -34,7 +34,7 @@ if __name__=="__main__":
                        GPARAMS.Train_setting.Stagenum+GPARAMS.Train_setting.Trainstage):
         LoadModel()
         #==Main MD process with productor and Consumer model==
-        """
+
         ProductPool=Pool(len(GPARAMS.Compute_setting.Gpulist))
         Resultlist=[]
         for i in range(len(GPARAMS.System_setting)):
@@ -51,19 +51,20 @@ if __name__=="__main__":
         QMQueue.put(None)
         Consumer_Process.join()
         #==parallel Mol caclulator==
+
         parallel_caljob("Stage_%d_Newadded"%GPARAMS.Train_setting.Trainstage,manager,ctrlfile=jsonfile)
         #==Esoi-layer Training process==
         Added_MSet("Stage_%d_Newadded"%GPARAMS.Train_setting.Trainstage)
         esoinner()         
-        """
         LoadModel(ifhdnn=False)
         print ("New ESOINN model has %d clusters"%GPARAMS.Esoinn_setting.Model.class_id)
         os.system("cp *.ESOINN Sfactor.in ./networks")
+        if os.path.exists(GPARAMS.Compute_setting.Traininglevel):
+            os.system("mkdir %s/Stage%d"%(GPARAMS.Compute_setting.Traininglevel,GPARAMS.Train_setting.Trainstage))
         Dataer_Process=Process(target=dataer,args=(DataQueue,))
         Dataer_Process.start()
-        
         if GPARAMS.Train_setting.Ifgpuwithhelp==True:
-            TrainerPool=Pool(max(GPARAMS.Esoinn_setting.Model.class_id+1,GPARAMS.Train_setting.Modelnumperpoint))
+            TrainerPool=Pool(max(GPARAMS.Esoinn_setting.Model.class_id+1,GPARAMS.Train_setting.Modelnumperpoint+1))
         else:
             TrainerPool=Pool(len(GPARAMS.Compute_setting.Gpulist))
         Resultlist=[]
@@ -71,22 +72,20 @@ if __name__=="__main__":
             print ("Create HDNN subnet for class %d"%i)
             result=TrainerPool.apply_async(trainer,(DataQueue,GPUQueue,jsonfile))
             Resultlist.append(result)
-        result=TrainerPool.apply_async(respnet_train,("HF_resp",GPUQueue))
+        result=TrainerPool.apply_async(respnet_train,("HF_resp",GPUQueue,jsonfile))
         Resultlist.append(result)
         TrainerPool.close()
-        for i in range(max(GPARAMS.Esoinn_setting.Model.class_id,GPARAMS.Train_setting.Modelnumperpoint)):
+        for i in range(max(GPARAMS.Esoinn_setting.Model.class_id+1,GPARAMS.Train_setting.Modelnumperpoint+1)):
             tmp=Resultlist[i].get()
             print (tmp)
         TrainerPool.terminate()
         TrainerPool.join()
         Dataer_Process.join()
-            
         if os.path.exists(GPARAMS.Compute_setting.Traininglevel):
-            os.system("mkdir %s/Stage%d"%(GPARAMS.Compute_setting.Traininglevel,GPARAMS.Train_setting.Trainstage))
             os.system("mv %s/*.record %s/Stage%d"%(GPARAMS.Compute_setting.Traininglevel,\
                                                    GPARAMS.Compute_setting.Traininglevel,\
                                                    GPARAMS.Train_setting.Trainstage)) 
         for i in range(len(GPARAMS.System_setting)):
             GPARAMS.MD_setting[i].Stageindex+=1
         GPARAMS.Train_setting.Trainstage+=1
-
+        
