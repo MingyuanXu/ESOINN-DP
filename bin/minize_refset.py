@@ -30,15 +30,28 @@ if __name__=="__main__":
     UpdateGPARAMS(jsonfile)
     for i in GPARAMS.Compute_setting.Gpulist:
         GPUQueue.put(i)
+    bigset=MSet('Bigset')
+    for name in GPARAMS.DataQueue_setting.Inputdatasetlist:
+        tmpset=MSet(name)
+        tmpset.Load()
+        bigset.mols+=tmpset.mols
+    for i in range(GPARAMS.Compute_setting.Checkernum):
+        checker_set=MSet('Bigset_%d'%i)
+        checker_set.mols=[bigset.mols[j] for j in range(1,len(bigset)+1) if j%i==0]
+        checker_set.mols=random.sample(checker_set.mols,min(GPARAMS.Compute_setting.Checkstep,len(checker_set.mols)))
+        checker_set.Save()
+        
     for stage in range(GPARAMS.Train_setting.Trainstage,\
                        GPARAMS.Train_setting.Stagenum+GPARAMS.Train_setting.Trainstage):
         LoadModel()
         #==Main MD process with productor and Consumer model==
-
         ProductPool=Pool(len(GPARAMS.Compute_setting.Gpulist))
         Resultlist=[]
         for i in range(len(GPARAMS.System_setting)):
             result=ProductPool.apply_async(productor,(i,QMQueue,GPUQueue))
+            Resultlist.append(result)
+        for i in range(len(GPARAMS.Compute_setting.Checkernum)):
+            result=ProductPool.apply_async(checker,(i,checker,GPUQueue))
             Resultlist.append(result)
         ProductPool.close()
         for i in range(len(GPARAMS.System_setting)):

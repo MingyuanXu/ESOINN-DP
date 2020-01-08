@@ -3,7 +3,7 @@
 from ..Base import *
 
 def Cal_DFTB_EFQ(NNSet,parapath,inpath):
-    NN_predict=[];ERROR_mols=[]
+    NN_predict=[];ERROR_mols=[];ERROR_strlist=[]
     for i,imol in enumerate(NNSet.mols):
         NNSet.mols[i].Write_DFTB_input(parapath,False,inpath)
         NNSet.mols[i].Cal_DFTB(inpath)
@@ -14,10 +14,11 @@ def Cal_DFTB_EFQ(NNSet,parapath,inpath):
         ERROR_mols.append([NNSet.mols[i],999])
         method='DFTB'
         NN_predict.append([E_avg,F_avg,D_avg,Q_i])
-    return NN_predict,ERROR_mols,0,'',method
+        ERROR_strlist.append('')
+    return NN_predict,ERROR_mols,0,ERROR_strlist,method
 
 def Cal_Gaussian_EFQ(NNSet,inpath,keywords,nproc=14,mem=600):
-    NN_predict=[];ERROR_mols=[]
+    NN_predict=[];ERROR_mols=[];ERROR_strlist=[]
     for i in range(len(NNSet.mols)):
         NNSet.mols[i].Write_Gaussian_input(keywords,inpath,nproc,mem)
         NNSet.mols[i].Cal_Gaussian(inpath)
@@ -29,5 +30,6 @@ def Cal_Gaussian_EFQ(NNSet,inpath,keywords,nproc=14,mem=600):
         ERROR_mols.append([NNSet.mols[i],999])
         method="Gaussian"
         NN_predict.append([E_avg,F_avg,D_avg,Q_i])
-    return NN_predict,ERROR_mols,0,'',method 
+        ERROR_strlist.append('')
+    return NN_predict,ERROR_mols,0,ERROR_strlist,method 
 

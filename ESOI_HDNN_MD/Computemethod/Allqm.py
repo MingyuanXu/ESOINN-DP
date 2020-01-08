@@ -64,20 +64,23 @@ class FullQM_System:
         QMSet.mols.append(QMMol)
         QMSet.mols[-1].name="Stage_%d_MDStep_%d_%d"%(GPARAMS.Train_setting.Trainstage,self.step,len(QMSet.mols))
         if self.Theroylevel=="NN":
-            NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
+            NN_predict,ERROR_mols,ERR_List,ERROR_str,self.stepmethod=\
                     Cal_NN_EFQ(QMSet,inpath=self.Inpath)
+            maxerr=np.max(ERR_List)
 
         elif self.Theroylevel=="DFTB3":
-            NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
+            NN_predict,ERROR_mols,ERR_List,ERROR_str,self.stepmethod=\
                     Cal_DFTB_EFQ(QMSet,\
                                 GPARAMS.Software_setting.Dftbparapath,\
                                 inpath=self.Inpath)
+            maxerr=np.max(ERR_List)
 
         elif self.Theroylevel=="Semiqm":
-            NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
+            NN_predict,ERROR_mols,ERR_List,ERROR_str,self.stepmethod=\
                     Cal_Gaussian_EFQ(QMSet,self.Inpath,\
                                      GPARAMS.Compute_setting.Gaussiankeywords,\
                                      GPARAMS.Compute_setting.Ncoresperthreads)
+            maxerr=np.max(ERR_List)
 
         """
         if self.level=='REACX':
@@ -92,12 +95,12 @@ class FullQM_System:
             self.err_step=self.step
         else:
             ERROR_mols=[]
-        self.recorderr=AVG_ERR
+        self.recorderr=maxerr 
         self.ERROR_file.write('Step: %d  '%self.step)
         self.ERROR_file.write(ERROR_str) 
         self.force=NN_predict[0][1]
         self.energy=NN_predict[0][0]
-        return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,AVG_ERR,ERROR_mols,EGCMlist,'' 
+        return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,maxerr,ERROR_mols,EGCMlist,'' 
 
     def update_crd(self):
         pass

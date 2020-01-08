@@ -17,7 +17,7 @@ def consumer(Queue):
         if ERROR_mols==None:
             break
         for i in range(len(ERROR_mols)):
-            ERROR_mols[i][0].name="Stage_%d_Mol_%d"%(GPARAMS.Train_setting.Trainstage,num)
+            ERROR_mols[i][0].name="Stage_%d_Mol_%d_%d"%(GPARAMS.Train_setting.Trainstage,num,i)
             Newaddedset.mols.append(ERROR_mols[i][0])
         num+=1
         if num%2000==0:
@@ -96,7 +96,10 @@ def parallel_caljob(MSetname,manager,ctrlfile):
     mols=TMPSet.mols
     print ('Nmols in Newaddedset:',len(mols))
     if GPARAMS.Train_setting.Ifcpuwithhelp==True:
-        nstage=math.ceil(len(mols)/GPARAMS.Train_setting.framenumperjob)
+        dftpercpu=math.ceil(len(mols)/GPARAMS.Train_setting.helpcpunum)
+        if dftpercpu<GPARAMS.Train_setting.framenumperjob:
+            dftpercpu=GPARAMS.Train_setting.framenumperjob 
+        nstage=math.ceil(len(mols)/dftpercpu)
         print (nstage)
         submollist=[mols[i*GPARAMS.Train_setting.framenumperjob:(i+1)*GPARAMS.Train_setting.framenumperjob] for i in range(nstage)]
         subMSetlist=[MSet(MSetname+'_part%d'%i) for i in range(nstage)]
@@ -140,7 +143,6 @@ def parallel_caljob(MSetname,manager,ctrlfile):
                 remotepath=GPARAMS.Train_setting.helpcpupath+'/'+MSetname+'/part%d'%i
                 stdin,stdout,stderr=ssh.exec_command("cd %s && ls "%(remotepath))
                 tmpstr=stdout.read().decode()
-                print ('finished' in tmpstr)
                 if 'finished' in tmpstr:
                     subMSetresult[i]=True
             print (t,subMSetresult)
@@ -160,7 +162,7 @@ def parallel_caljob(MSetname,manager,ctrlfile):
     else:
         inpathlist=[input_path]*len(mols)
         parapathlist=[para_path]*len(mols)
-        corenumperjob=[GPARAMS.Compute_setting.Ncoresperthreads]*len(mols)
+        corenumperjob=[math.ceil(GPARAMS.Compute_setting.Ncoresperthreads/GPARAMS.Compute_setting.Consumerprocessnum)]*len(mols)
         keywordslist=[GPARAMS.Compute_setting.Gaussiankeywords]*len(mols)
         Atomizationlist=[GPARAMS.Compute_setting.Atomizationlevel]*len(mols)
         inputlist=list(zip(mols,inpathlist,parapathlist,keywordslist,corenumperjob,Atomizationlist))

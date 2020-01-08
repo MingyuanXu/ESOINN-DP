@@ -31,6 +31,7 @@ class Esoinn_setting:
         self.scalemin=None
         self.Mixrate=0.1
         self.Model=None 
+        self.Ifresp=False
         return
     def Update(self):
         self.Maxnum=np.sum(self.Amax)
@@ -57,6 +58,8 @@ class Compute_setting:
         self.Gaussiankeywords=""
         self.Atomizationlevel=""
         self.Consumerprocessnum=1
+        self.Checkernum=0
+        self.Checkerstep=0
         return
     def Update(self):
         if not os.path.exists(self.Traininglevel):
@@ -153,6 +156,8 @@ class Train_setting:
         self.helpgpupath=''
         self.helpcpuenv=''
         self.helpgpuenv=''
+        self.helpcpunum=99
+        self.helpgpunum=99
         self.cpuqueuetype=''
         self.gpuqueuetype=''
         self.cpuqueuename=''

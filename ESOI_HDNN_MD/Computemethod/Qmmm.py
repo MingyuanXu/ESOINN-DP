@@ -370,22 +370,26 @@ class QMMM_FragSystem:
         QMSet.mols[-1].name="%s_stage_%d_MDStep_%d_%d"%(self.name,GPARAMS.Train_setting.Trainstage,self.step,len(QMSet.mols))
         if self.Theroylevel=='NN':
             try:
-                NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
+                NN_predict,ERROR_mols,ERR_List,ERROR_strlist,self.stepmethod=\
                     Cal_NN_EFQ(QMSet,inpath=self.Inpath)
+                maxerr=np.max(np.array(ERR_List))
             except:
-                NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
+                NN_predict,ERROR_mols,ERR_List,ERROR_strlist,self.stepmethod=\
                     Cal_Gaussian_EFQ(QMSet,self.Inpath,GPARAMS.Compute_setting.Gaussiankeywords,GPARAMS.Compute_setting.Ncoresperthreads)
+                maxerr=np.max(np.array(ERR_List))
 
             
         if self.Theroylevel=='DFTB3':
-            NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
+            NN_predict,ERROR_mols,ERR_List,ERROR_strlist,self.stepmethod=\
                     Cal_DFTB_EFQ(QMSet,\
                                  GPARAMS.Software_setting.Dftbparapath,\
                                  inpath=self.Inpath)
+            maxerr=np.max(np.array(ERR_List))
 
         if self.Theroylevel=="Semiqm" or self.Theroylevel=="DFT":
-            NN_predict,ERROR_mols,AVG_ERR,ERROR_str,self.stepmethod=\
+            NN_predict,ERROR_mols,ERR_List,ERROR_strlist,self.stepmethod=\
                     Cal_Gaussian_EFQ(QMSet,self.Inpath,GPARAMS.Compute_setting.Gaussiankeywords,GPARAMS.Compute_setting.Ncoresperthreads)
+            maxerr=np.max(np.array(ERR_List))
 
         if self.stepmethod=="NN":
             if len(ERROR_mols)>0 and self.step-self.record_err_step>5:
@@ -394,7 +398,7 @@ class QMMM_FragSystem:
                 self.ERROR_mols=[]
                 self.EGCMlist=[]
             
-        self.recorderr=AVG_ERR
+        self.recorderr=maxerr
         self.QMarea_QMforce=NN_predict[0][1]
         self.QMarea_QMenergy=NN_predict[0][0]
         if self.ifresp==True:
@@ -491,7 +495,7 @@ class QMMM_FragSystem:
         #            print (realpt,QMlist_withg[i].aname,self.coords[realpt],self.force[realpt],self.FullMM_force[realpt],self.QMarea_MMforce[num],self.QMarea_QMforce[i])
         #            num+=1
         self.step+=1
-        return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,AVG_ERR,ERROR_mols,EGCMlist,chargestr 
+        return self.force/627.51*JOULEPERHARTREE,self.energy/627.51,maxerr,ERROR_mols,EGCMlist,chargestr 
 
     def update_crd(self):
         for i in range(self.natom):

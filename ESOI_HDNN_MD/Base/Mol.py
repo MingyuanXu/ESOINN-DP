@@ -22,7 +22,11 @@ class Molnew:
         self.belongto=[]
         self.spin=1
     def Write_Gaussian_input(self,keywords,inpath,nproc=14,mem=600,spin=1):
-        file=open(inpath+self.name+'_ef.com','w')
+        if GPARAMS.Esoinn_setting.Ifresp==True:
+            file=open(inpath+self.name+'_ef.com','w')
+        else:
+            file=open(inpath+self.name+'.com','w')
+
         file.write('%'+'nproc=%d\n'%nproc)
         file.write('%mem='+'%dMW\n'%mem)
         file.write('%'+'chk=%s_ef.chk\n'%self.name)
@@ -38,36 +42,49 @@ class Molnew:
             file.write('%s %.3f %.3f %.3f\n'%(Element_Table[self.atoms[i]],self.coords[i][0],self.coords[i][1],self.coords[i][2]))
         file.write('\n')
         file.close()
-        file=open(inpath+self.name+'_q.com','w')
-        file.write('%'+'nproc=%d\n'%nproc)
-        file.write('%mem='+'%dMW\n'%mem)
-        file.write('%'+'chk=%s_q.chk\n'%self.name)
-        file.write("# HF/6-31g* SCF=Tight force nosymm Pop=MK IOp(6/33=2,6/41=10,6/42=17)\n")
-        file.write('\n')
-        try: 
-            file.write('MODEL ERROR: %f'%self.properties['ERR'])
-        except:
-            file.write('Hello world\n')
-        file.write('\n')
-        file.write('%d %d\n'%(self.totalcharge,self.spin))
-        for i in range(len(self.atoms)):
-            file.write('%s %.3f %.3f %.3f\n'%(Element_Table[self.atoms[i]],self.coords[i][0],self.coords[i][1],self.coords[i][2]))
-        file.write('\n')
-        file.close()
+        if GPARAMS.Esoinn_setting.Ifresp==True:
+            file=open(inpath+self.name+'_q.com','w')
+            file.write('%'+'nproc=%d\n'%nproc)
+            file.write('%mem='+'%dMW\n'%mem)
+            file.write('%'+'chk=%s_q.chk\n'%self.name)
+            file.write("# HF/6-31g* SCF=Tight force nosymm Pop=MK IOp(6/33=2,6/41=10,6/42=17)\n")
+            file.write('\n')
+            try: 
+                file.write('MODEL ERROR: %f'%self.properties['ERR'])
+            except:
+                file.write('Hello world\n')
+            file.write('\n')
+            file.write('%d %d\n'%(self.totalcharge,self.spin))
+            for i in range(len(self.atoms)):
+                file.write('%s %.3f %.3f %.3f\n'%(Element_Table[self.atoms[i]],self.coords[i][0],self.coords[i][1],self.coords[i][2]))
+            file.write('\n')
+            file.close()
         return 
     def Cal_Gaussian(self,inpath='./'):
-        os.system('cd '+inpath+' && g16 '+self.name+'_ef.com && g16 '+self.name+'_q.com && rm '+self.name+'*.chk && cd - >/dev/null')
+        if GPARAMS.Esoinn_setting.Ifresp==True:
+            os.system('cd '+inpath+' && g16 '+self.name+'_ef.com && g16 '+self.name+'_q.com && rm '+self.name+'*.chk && cd - >/dev/null')
+        else:
+            os.system('cd '+inpath+' && g16 '+self.name+'.com && rm '+self.name+'*.chk && cd - >/dev/null')
+
         flag1=self.Update_from_Gaulog(inpath)
-        flag2,respcharge=cal_resp_charge(inpath+self.name+'_q.log')
+        if GPARAMS.Esoinn_setting.Ifresp==True:
+            flag2,respcharge=cal_resp_charge(inpath+self.name+'_q.log')
+        else:
+            flag2=True 
         flag=(flag1 and flag2)
         print (flag1,flag2,flag,self)
-        if flag==True: 
+
+        if flag==True and GPARAMS.Esoinn_setting.Ifresp==True: 
             self.properties['resp_charge']=respcharge 
         #if flag==True:
         #    self.CalculateAtomization(GPARAMS.Compute_setting.Atomizationlevel)
         return flag 
     def Update_from_Gaulog(self,inpath='./'):
-        file=open(inpath+self.name+'_ef.log','r') 
+        if GPARAMS.Esoinn_setting.Ifresp==True:
+            file=open(inpath+self.name+'_ef.log','r') 
+        else:
+            file=open(inpath+self.name+'.log','r') 
+
         line=file.readline()
         natom=0
         atoms=[];coords=[];charge=[];force=[];dipole=[];energy=0

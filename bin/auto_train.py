@@ -64,7 +64,10 @@ if __name__=="__main__":
         Dataer_Process=Process(target=dataer,args=(DataQueue,))
         Dataer_Process.start()
         if GPARAMS.Train_setting.Ifgpuwithhelp==True:
-            TrainerPool=Pool(max(GPARAMS.Esoinn_setting.Model.class_id+1,GPARAMS.Train_setting.Modelnumperpoint+1))
+            TrainerPool=Pool(min(\
+                                max(GPARAMS.Esoinn_setting.Model.class_id+1,GPARAMS.Train_setting.Modelnumperpoint+1),\
+                                GPARAMS.Train_setting.helpgpunum\
+                                ))
         else:
             TrainerPool=Pool(len(GPARAMS.Compute_setting.Gpulist))
         Resultlist=[]
