@@ -50,7 +50,6 @@ timelist=[[[] for j in range(GPARAMS.Train_setting.Trainstage)] for i in range(l
 graphlist=[] 
 modeldev=[[] for j in range(GPARAMS.Train_setting.Trainstage)]
 for i in range(len(GPARAMS.MD_setting)):
-    
     timemask=0
     moddevdatlist=[]
     tempdatlist=[]

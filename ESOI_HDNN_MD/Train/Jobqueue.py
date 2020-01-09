@@ -8,6 +8,14 @@ pbscpustr="""
 #PBS -q small
 #PBS -N %s 
 """
+pbsgpustr="""
+#!/bin/bash -l
+#PBS -l nodes=1:ppn=%d:gpus=1
+#PBS -l walltime=120:00:00
+#PBS -j oe
+#PBS -q %s
+#PBS -N %s 
+"""
 
 lsfgpustr="""
 #!/bin/sh

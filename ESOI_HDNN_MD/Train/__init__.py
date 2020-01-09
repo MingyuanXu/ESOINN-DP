@@ -6,3 +6,4 @@ from .Esoinner import *
 from .Trainer import * 
 from .Dataer import *
 from .Jobqueue import * 
+from .Checker import *

@@ -17,7 +17,6 @@ TMPset.Load()
 mollist=[]
 for i in range(len(TMPset.mols)):
     TMPset.mols[i].properties={}
-    print ("OOOOOOOOOOOOOOO")
     para=[TMPset.mols[i],'./','./',GPARAMS.Compute_setting.Gaussiankeywords,GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Atomizationlevel]
     flag,mol=calculator(para)
     if flag==True:

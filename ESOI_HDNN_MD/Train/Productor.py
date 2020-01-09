@@ -23,8 +23,9 @@ def productor(GPARAMS_index=0,Queue=None,GPUQueue=None):
                 os.system("mkdir -p %s"%MDpath)
             os.system("cp "+prmfile+' '+MDpath+prmfile)
             if GPARAMS.MD_setting[GPARAMS_index].Stageindex!=0:
-                restartstruc=GPARAMS.MD_setting[GPARAMS_index].Name+\
-                        '_%d.rst7'%(GPARAMS.MD_setting[GPARAMS_index].Stageindex-1)
+                #restartstruc=GPARAMS.MD_setting[GPARAMS_index].Name+\
+                #        '_%d.rst7'%(GPARAMS.MD_setting[GPARAMS_index].Stageindex-1)
+                restartstruc=GPARAMS.MD_setting[GPARAMS_index].Name+'_0.inpcrd'
                 initstruc=GPARAMS.MD_setting[GPARAMS_index].Name+\
                         '_%d.inpcrd'%(GPARAMS.MD_setting[GPARAMS_index].Stageindex)
                 os.system('cp '+MDpath+restartstruc+' '+MDpath+initstruc)

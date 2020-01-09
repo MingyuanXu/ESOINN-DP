@@ -9,6 +9,8 @@ from ESOI_HDNN_MD.Neuralnetwork import *
 import os
 import math
 import argparse as arg
+import time
+import random
 
 parser=arg.ArgumentParser(description="Training Neural Network Potentials for MSet")
 parser.add_argument('-i',"--ctrlfile")
@@ -16,8 +18,7 @@ parser.add_argument('-d',"--dataset")
 parser.add_argument('-s',"--struc")
 parser.add_argument('-t',"--type")
 args=parser.parse_args()
-GPUID=Find_useable_gpu([0,1,2,3,4,5,6,7,8])
-os.environ["CUDA_VISIBLE_DEVICES"]=str(GPUID)
+time.sleep(random.randint(1,10)*20)
 UpdateGPARAMS(args.ctrlfile)
 evostruc=[int(i) for i in args.struc.split('_')]
 print (evostruc)
@@ -26,6 +27,8 @@ TMPset.Load()
 if len(TMPset.mols)< GPARAMS.Neuralnetwork_setting.Batchsize*20 :
     num=math.ceil(GPARAMS.Neuralnetwork_setting.Batchsize*20/len(TMPset.mols))
     TMPset.mols=TMPset.mols*num
+GPUID=Find_useable_gpu([0,1,2,3,4,5,6,7,8])
+os.environ["CUDA_VISIBLE_DEVICES"]=str(GPUID)
 TreatedAtoms=TMPset.AtomTypes()
 d=MolDigester(TreatedAtoms,name_="ANI1_Sym_Direct",OType_="EnergyAndDipole")
 if args.type=="bpresp":

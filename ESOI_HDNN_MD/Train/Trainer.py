@@ -16,7 +16,6 @@ def trainer(DataQueue,GPUQueue=None,jsonfile=''):
         GPUid=GPUQueue.get()
         os.environ["CUDA_VISIBLE_DEVICES"]=str(GPUid)
     TMMSET,ider,maxsteps=DataQueue.get()
-    time.sleep(random.randint(1,60))
     print ("OOOOOOOOOOOOXXXXXXXXXXXXXXXXXXXXXOOOOOOOOOOOOOOOOO")
     print ("Name:",TMMSET.name,ider)
     if len(TMMSET.mols)< GPARAMS.Neuralnetwork_setting.Batchsize*20 :
@@ -126,7 +125,9 @@ def get_best_struc(candidate_num):
     candidate_struc=[GPARAMS.Neuralnetwork_setting.NNstrucselect[i][3] for i in scoresort]
     print (np.mean(candidate_struc,axis=0))
     return candidate_struc
+
 def respnet_train(MSetname,GPUQueue,jsonfile):
+    print ("RESP coming")
     if len(GPARAMS.Neuralnetwork_setting.NNstrucselect)!=0:
         candidate_struc=get_best_struc(2)
         print ("Candidate_NNSTRUC:",candidate_struc) 

@@ -12,7 +12,7 @@ def checker(GPARAMS_index=0,Queue=None,GPUQueue=None):
     print (os.environ["CUDA_VISIBLE_DEVICES"])
     tmpset=MSet("Bigset_%d"%GPARAMS_index)
     tmpset.Load()
-    interval=5*GPARAMS.Neuralnetwork_setting.Batchsize*5
+    interval=5*GPARAMS.Neuralnetwork_setting.Batchsize
     stepnum=math.ceil(len(tmpset.mols)/interval)
     Checkerpath='./Checker%d'%GPARAMS_index 
     if not os.path.exists(Checkerpath):
@@ -20,9 +20,10 @@ def checker(GPARAMS_index=0,Queue=None,GPUQueue=None):
     recordfile=open(Checkerpath+'/Checker%d.out'%GPARAMS_index,'w')
     EGCMlist=[]
     for i in range(stepnum):
-        testmols=tmpset.mols[i*interval:(i+1)*interval]
+        testset=MSet('TMP')
+        testset.mols=tmpset.mols[i*interval:(i+1)*interval]
         num=0
-        for imol in testmols:
+        for imol in testset.mols:
             imol.name="Stage_%d_Mol_%d"%(GPARAMS.Train_setting.Trainstage,num)
             try:
                 EGCM=(imol.Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
@@ -37,16 +38,18 @@ def checker(GPARAMS_index=0,Queue=None,GPUQueue=None):
                 EGCMlist.append(EGCM)
             num+=1
         if GPARAMS.Compute_setting.Theroylevel=="NN":
-            NN_predict,ERROR_mols,AVG_ERR,ERROR_strlist,method=Cal_NN_EFQ(testmols)
-            ERROR_mols+=testmols 
+            NN_predict,ERROR_mols,maxerr,ERROR_strlist,method=Cal_NN_EFQ(testset)
         else:
             method='No method'
-            for j in testmols:
-                ERROR_mols.append([testmols[j],999])
-        for j in range(len(ERROR_mols)):
-            recordfile.write('step: %8d index :%8d atomnum: %8d error indicator: %12.2f '%(i,j,len(ERROR_mols[j][0].atoms),ERROR_mols[j][1],method))
+            for j in testset.mols:
+                ERROR_mols.append([testset.mols[j],999])
+
+        for j in range(len(testset.mols)):
+            print('step: %8d index :%8d atomnum: %8d error indicator: %12.2f %s'%(i,j,len(testset.mols[j].atoms),maxerr[j],method))
+            recordfile.write('step: %8d index :%8d atomnum: %8d error indicator: %12.2f %s\n'%(i,j,len(testset.mols[j].atoms),maxerr[j],method))
             recordfile.flush()
-            Queue.put(ERROR_mols[j])
+        for j in range(len(ERROR_mols)):
+            Queue.put([ERROR_mols[j]])
     recordfile.close()        
     GPUQueue.put(GPUid)
     return 
