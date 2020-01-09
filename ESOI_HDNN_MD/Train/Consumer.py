@@ -42,17 +42,17 @@ def consumer(Queue):
         print ("Select Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist))
         sysnum=(len(GPARAMS.System_setting)+GPARAMS.Esoinn_setting.Checkernum)
 
-        if len(Newaddedset.mols)>1000*sysnum:
+        if len(Newaddedset.mols)>GPARAMS.Compute_setting.samplebasenum*sysnum:
             edgemollist=random.sample(edgemollist,min(600*sysnum,len(edgemollist)))
             noisemollist_tmp=random.sample(noisemollist,min(200*sysnum,len(noisemollist)))
             normalmollist=random.sample(normalmollist,min(200*sysnum,len(normalmollist)))
             allnum=len(noisemollist_tmp)+len(edgemollist)+len(normalmollist)
-            othermollist+=random.sample(Newaddedset.mols,max(100,1000*sysnum-allnum))
+            othermollist+=random.sample(Newaddedset.mols,max(100,GPARAMS.Compute_setting.samplebasenum*sysnum-allnum))
             Newaddedset.mols=edgemollist+noisemollist_tmp+normalmollist+othermollist  
         print ("After selecting Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist),len(othermollist))
     else:
-        if len(Newaddedset.mols)>1000:
-            Newaddedset.mols=random.sample(Newaddedset.mols,1000)
+        if len(Newaddedset.mols)>GPARAMS.Compute_setting.samplebasenum*sysnum:
+            Newaddedset.mols=random.sample(Newaddedset.mols,GPARAMS.Compute_setting.samplebasenum*sysnum)
     Newaddedset.Save()
     return
 

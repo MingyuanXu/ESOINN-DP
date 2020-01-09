@@ -60,6 +60,7 @@ class Compute_setting:
         self.Consumerprocessnum=1
         self.Checkernum=0
         self.Checkerstep=0
+        self.samplebasenum=1000
         return
     def Update(self):
         if not os.path.exists(self.Traininglevel):
