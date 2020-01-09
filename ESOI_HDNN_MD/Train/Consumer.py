@@ -40,12 +40,14 @@ def consumer(Queue):
             if signalmask[i]=='Normal':
                 normalmollist.append(Newaddedset.mols[i])
         print ("Select Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist))
-        if len(Newaddedset.mols)>1000:
-            edgemollist=random.sample(edgemollist,min(600,len(edgemollist)))
-            noisemollist_tmp=random.sample(noisemollist,min(200,len(noisemollist)))
-            normalmollist=random.sample(normalmollist,min(200,len(normalmollist)))
+        sysnum=(len(GPARAMS.System_setting)+GPARAMS.Esoinn_setting.Checkernum)
+
+        if len(Newaddedset.mols)>1000*sysnum:
+            edgemollist=random.sample(edgemollist,min(600*sysnum,len(edgemollist)))
+            noisemollist_tmp=random.sample(noisemollist,min(200*sysnum,len(noisemollist)))
+            normalmollist=random.sample(normalmollist,min(200*sysnum,len(normalmollist)))
             allnum=len(noisemollist_tmp)+len(edgemollist)+len(normalmollist)
-            othermollist+=random.sample(Newaddedset.mols,max(100,allnum))
+            othermollist+=random.sample(Newaddedset.mols,max(100,1000*sysnum-allnum))
             Newaddedset.mols=edgemollist+noisemollist_tmp+normalmollist+othermollist  
         print ("After selecting Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist),len(othermollist))
     else:
