@@ -86,16 +86,19 @@ def Get_resp_instance(Name):
 
 def Added_MSet(filename):
     TotalMSet=MSet(GPARAMS.Compute_setting.Traininglevel)
-    RespMSet=MSet('HF_RESP')
     if os.path.exists('./datasets/'+GPARAMS.Compute_setting.Traininglevel+'.pdb'):
         TotalMSet.Load()
     NewaddedSet=MSet(filename)
     NewaddedSet.Load()
-    if os.path.exists('./datasets/HF_RESP.pdb'):
-        RespMSet.Load()
-    Resp.MSet.mols+=NewaddedSet.mols
-    TotalMSet.mols+=NewaddedSet.mols
+    if GPARAMS.Esoinn_setting.Ifresp==True:
+        RespMSet=MSet('HF_resp')
+        if os.path.exists('./datasets/HF_resp.pdb'):
+            RespMSet.Load()
+        RespMSet.mols+=NewaddedSet.mols 
+        RespMSet.Save()
+    TotalMSet.mols+=NewaddedSet.mols 
     TotalMSet.Save()
-    Resp.MSet.Save()
+#    print (RespMSet.mols[-1],RespMSet.mols[-1].properties)
+#    print (TotalMSet.mols[-1],TotalMSet.mols[-1].properties)
     return
 
