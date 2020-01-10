@@ -38,9 +38,9 @@ else:
     tset=TData_BP_Direct_EE_WithEle(TMPset,d,order_=1,num_indis_=1,type_="mol",WithGrad_=True,MaxNAtoms=100)
 NN_name=None 
 ifcontinue=False
+
 if args.type=="bpresp":
     SUBNET=BP_HDNN_charge(tset,NN_name,Structure=evostruc)
-
 else:
     SUBNET=BP_HDNN(tset,NN_name,Structure=evostruc)
 Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,structure=SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue)
@@ -50,4 +50,10 @@ if args.type!="bpresp":
     NNstrucfile=open(GPARAMS.Neuralnetwork_setting.NNstrucrecord,'w')
     NNstrucfile.write("%d, %d, %f, %f, %d, %f, %s,\n"\
             %(Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,strucstr))
+    """
 
+if args.type=="bp":
+    SUBNET=BP_HDNN(None,)
+    Etotal,Ebp,Ebp_atom,Ecc,Evdw,mol_dipole,atom_charge,gradient=EvalSet(TMMSET)
+    
+    """
