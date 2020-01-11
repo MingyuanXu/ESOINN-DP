@@ -122,6 +122,7 @@ class MD_setting:
         self.MDmethod="Normal MD"
         self.Name="MD"
         self.Box=np.zeros(3)
+        self.Ifcontinue=True
         return
     def Update():
         if not os.path.exists(self.Name):
