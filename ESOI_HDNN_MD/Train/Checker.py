@@ -16,7 +16,7 @@ def checker(GPARAMS_index=0,Queue=None,GPUQueue=None):
     Checkerpath='./Checker%d'%GPARAMS_index 
     if not os.path.exists(Checkerpath):
         os.system("mkdir -p %s"%Checkerpath)
-    recordfile=open(Checkerpath+'/Checker%d.out'%GPARAMS_index,'w')
+    recordfile=open(Checkerpath+'/Checker%d_%d.out'%(GPARAMS_index,GPARAMS.Train_setting.Trainstage),'w')
     EGCMlist=[]
     for i in range(stepnum):
         testset=MSet('TMP')
