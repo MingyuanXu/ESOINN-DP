@@ -1,6 +1,5 @@
 from ..Comparm import *
 import os
-
 def checker(GPARAMS_index=0,Queue=None,GPUQueue=None):
     from ..Base import Find_useable_gpu
     from ..Computemethod import Cal_NN_EFQ 
@@ -17,7 +16,7 @@ def checker(GPARAMS_index=0,Queue=None,GPUQueue=None):
     Checkerpath='./Checker%d'%GPARAMS_index 
     if not os.path.exists(Checkerpath):
         os.system("mkdir -p %s"%Checkerpath)
-    recordfile=open(Checkerpath+'/Checker%d.out'%GPARAMS_index,'w')
+    recordfile=open(Checkerpath+'/Checker%d_%d.out'%(GPARAMS_index,GPARAMS.Train_setting.Trainstage),'w')
     EGCMlist=[]
     for i in range(stepnum):
         testset=MSet('TMP')
@@ -37,15 +36,16 @@ def checker(GPARAMS_index=0,Queue=None,GPUQueue=None):
                 EGCM=imol.Cal_EGCM()
                 EGCMlist.append(EGCM)
             num+=1
+        ERROR_mols=[]
+        maxerr=[]
         if GPARAMS.Compute_setting.Theroylevel=="NN":
             NN_predict,ERROR_mols,maxerr,ERROR_strlist,method=Cal_NN_EFQ(testset)
         else:
             method='No method'
             for j in testset.mols:
-                ERROR_mols.append([testset.mols[j],999])
-
+                ERROR_mols.append([j,999])
+                maxerr.append(999)
         for j in range(len(testset.mols)):
-            print('step: %8d index :%8d atomnum: %8d error indicator: %12.2f %s'%(i,j,len(testset.mols[j].atoms),maxerr[j],method))
             recordfile.write('step: %8d index :%8d atomnum: %8d error indicator: %12.2f %s\n'%(i,j,len(testset.mols[j].atoms),maxerr[j],method))
             recordfile.flush()
         for j in range(len(ERROR_mols)):
@@ -53,4 +53,3 @@ def checker(GPARAMS_index=0,Queue=None,GPUQueue=None):
     recordfile.close()        
     GPUQueue.put(GPUid)
     return 
-        

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-
 import json
 import numpy as np
 from itertools import product

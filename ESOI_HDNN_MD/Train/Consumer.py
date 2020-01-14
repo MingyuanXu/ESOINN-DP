@@ -12,16 +12,21 @@ def consumer(Queue):
     print ("Consumer start")
     Newaddedset=MSet('Stage_%d_Newadded'%GPARAMS.Train_setting.Trainstage)
     num=0
+    Error_list=[]
     while True:
         ERROR_mols=Queue.get()
         if ERROR_mols==None:
             break
         for i in range(len(ERROR_mols)):
             ERROR_mols[i][0].name="Stage_%d_Mol_%d_%d"%(GPARAMS.Train_setting.Trainstage,num,i)
+            Error_list.append(ERROR_mols[i][1])
             Newaddedset.mols.append(ERROR_mols[i][0])
+        
         num+=1
         if num%2000==0:
             Newaddedset.Save()  
+    Error_list=np.array(-Error_list)
+    Newaddedset.mols=[Newaddedset.mols[i] for i in np.argsort(Error_list)]
     Dataset=[]
     Newaddedset.mols=Check_MSet(Newaddedset.mols)
     if len(GPARAMS.Esoinn_setting.Model.nodes)!=0 and GPARAMS.Esoinn_setting.Model.class_id > GPARAMS.Train_setting.Modelnumperpoint:
@@ -31,7 +36,7 @@ def consumer(Queue):
             except:
                 Dataset.append(i.Cal_EGCM())
         a,b,c,d,signalmask=GPARAMS.Esoinn_setting.Model.predict(Dataset)
-        normalmollist=[];edgemollist=[];noisemollist=[]  
+        normalmollist=[];edgemollist=[];noisemollist=[]   
         for i in range(len(Newaddedset.mols)):
             if signalmask[i]=='Noise':
                 noisemollist.append(Newaddedset.mols[i])
@@ -43,16 +48,21 @@ def consumer(Queue):
         sysnum=(len(GPARAMS.System_setting)+GPARAMS.Compute_setting.Checkernum)
 
         if len(Newaddedset.mols)>GPARAMS.Compute_setting.samplebasenum*sysnum:
-            edgemollist=random.sample(edgemollist,min(600*sysnum,len(edgemollist)))
-            noisemollist_tmp=random.sample(noisemollist,min(200*sysnum,len(noisemollist)))
-            normalmollist=random.sample(normalmollist,min(200*sysnum,len(normalmollist)))
-            allnum=len(noisemollist_tmp)+len(edgemollist)+len(normalmollist)
-            othermollist+=random.sample(Newaddedset.mols,max(100,GPARAMS.Compute_setting.samplebasenum*sysnum-allnum))
-            Newaddedset.mols=edgemollist+noisemollist_tmp+normalmollist+othermollist  
-        print ("After selecting Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist),len(othermollist))
+            #edgemollist=random.sample(edgemollist,min(600*sysnum,len(edgemollist)))
+            #noisemollist_tmp=random.sample(noisemollist,min(200*sysnum,len(noisemollist)))
+            #normalmollist=random.sample(normalmollist,min(200*sysnum,len(normalmollist)))
+            normalnumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
+            edgenumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
+            noisenumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
+            edgemollist=edgemollist[:edgenumpersys*sysnum]
+            normalmollist=normalmollist[:normalnumpersys*sysnum]
+            noisemollist=noisemollist[:GPARAMS.Compute_setting.samplebasenum*sysnum-len(normalmollist)-len(edgemollist)]
+            Newaddedset.mols=edgemollist+noisemollist_tmp+normalmollist  
+        print ("After selecting Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist))
     else:
         if len(Newaddedset.mols)>GPARAMS.Compute_setting.samplebasenum*sysnum:
             Newaddedset.mols=random.sample(Newaddedset.mols,GPARAMS.Compute_setting.samplebasenum*sysnum)
+            Newaddedset.mols=Newaddedset.mols[:GPARAMS.Compute_setting.samplebasenum*sysnum]
     Newaddedset.Save()
     return
 

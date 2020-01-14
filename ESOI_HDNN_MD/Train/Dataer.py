@@ -47,10 +47,11 @@ def dataer(Dataqueue):
     Trainingset.Load()
     Trainingset.mols=Check_MSet(Trainingset.mols,level=1)
     Trainingset.Save()
-    respset=MSet('HF_resp')
-    respset.Load()
-    respset.mols=Check_MSet(respset.mols,level=1)
-    respset.Save()
+    if GPARAMS.Esoinn_setting.Ifresp:
+        respset=MSet('HF_resp')
+        respset.Load()
+        respset.mols=Check_MSet(respset.mols,level=1)
+        respset.Save()
     print ("Trainingset.mols :",len(Trainingset.mols))
     ClusNum=max(GPARAMS.Esoinn_setting.Model.class_id,GPARAMS.Train_setting.Modelnumperpoint)
     print ("++++++++++++++++++Dataer++++++++++++++++++++++")
@@ -74,10 +75,8 @@ def dataer(Dataqueue):
             list=[i for i in range(GPARAMS.Train_setting.Modelnumperpoint)]
         for j in list:
             SubTrainList[j].mols.append(Trainingset.mols[i])
-
     for i in range(ClusNum):
         print ("Cluster %d has %d mols"%(i,len(SubTrainList[i].mols)))
-
     for i in range(ClusNum):
         othermollist=[]
         for j in range(ClusNum):
@@ -92,10 +91,8 @@ def dataer(Dataqueue):
             print (len(othermollist),samplenum)
             SubTrainList[i].mols+=random.sample(othermollist,samplenum)
         SubTrainList[i].Save()
-    
     for i in range(ClusNum):
         Dataqueue.put((SubTrainList[i],i,GPARAMS.Train_setting.Maxsteps))
         print ('%dth cluster is put in queue, mol num: %d!'%(i,len(SubTrainList[i].mols)))
 #    for j in range(len(GPARAMS.Compute_setting.Gpulist)):
 #        Dataqueue.put((None,j,0))
-     

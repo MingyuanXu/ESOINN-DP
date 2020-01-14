@@ -32,7 +32,9 @@ if __name__=="__main__":
     UpdateGPARAMS(jsonfile)
     for i in GPARAMS.Compute_setting.Gpulist:
         GPUQueue.put(i)
+
     bigset=MSet('Bigset')
+    GPARAMS.Dataset_setting.Inputdatasetlist=random.sample(GPARAMS.Dataset_setting.Inputdatasetlist,2)
     for name in GPARAMS.Dataset_setting.Inputdatasetlist:
         tmpset=MSet(name)
         tmpset.Load()
@@ -40,9 +42,9 @@ if __name__=="__main__":
     for i in range(GPARAMS.Compute_setting.Checkernum):
         checker_set=MSet('Bigset_%d'%i)
         checker_set.mols=[bigset.mols[j] for j in range(len(bigset.mols)) if j%(i+1)==0]
-        checker_set.mols=random.sample(checker_set.mols,min(GPARAMS.Compute_setting.Checkerstep,len(checker_set.mols)))
+        checker_set.mols=[bigset.mols[0]]+random.sample(checker_set.mols,min(GPARAMS.Compute_setting.Checkerstep,len(checker_set.mols)))
         checker_set.Save()
-        
+    bigset=None 
     for stage in range(GPARAMS.Train_setting.Trainstage,\
                        GPARAMS.Train_setting.Stagenum+GPARAMS.Train_setting.Trainstage):
         LoadModel()
@@ -89,10 +91,14 @@ if __name__=="__main__":
             print ("Create HDNN subnet for class %d"%i)
             result=TrainerPool.apply_async(trainer,(DataQueue,GPUQueue,jsonfile))
             Resultlist.append(result)
-        result=TrainerPool.apply_async(respnet_train,("HF_resp",GPUQueue,jsonfile))
-        Resultlist.append(result)
+        if GPARAMS.Esoinn_setting.Loadrespnet==True and GPARAMS.Esoinn_setting.Ifresp==True:
+            result=TrainerPool.apply_async(respnet_train,("HF_resp",GPUQueue,jsonfile))
+            Resultlist.append(result)
         TrainerPool.close()
-        for i in range(max(GPARAMS.Esoinn_setting.Model.class_id+1,GPARAMS.Train_setting.Modelnumperpoint+1)):
+        for i in range(max(GPARAMS.Esoinn_setting.Model.class_id,GPARAMS.Train_setting.Modelnumperpoint+1)):
+            tmp=Resultlist[i].get()
+            print (tmp)
+        if GPARAMS.Esoinn_setting.Loadrespnet==True and GPARAMS.Esoinn_setting.Ifresp==True:
             tmp=Resultlist[i].get()
             print (tmp)
         TrainerPool.terminate()
