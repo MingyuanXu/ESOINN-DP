@@ -3,13 +3,15 @@ from ESOI_HDNN_MD.Computemethod import Qmmm
 from ESOI_HDNN_MD.Comparm import GPARAMS
 from ESOI_HDNN_MD.Base.Info import List2str
 from ESOI_HDNN_MD import UpdateGPARAMS,LoadModel,Added_MSet
-from ESOI_HDNN_MD.Train import productor,consumer,esoinner,trainer,dataer,parallel_caljob,get_best_struc,respnet_train 
+from ESOI_HDNN_MD.Train import checker,productor,consumer,esoinner,trainer,dataer,parallel_caljob,get_best_struc,respnet_train 
+from TensorMol import MSet
 import os
 
 #from TensorMol import *
 import argparse as arg
 from multiprocessing import Queue,Process,Manager,Pool
 import time
+import random
 #import sys
 #sys.path.append("./Oldmodule")
 
@@ -31,14 +33,14 @@ if __name__=="__main__":
     for i in GPARAMS.Compute_setting.Gpulist:
         GPUQueue.put(i)
     bigset=MSet('Bigset')
-    for name in GPARAMS.DataQueue_setting.Inputdatasetlist:
+    for name in GPARAMS.Dataset_setting.Inputdatasetlist:
         tmpset=MSet(name)
         tmpset.Load()
         bigset.mols+=tmpset.mols
     for i in range(GPARAMS.Compute_setting.Checkernum):
         checker_set=MSet('Bigset_%d'%i)
-        checker_set.mols=[bigset.mols[j] for j in range(1,len(bigset)+1) if j%i==0]
-        checker_set.mols=random.sample(checker_set.mols,min(GPARAMS.Compute_setting.Checkstep,len(checker_set.mols)))
+        checker_set.mols=[bigset.mols[j] for j in range(len(bigset.mols)) if j%(i+1)==0]
+        checker_set.mols=random.sample(checker_set.mols,min(GPARAMS.Compute_setting.Checkerstep,len(checker_set.mols)))
         checker_set.Save()
         
     for stage in range(GPARAMS.Train_setting.Trainstage,\
@@ -50,11 +52,14 @@ if __name__=="__main__":
         for i in range(len(GPARAMS.System_setting)):
             result=ProductPool.apply_async(productor,(i,QMQueue,GPUQueue))
             Resultlist.append(result)
-        for i in range(len(GPARAMS.Compute_setting.Checkernum)):
-            result=ProductPool.apply_async(checker,(i,checker,GPUQueue))
+        for i in range(GPARAMS.Compute_setting.Checkernum):
+            result=ProductPool.apply_async(checker,(i,QMQueue,GPUQueue))
             Resultlist.append(result)
         ProductPool.close()
         for i in range(len(GPARAMS.System_setting)):
+            tmp=Resultlist[i].get()
+            print (tmp)
+        for i in range(GPARAMS.Compute_setting.Checkernum):
             tmp=Resultlist[i].get()
             print (tmp)
         Consumer_Process=Process(target=consumer,args=(QMQueue,))
@@ -64,7 +69,6 @@ if __name__=="__main__":
         QMQueue.put(None)
         Consumer_Process.join()
         #==parallel Mol caclulator==
-
         parallel_caljob("Stage_%d_Newadded"%GPARAMS.Train_setting.Trainstage,manager,ctrlfile=jsonfile)
         #==Esoi-layer Training process==
         Added_MSet("Stage_%d_Newadded"%GPARAMS.Train_setting.Trainstage)
