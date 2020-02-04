@@ -356,7 +356,7 @@ class BP_HDNN():
         self.run_metadata = None
         self.batch_size_ctrl=None 
 
-    def train(self, mxsteps, continue_training= False,chk_file='',AimE=0.05,AimF=0.005,AimD=0.02):
+    def train(self, mxsteps, continue_training= False,chk_file='',AimE=0.05,AimF=0.002,AimD=0.02):
         """
         This the training loop for the united model.
         """
