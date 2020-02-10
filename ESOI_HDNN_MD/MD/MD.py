@@ -22,7 +22,7 @@ class Simulation():
         self.path='./'+MD_setting.Name+'/' 
         self.format=MD_setting.Mdformat
         self.T=MD_setting.Temp
-        self.maxstep=MD_setting.Mdmaxsteps
+        self.maxstep=MD_setting.Mdmaxsteps[MD_setting.Stageindex]
         self.dt=MD_setting.Mddt
         self.icap=MD_setting.Icap
         self.ibox=MD_setting.Ibox

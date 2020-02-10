@@ -21,12 +21,13 @@ def consumer(Queue):
             ERROR_mols[i][0].name="Stage_%d_Mol_%d_%d"%(GPARAMS.Train_setting.Trainstage,num,i)
             Error_list.append(ERROR_mols[i][1])
             Newaddedset.mols.append(ERROR_mols[i][0])
-        
+            
         num+=1
         if num%2000==0:
-            Newaddedset.Save()  
+            Newaddedset.Save() 
     Error_list=np.array(-Error_list)
     Newaddedset.mols=[Newaddedset.mols[i] for i in np.argsort(Error_list)]
+
     Dataset=[]
     Newaddedset.mols=Check_MSet(Newaddedset.mols)
     if len(GPARAMS.Esoinn_setting.Model.nodes)!=0 and GPARAMS.Esoinn_setting.Model.class_id > GPARAMS.Train_setting.Modelnumperpoint:
@@ -56,7 +57,8 @@ def consumer(Queue):
             noisenumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
             edgemollist=edgemollist[:edgenumpersys*sysnum]
             normalmollist=normalmollist[:normalnumpersys*sysnum]
-            noisemollist=noisemollist[:GPARAMS.Compute_setting.samplebasenum*sysnum-len(normalmollist)-len(edgemollist)]
+            noisemolnum=GPARAMS.Compute_setting.samplebasenum*sysnum-len(normalmollist)-len(edgemollist)
+            noisemollist=random.sample(noisemollist[:noisemolnum*5],noisemolnum)
             Newaddedset.mols=edgemollist+noisemollist_tmp+normalmollist  
         print ("After selecting Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist))
     else:
