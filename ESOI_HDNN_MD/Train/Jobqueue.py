@@ -17,6 +17,14 @@ pbsgpustr="""
 #PBS -N %s 
 """
 
+lsfcpustr="""
+#!/bin/sh
+#BSUB -q normal
+#BSUB -n %d
+#BSUB -o %%J.out
+#BSUB -e %%J.err
+#BSUB -J %s
+"""
 lsfgpustr="""
 #!/bin/sh
 #BSUB -q %s
