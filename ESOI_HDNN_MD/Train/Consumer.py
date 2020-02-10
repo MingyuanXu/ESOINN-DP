@@ -2,7 +2,7 @@ from ..Comparm import *
 import os
 from .Dataer import Check_MSet 
 import paramiko as pko 
-from .Jobqueue import pbscpustr 
+from .Jobqueue import pbscpustr,lsfcpustr 
 
 def consumer(Queue):
     import time
