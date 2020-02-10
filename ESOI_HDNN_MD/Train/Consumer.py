@@ -49,9 +49,6 @@ def consumer(Queue):
         sysnum=(len(GPARAMS.System_setting)+GPARAMS.Compute_setting.Checkernum)
 
         if len(Newaddedset.mols)>GPARAMS.Compute_setting.samplebasenum*sysnum:
-            #edgemollist=random.sample(edgemollist,min(600*sysnum,len(edgemollist)))
-            #noisemollist_tmp=random.sample(noisemollist,min(200*sysnum,len(noisemollist)))
-            #normalmollist=random.sample(normalmollist,min(200*sysnum,len(normalmollist)))
             normalnumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
             edgenumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
             noisenumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
@@ -138,17 +135,19 @@ def parallel_caljob(MSetname,manager,ctrlfile):
             stdin,stdout,stderr=ssh.exec_command('mkdir -p %s/datasets'%remotepath)
             print (stdout.read().decode())
             sftp.put(srcpath,remotepath+'/datasets/%s.pdb'%(MSetname+'_part%d'%i))
+            cpurun=open('cpu.run','w')
             if GPARAMS.Train_setting.cpuqueuetype=='PBS':
-                pbsrun=open('pbs.run','w')
-                pbsrun.write(pbscpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
-                pbsrun.write(GPARAMS.Train_setting.helpcpuenv)
-                pbsrun.write("Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
-                pbsrun.write("rm *.chk\n")
-                pbsrun.write("touch finished\n")
-                pbsrun.close()
-                sftp.put(localpath=workpath+'/pbs.run',remotepath=remotepath+'/pbs.run')
-                sftp.put(localpath=workpath+'/'+ctrlfile,remotepath=remotepath+'/'+ctrlfile)
-                ssh.exec_command('cd %s && qsub pbs.run'%remotepath)
+                cpurun.write(pbscpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
+            elif GPARAMS.Train_setting.cpuqueuetype=='LSF':
+                cpurun.write(lsfcpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
+            cpurun.write(GPARAMS.Train_setting.helpcpuenv)
+            cpurun.write("Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
+            cpurun.write("rm *.chk\n")
+            cpurun.write("touch finished\n")
+            cpurun.close()
+            sftp.put(localpath=workpath+'/cpu.run',remotepath=remotepath+'/cpu.run')
+            sftp.put(localpath=workpath+'/'+ctrlfile,remotepath=remotepath+'/'+ctrlfile)
+            ssh.exec_command('cd %s && qsub cpu.run'%remotepath)
         t=0
         while False in subMSetresult:
             time.sleep(30)
