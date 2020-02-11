@@ -2,7 +2,7 @@ from ..Comparm import *
 import os
 from .Dataer import Check_MSet 
 import paramiko as pko 
-from .Jobqueue import pbscpustr 
+from .Jobqueue import pbscpustr,lsfcpustr 
 
 def consumer(Queue):
     import time
@@ -23,13 +23,8 @@ def consumer(Queue):
             Newaddedset.mols.append(ERROR_mols[i][0])
             
         num+=1
-<<<<<<< HEAD
-        if num%200000==0:
-            Newaddedset.Save()  
-=======
         if num%2000==0:
             Newaddedset.Save() 
->>>>>>> b5c7da5e4f4dfed3fac646fc51c16a16bdc6154d
     Error_list=np.array(-Error_list)
     Newaddedset.mols=[Newaddedset.mols[i] for i in np.argsort(Error_list)]
 
