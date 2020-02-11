@@ -23,7 +23,7 @@ def consumer(Queue):
             Newaddedset.mols.append(ERROR_mols[i][0])
         
         num+=1
-        if num%2000==0:
+        if num%200000==0:
             Newaddedset.Save()  
     Error_list=np.array(-Error_list)
     Newaddedset.mols=[Newaddedset.mols[i] for i in np.argsort(Error_list)]

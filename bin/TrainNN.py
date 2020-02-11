@@ -41,9 +41,10 @@ ifcontinue=False
 
 if args.type=="bpresp":
     SUBNET=BP_HDNN_charge(tset,NN_name,Structure=evostruc)
+    Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,structure=SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue)
 else:
     SUBNET=BP_HDNN(tset,NN_name,Structure=evostruc)
-Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,structure=SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue)
+    Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,structure=SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue,AimF=GPARAMS.Neuralnetwork_setting.Aimf)
 
 if args.type!="bpresp":
     strucstr=" ".join([str(i) for i in structure])

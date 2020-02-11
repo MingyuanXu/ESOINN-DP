@@ -16,7 +16,6 @@ pbsgpustr="""
 #PBS -q %s
 #PBS -N %s 
 """
-
 lsfgpustr="""
 #!/bin/sh
 #BSUB -q %s

@@ -211,7 +211,7 @@ class Neuralnetwork_setting:
         self.NNstrucrecord=""
         self.NNstrucselect=[]
         self.Aime=0.002
-        self.Aimf=0.005
+        self.Aimf=0.002
         self.Aimd=0.05
         return
     def Update(self):
