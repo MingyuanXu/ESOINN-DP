@@ -21,12 +21,18 @@ def consumer(Queue):
             ERROR_mols[i][0].name="Stage_%d_Mol_%d_%d"%(GPARAMS.Train_setting.Trainstage,num,i)
             Error_list.append(ERROR_mols[i][1])
             Newaddedset.mols.append(ERROR_mols[i][0])
-        
+            
         num+=1
+<<<<<<< HEAD
         if num%200000==0:
             Newaddedset.Save()  
+=======
+        if num%2000==0:
+            Newaddedset.Save() 
+>>>>>>> b5c7da5e4f4dfed3fac646fc51c16a16bdc6154d
     Error_list=np.array(-Error_list)
     Newaddedset.mols=[Newaddedset.mols[i] for i in np.argsort(Error_list)]
+
     Dataset=[]
     Newaddedset.mols=Check_MSet(Newaddedset.mols)
     if len(GPARAMS.Esoinn_setting.Model.nodes)!=0 and GPARAMS.Esoinn_setting.Model.class_id > GPARAMS.Train_setting.Modelnumperpoint:
@@ -48,15 +54,13 @@ def consumer(Queue):
         sysnum=(len(GPARAMS.System_setting)+GPARAMS.Compute_setting.Checkernum)
 
         if len(Newaddedset.mols)>GPARAMS.Compute_setting.samplebasenum*sysnum:
-            #edgemollist=random.sample(edgemollist,min(600*sysnum,len(edgemollist)))
-            #noisemollist_tmp=random.sample(noisemollist,min(200*sysnum,len(noisemollist)))
-            #normalmollist=random.sample(normalmollist,min(200*sysnum,len(normalmollist)))
             normalnumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
             edgenumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
             noisenumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
             edgemollist=edgemollist[:edgenumpersys*sysnum]
             normalmollist=normalmollist[:normalnumpersys*sysnum]
-            noisemollist=noisemollist[:GPARAMS.Compute_setting.samplebasenum*sysnum-len(normalmollist)-len(edgemollist)]
+            noisemolnum=GPARAMS.Compute_setting.samplebasenum*sysnum-len(normalmollist)-len(edgemollist)
+            noisemollist=random.sample(noisemollist[:noisemolnum*5],noisemolnum)
             Newaddedset.mols=edgemollist+noisemollist_tmp+normalmollist  
         print ("After selecting Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist))
     else:
@@ -136,17 +140,19 @@ def parallel_caljob(MSetname,manager,ctrlfile):
             stdin,stdout,stderr=ssh.exec_command('mkdir -p %s/datasets'%remotepath)
             print (stdout.read().decode())
             sftp.put(srcpath,remotepath+'/datasets/%s.pdb'%(MSetname+'_part%d'%i))
+            cpurun=open('cpu.run','w')
             if GPARAMS.Train_setting.cpuqueuetype=='PBS':
-                pbsrun=open('pbs.run','w')
-                pbsrun.write(pbscpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
-                pbsrun.write(GPARAMS.Train_setting.helpcpuenv)
-                pbsrun.write("Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
-                pbsrun.write("rm *.chk\n")
-                pbsrun.write("touch finished\n")
-                pbsrun.close()
-                sftp.put(localpath=workpath+'/pbs.run',remotepath=remotepath+'/pbs.run')
-                sftp.put(localpath=workpath+'/'+ctrlfile,remotepath=remotepath+'/'+ctrlfile)
-                ssh.exec_command('cd %s && qsub pbs.run'%remotepath)
+                cpurun.write(pbscpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
+            elif GPARAMS.Train_setting.cpuqueuetype=='LSF':
+                cpurun.write(lsfcpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
+            cpurun.write(GPARAMS.Train_setting.helpcpuenv)
+            cpurun.write("Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
+            cpurun.write("rm *.chk\n")
+            cpurun.write("touch finished\n")
+            cpurun.close()
+            sftp.put(localpath=workpath+'/cpu.run',remotepath=remotepath+'/cpu.run')
+            sftp.put(localpath=workpath+'/'+ctrlfile,remotepath=remotepath+'/'+ctrlfile)
+            ssh.exec_command('cd %s && qsub cpu.run'%remotepath)
         t=0
         while False in subMSetresult:
             time.sleep(30)

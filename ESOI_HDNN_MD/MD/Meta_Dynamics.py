@@ -9,6 +9,8 @@ from ..Base import *
 import random
 from multiprocessing import Queue,Process 
 #def BumpEnergy(h,w,distag,dis):
+    """
+
 class BumpHolder:
     def __init__(self,CV_num,Max_bump,Height,Width):
         self.max_num=Max_bump
@@ -33,7 +35,10 @@ class BumpHolder:
             self.BFt=tf.gradients(self.BE,self.xyzt_pl)
             init=tf.global_variables_initializer()
         self.Bumpsess=tf.Session(graph=self.Bumpgraph,config=tf.ConfigProto(allow_soft_placement=True))
-    #def Bump(dis_,xyzs,xyzt):
-    #    BE,BFs,BFt=self.Bumpsess([self.BE,self.BFs,self.BFt].feed_dict={self.xyzs_pl:xyzs,self.xyzt_pl:xyzt,self.dis_pl:dis_})
-    #    return BE,BFs,BFt 
+    def Bump(dis_,xyzs,xyzt):
+        BE,BFs,BFt=self.Bumpsess([self.BE,self.BFs,self.BFt].feed_dict={self.xyzs_pl:xyzs,self.xyzt_pl:xyzt,self.dis_pl:dis_})
+        return BE,BFs,BFt 
+def BumpEnergy(h,w,dis_,r):
+    for i in 
 
+    """

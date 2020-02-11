@@ -90,9 +90,17 @@ def trainer(DataQueue,GPUQueue=None,jsonfile=''):
             stdin,stdout,stderr=ssh.exec_command("cd %s && qsub <gpu.run"%remotepath)
         flag=True 
         while flag:
+            time.sleep(5)
             stdin,stdout,stderr=ssh.exec_command("cd %s&& ls"%remotepath)
             tmpstr=stdout.read().decode()
             flag=not ('finished' in tmpstr)
+            if GPARAMS.Train_setting.gpuqueuetype=="PBS":
+                stdin,stdout,stderr=ssh.exec_command("cd %s && grep 'CUDA_ERROR_OUT_OF_MEMORY' Cluster*.o*"%remotepath)
+                tmpstr=stdout.read().decode()
+                normalflag=('core dump' in tmpstr)
+                if normalflag==True:
+                    stdin,stdout,stderr=ssh.exec_command("cd %s && rm Cluster*.o* && bsub < gpu.run"%remotepath)
+                
         stdin,stdout,stderr=ssh.exec_command("cd %s && mv %s/Cluster*.record networks/Cluster%d.record"%(remotepath,remotepath,ider))
         print (stdout.read().decode())
         stdin,stdout,stderr=ssh.exec_command("cd %s/networks && tar zcvf Cluster%d.tar.gz *"%(remotepath,ider))
