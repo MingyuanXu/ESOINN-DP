@@ -423,6 +423,7 @@ class BP_HDNN():
                     #        self.recorder.write("Switching to Energy and Gradient Learning...\n")
             step+=1
         self.SaveAndClose()
+        print ("NN nan minibatch :",self.trainerror_minibatch)
         return  self.TData.NTrain,self.batchtrainnumf,Losse,Lossf,self.batchtrainnumd,Lossd,self.HiddenLayers
 
     def TrainPrepare(self,  continue_training =False,chk_file=''):
