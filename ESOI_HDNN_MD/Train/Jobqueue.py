@@ -24,6 +24,7 @@ lsfcpustr="""
 #BSUB -o %%J.out
 #BSUB -e %%J.err
 #BSUB -J %s
+#BSUB -R span[ptile=%d]
 """
 lsfgpustr="""
 #!/bin/sh

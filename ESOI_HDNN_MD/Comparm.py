@@ -138,6 +138,7 @@ class Dataset_setting:
 
 class Train_setting:
     def __init__(self):
+        self.rmse=3
         self.Ifcpuwithhelp=False
         self.Ifgpuwithhelp=False
         self.Trainstage=0
@@ -211,7 +212,7 @@ class Neuralnetwork_setting:
         self.NNstrucrecord=""
         self.NNstrucselect=[]
         self.Aime=0.002
-        self.Aimf=0.005
+        self.Aimf=0.002
         self.Aimd=0.05
         return
     def Update(self):

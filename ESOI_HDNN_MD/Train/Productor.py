@@ -23,6 +23,7 @@ def productor(GPARAMS_index=0,Queue=None,GPUQueue=None):
                 os.system("mkdir -p %s"%MDpath)
             os.system("cp "+prmfile+' '+MDpath+prmfile)
             if GPARAMS.MD_setting[GPARAMS_index].Stageindex!=0:
+                print (GPARAMS.MD_setting[GPARAMS_index].Stageindex)
                 if GPARAMS.MD_setting[GPARAMS_index].Ifcontinue==True:
                     restartstruc=GPARAMS.MD_setting[GPARAMS_index].Name+\
                         '_%d.rst7'%(GPARAMS.MD_setting[GPARAMS_index].Stageindex-1)
@@ -74,7 +75,13 @@ def productor(GPARAMS_index=0,Queue=None,GPUQueue=None):
         print (GPARAMS.MD_setting[GPARAMS_index].Name)
         MD_simulation=Simulation(sys=qmsys,\
                                  MD_setting=GPARAMS.MD_setting[GPARAMS_index])
-        MDdeviation=MD_simulation.MD(Queue)
+        try:
+            MDdeviation=MD_simulation.MD(Queue)
+        except:
+            print ("=======================================")
+            print ("ERROR: MD of %s failed by some mistake!")
+            print ("=======================================")
+
     GPUQueue.put(GPUid)
         
 

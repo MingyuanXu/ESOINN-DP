@@ -22,7 +22,7 @@ class Simulation():
         self.path='./'+MD_setting.Name+'/' 
         self.format=MD_setting.Mdformat
         self.T=MD_setting.Temp
-        self.maxstep=MD_setting.Mdmaxsteps[MD_setting.Stageindex]
+        self.maxstep=MD_setting.Mdmaxsteps
         self.dt=MD_setting.Mddt
         self.icap=MD_setting.Icap
         self.ibox=MD_setting.Ibox
@@ -64,9 +64,6 @@ class Simulation():
             self.trajectory=AmberMdcrd(self.path+self.name+'_%d.mdcrd'%self.stageindex,natom=self.sys.natom,hasbox=False,mode='w')
             self.restart=Rst7(natom=len(self.atoms))
             self.trajectory.add_coordinates(self.x)
-        #else:
-        #    self.trajectory=XyzMdcrd(self.name+'.xyz',atoms=self.atoms)
-        #    self.restart=XyzRestart(self.name+'_restart.xyz',atoms=self.atoms)
 
         if self.MDV0=="Random":
             np.random.seed()
@@ -92,6 +89,8 @@ class Simulation():
         res_order=np.array(range(1,self.sys.nres))
         ERROR=0
         ERROR_record=[]
+        method_record=0
+        Temp_record=[]
         miderr_num=0
         MD_Flag=True
         while step < self.maxstep and MD_Flag:
@@ -106,6 +105,9 @@ class Simulation():
             self.sys.update_crd()
             f,EPot,ERROR,ERROR_mols,EGCMlist,chargestr=self.sys.Cal_EFQ()
             ERROR_record.append(ERROR)
+            if self.sys.stepmethod=='Gaussian':
+                method_record+=1
+            
             if ERROR>self.Miderr and ERROR<self.Maxerr:
                 miderr_num+=1
             if self.MODE=='Train':
@@ -138,6 +140,8 @@ class Simulation():
             avE,Evar=self.EnergyStat(self.EPot)
             self.KE= KineticEnergy(self.v,self.m)
             Teff = (2./3.)*self.KE/IDEALGASR
+            Temp_record.append(Teff)
+        
             if (step%10==0 ):
                 if self.format=="Amber":
                     self.trajectory.add_coordinates(self.x)
@@ -148,11 +152,16 @@ class Simulation():
                     self.restart.write(self.path+self.name+'_%d.rst7'%self.stageindex)
             step+=1
             AVG_ERR=np.mean(np.array(ERROR_record[-1:-50]))
-            if AVG_ERR>200:
+            AVG_TEMP=np.mean(np.array(Temp_record[-1:-50]))
+            if AVG_ERR>GPARAMS.Train_setting.rmse**2*GPARAMS.Train_setting.Modelnumperpoint*4:
+                MD_Flag=False
+            if method_record>10:
+                MD_Flag=False 
+            if AVG_TEMP>350:
                 MD_Flag=False
             if MD_Flag==True:
-                self.Outfile.write("%s Step: %i time: %.1f(fs) KE(kJ): %.5f PotE(Eh): %.5f ETot(kJ/mol): %.5f Teff(K): %.5f MAX ERROR: %.3f Method: %s\n"\
-                                   %(self.name, step, self.t, self.KE*len(self.m)/1000.0, self.EPot, self.KE*len(self.m)/1000.0+(self.EPot)*KJPERHARTREE, Teff,ERROR,self.sys.stepmethod))
+                self.Outfile.write("%s Step: %i time: %.1f(fs) KE(kJ): %.5f PotE(Eh): %.5f ETot(kJ/mol): %.5f Teff(K): %.5f MAX ERROR: %.3f Method: %s  AVG_ERR: %f AVG_TEMP: %f \n"\
+                                   %(self.name, step, self.t, self.KE*len(self.m)/1000.0, self.EPot, self.KE*len(self.m)/1000.0+(self.EPot)*KJPERHARTREE, Teff,ERROR,self.sys.stepmethod,AVG_ERR,AVG_TEMP))
                 self.Outfile.flush()
                 self.Respfile.write(chargestr)
                 self.Respfile.write(chargestr)
