@@ -360,6 +360,8 @@ class BP_HDNN():
         """
         This the training loop for the united model.
         """
+        self.trainerror_minibatch=[]
+        self.testerror_minibatch=[]
         maxsteps=mxsteps 
         LOGGER.info("running the TFMolInstance.train()")
         if self.need_Newtrain==True:
@@ -877,8 +879,6 @@ class BP_HDNN():
         tf.add_to_collection('losses', loss)
         return tf.add_n(tf.get_collection('losses'), name='total_loss'), loss, energy_loss, grads_loss, dipole_loss
 
-
-
     def train_step_EandG(self, step):
         """
         Perform a single training step (complete processing of all input), using minibatches of size self.batch_size
@@ -902,31 +902,34 @@ class BP_HDNN():
         time_print_mini = time.time()
         duration=time.time()-start_time
         for ministep in range (0, int(Ncase_train/self.batch_size)):
-            self.batchtrainnumf+=1
-            t_mini = time.time()
-            batch_data = self.TData.GetTrainBatch(self.batch_size)+[GPARAMS.Neuralnetwork_setting.AddEcc] + [self.keep_prob]
-            actual_mols  = self.batch_size
-            t = time.time()
-            dump_2, total_loss_value, loss_value, energy_loss, grads_loss,  dipole_loss,  Etotal, Ecc, Evdw, mol_dipole, atom_charge,lr_ef = self.sess.run([self.train_op_EandG, self.total_loss_EandG, self.loss_EandG, self.energy_loss_EandG, self.grads_loss_EandG, self.dipole_loss_EandG, self.Etotal, self.Ecc, self.Evdw,  self.dipole, self.charge,self.lr_ef], feed_dict=self.fill_feed_dict(batch_data))
-
-
-            print_loss += loss_value
-            print_energy_loss += energy_loss
-            print_grads_loss += grads_loss
-            print_dipole_loss += dipole_loss
-            if (ministep%print_per_mini == 0 and ministep!=0):
-                print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
-                print_loss = 0.0
-                print_energy_loss = 0.0
-                print_dipole_loss = 0.0
-                print_grads_loss = 0.0
-                print_time = 0.0
-                time_print_mini = time.time()
-            train_loss = train_loss + loss_value
-            train_energy_loss += energy_loss
-            train_grads_loss += grads_loss
-            train_dipole_loss += dipole_loss
-            num_of_mols += actual_mols
+            if ministep not in self.trainerror_minibatch:
+                self.batchtrainnumf+=1
+                t_mini = time.time()
+                batch_data = self.TData.GetTrainBatch(self.batch_size)+[GPARAMS.Neuralnetwork_setting.AddEcc] + [self.keep_prob]
+                actual_mols  = self.batch_size
+                t = time.time()
+                dump_2, total_loss_value, loss_value, energy_loss, grads_loss,  dipole_loss,  Etotal, Ecc, Evdw, mol_dipole, atom_charge,lr_ef = self.sess.run([self.train_op_EandG, self.total_loss_EandG, self.loss_EandG, self.energy_loss_EandG, self.grads_loss_EandG, self.dipole_loss_EandG, self.Etotal, self.Ecc, self.Evdw,  self.dipole, self.charge,self.lr_ef], feed_dict=self.fill_feed_dict(batch_data))
+                
+                if grads_loss:
+                    print_loss += loss_value
+                    print_energy_loss += energy_loss
+                    print_grads_loss += grads_loss
+                    print_dipole_loss += dipole_loss
+                    if (ministep%print_per_mini == 0 and ministep!=0):
+                        print ("time:", (time.time() - time_print_mini)/print_per_mini ,  " loss_value: ",  print_loss/print_per_mini, " energy_loss:", print_energy_loss/print_per_mini, " grads_loss:", print_grads_loss/print_per_mini, " dipole_loss:", print_dipole_loss/print_per_mini)
+                        print_loss = 0.0
+                        print_energy_loss = 0.0
+                        print_dipole_loss = 0.0
+                        print_grads_loss = 0.0
+                        print_time = 0.0
+                        time_print_mini = time.time()
+                    train_loss = train_loss + loss_value
+                    train_energy_loss += energy_loss
+                    train_grads_loss += grads_loss
+                    train_dipole_loss += dipole_loss
+                    num_of_mols += actual_mols
+                else:
+                    self.trainerror_minibatch.append(ministep)
         duration = time.time() - start_time
         self.print_training(step, train_loss, train_energy_loss, train_grads_loss, train_dipole_loss, num_of_mols, duration,lr_ef)
         return train_energy_loss/num_of_mols,train_grads_loss/num_of_mols 
@@ -946,17 +949,20 @@ class BP_HDNN():
         num_of_mols = 0
         duration = time.time() - start_time
         for ministep in range (0, int(Ncase_test/self.batch_size)):
-            batch_data = self.TData.GetTestBatch(self.batch_size)+[GPARAMS.Neuralnetwork_setting.AddEcc] + [np.ones(self.nlayer+1)]
-            actual_mols  = self.batch_size
-            t = time.time()
-            total_loss_value, loss_value, energy_loss, grads_loss,  dipole_loss,  Etotal, Ecc, mol_dipole, atom_charge = self.sess.run([self.total_loss_EandG, self.loss_EandG, self.energy_loss_EandG, self.grads_loss_EandG, self.dipole_loss_EandG, self.Etotal, self.Ecc, self.dipole, self.charge], feed_dict=self.fill_feed_dict(batch_data))
-
-            test_loss = test_loss + loss_value
-            test_energy_loss += energy_loss
-            test_grads_loss += grads_loss
-            test_dipole_loss += dipole_loss
-            duration = time.time() - start_time
-            num_of_mols += actual_mols
+            if ministep not in self.testerror_minibatch:
+                batch_data = self.TData.GetTestBatch(self.batch_size)+[GPARAMS.Neuralnetwork_setting.AddEcc] + [np.ones(self.nlayer+1)]
+                actual_mols  = self.batch_size
+                t = time.time()
+                total_loss_value, loss_value, energy_loss, grads_loss,  dipole_loss,  Etotal, Ecc, mol_dipole, atom_charge = self.sess.run([self.total_loss_EandG, self.loss_EandG, self.energy_loss_EandG, self.grads_loss_EandG, self.dipole_loss_EandG, self.Etotal, self.Ecc, self.dipole, self.charge], feed_dict=self.fill_feed_dict(batch_data))
+                if grads_loss:
+                    test_loss = test_loss + loss_value
+                    test_energy_loss += energy_loss
+                    test_grads_loss += grads_loss
+                    test_dipole_loss += dipole_loss
+                    duration = time.time() - start_time
+                    num_of_mols += actual_mols
+                else:
+                    self.testerror_minibatch.append(ministep)
         #print ("testing...")
         self.print_training(step, test_loss, test_energy_loss, test_grads_loss, test_dipole_loss, num_of_mols, duration,0,False)
         return  test_energy_loss,test_grads_loss
