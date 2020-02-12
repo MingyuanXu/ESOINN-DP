@@ -7,3 +7,4 @@ from .Trainer import *
 from .Dataer import *
 from .Jobqueue import * 
 from .Checker import *
+from .Evaler import *
