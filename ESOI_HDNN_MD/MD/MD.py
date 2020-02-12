@@ -145,20 +145,27 @@ class Simulation():
             if (step%10==0 ):
                 if self.format=="Amber":
                     self.trajectory.add_coordinates(self.x)
-            if (step%self.Nprint==0 ):
-                if self.format=="Amber":
-                    self.restart.coordinates=self.x
-                    self.restart.vels=self.v
-                    self.restart.write(self.path+self.name+'_%d.rst7'%self.stageindex)
             step+=1
-            AVG_ERR=np.mean(np.array(ERROR_record[-1:-50]))
-            AVG_TEMP=np.mean(np.array(Temp_record[-1:-50]))
+            AVG_ERR=np.mean(np.array(ERROR_record[-1:-30]))
+            AVG_TEMP=np.mean(np.array(Temp_record[-1:-30]))
             if AVG_ERR>GPARAMS.Train_setting.rmse**2*GPARAMS.Train_setting.Modelnumperpoint*4:
                 MD_Flag=False
             if method_record>10:
                 MD_Flag=False 
             if AVG_TEMP>350:
                 MD_Flag=False
+            if (step%self.Nprint==0 ):
+                if self.format=="Amber":
+                    if MD_Flag:
+                        self.restart.coordinates=self.x
+                        self.restart.vels=self.v
+                        self.restart.write(self.path+self.name+'_%d.rst7'%self.stageindex)
+                        self.steprecord=step
+                    else:
+                        file=open('%strajd%.trajin'%(self.path,self.stageindex),'w')
+                        file.write('trajin %s %d %d 1\n'%(self.name+'_%d.mdcrd'%self.stageindex,0,math.ceil(self.steprecord,10))
+                        file.write('trajout %s\n' %(self.name+'_%d.mdcrd'%self.stageindex))
+                        os.system("cd %s && cpptraj -p %s < traj%d.trajin > traj%d.out && cd .."%(self.path,self.name+'.prmtop',self.stageindex,self.stageindex))
             if MD_Flag==True:
                 self.Outfile.write("%s Step: %i time: %.1f(fs) KE(kJ): %.5f PotE(Eh): %.5f ETot(kJ/mol): %.5f Teff(K): %.5f MAX ERROR: %.3f Method: %s  AVG_ERR: %f AVG_TEMP: %f \n"\
                                    %(self.name, step, self.t, self.KE*len(self.m)/1000.0, self.EPot, self.KE*len(self.m)/1000.0+(self.EPot)*KJPERHARTREE, Teff,ERROR,self.sys.stepmethod,AVG_ERR,AVG_TEMP))
