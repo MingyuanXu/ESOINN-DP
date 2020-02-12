@@ -3,7 +3,7 @@ from ESOI_HDNN_MD.Computemethod import Qmmm
 from ESOI_HDNN_MD.Comparm import GPARAMS
 from ESOI_HDNN_MD.Base.Info import List2str
 from ESOI_HDNN_MD import UpdateGPARAMS,LoadModel,Added_MSet
-from ESOI_HDNN_MD.Train import productor,consumer,esoinner,trainer,dataer,parallel_caljob,get_best_struc,respnet_train 
+from ESOI_HDNN_MD.Train import productor,consumer,esoinner,trainer,dataer,parallel_caljob,get_best_struc,respnet_train,evaler 
 import os
 
 #from TensorMol import *
@@ -64,10 +64,7 @@ if __name__=="__main__":
         Dataer_Process=Process(target=dataer,args=(DataQueue,))
         Dataer_Process.start()
         if GPARAMS.Train_setting.Ifgpuwithhelp==True:
-            TrainerPool=Pool(min(\
-                                max(GPARAMS.Esoinn_setting.Model.class_id+1,GPARAMS.Train_setting.Modelnumperpoint+1),\
-                                GPARAMS.Train_setting.helpgpunum\
-                                ))
+            TrainerPool=Pool(max(GPARAMS.Esoinn_setting.Model.class_id+1,GPARAMS.Train_setting.Modelnumperpoint+1))
         else:
             TrainerPool=Pool(len(GPARAMS.Compute_setting.Gpulist))
         Resultlist=[]
@@ -88,7 +85,11 @@ if __name__=="__main__":
             os.system("mv %s/*.record %s/Stage%d"%(GPARAMS.Compute_setting.Traininglevel,\
                                                    GPARAMS.Compute_setting.Traininglevel,\
                                                    GPARAMS.Train_setting.Trainstage)) 
+        RMSE=evaler()
+        GPARAMS.Train_setting.rmse=RMSE[0]
+        print ("NN result :",RMSE )
         for i in range(len(GPARAMS.System_setting)):
             GPARAMS.MD_setting[i].Stageindex+=1
+            GPARAMS.MD_setting[i].maxstep=int(GPARAMS.MD_setting[i].maxstep*1.20)
         GPARAMS.Train_setting.Trainstage+=1
         

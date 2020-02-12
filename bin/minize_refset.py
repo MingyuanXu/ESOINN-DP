@@ -34,7 +34,7 @@ if __name__=="__main__":
         GPUQueue.put(i)
 
     bigset=MSet('Bigset')
-    GPARAMS.Dataset_setting.Inputdatasetlist=random.sample(GPARAMS.Dataset_setting.Inputdatasetlist,2)
+    GPARAMS.Dataset_setting.Inputdatasetlist=random.sample(GPARAMS.Dataset_setting.Inputdatasetlist,8)
     for name in GPARAMS.Dataset_setting.Inputdatasetlist:
         tmpset=MSet(name)
         tmpset.Load()

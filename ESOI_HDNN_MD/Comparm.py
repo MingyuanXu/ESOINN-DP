@@ -138,6 +138,7 @@ class Dataset_setting:
 
 class Train_setting:
     def __init__(self):
+        self.rmse=3
         self.Ifcpuwithhelp=False
         self.Ifgpuwithhelp=False
         self.Trainstage=0
