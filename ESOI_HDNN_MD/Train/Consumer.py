@@ -47,6 +47,8 @@ def consumer(Queue):
                 normalmollist.append(Newaddedset.mols[i])
         print ("Select Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist))
         sysnum=(len(GPARAMS.System_setting)+GPARAMS.Compute_setting.Checkernum)
+        print (sysnum,GPARAMS.Compute_setting.samplebasenum*sysnum)
+
 
         if len(Newaddedset.mols)>GPARAMS.Compute_setting.samplebasenum*sysnum:
             normalnumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
