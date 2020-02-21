@@ -52,8 +52,8 @@ def remover(GPARAMS_index=0,Queue=None,GPUQueue=None):
         for j in range(len(ERROR_mols)):
             Queue.put([ERROR_mols[j]])
             unknownlist.append(ERROR_mols[j][0])
-        tmpset.mols=unknownlist
-        tmpset.Save()
+    tmpset.mols=unknownlist
+    tmpset.Save()
     recordfile.close()
     GPUQueue.put(GPUid)
     return 
