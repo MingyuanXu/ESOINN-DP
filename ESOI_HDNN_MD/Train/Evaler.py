@@ -65,13 +65,13 @@ def evaler():
         f4.flush()
 
     fdata=np.loadtxt("%s"%(path+GPARAMS.Compute_setting.Traininglevel+'_f.csv'))
-    a=fdata[:][0]
-    b=fdata[:][1]
-    rmse.append(np.sqrt(np.sum((a-b)**2))/len(a))
+    a=fdata[:,0]
+    b=fdata[:,1]
+    rmse.append(np.sqrt(np.sum((a-b)**2)/len(a)))
     edata=np.loadtxt("%s"%(path+GPARAMS.Compute_setting.Traininglevel+'_e.csv'))
-    a=edata[:][0]
-    b=edata[:][1]
-    rmse.append(np.sqrt(np.sum((a-b)**2))/len(a))
+    a=edata[:,0]
+    b=edata[:,1]
+    rmse.append(np.sqrt(np.sum((a-b)**2)/len(a)))
     file=open(path+'rmse.result','w')
     file.write('F rmse: %f\n '%rmse[0])
     file.write('E rmse: %f\n '%rmse[1])

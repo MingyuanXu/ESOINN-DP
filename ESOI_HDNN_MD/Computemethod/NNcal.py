@@ -89,8 +89,6 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
             ERROR_mols.append([NNSet.mols[i],MAX_MSE_F])
         NN_predict.append([E_avg,F_avg,D_avg,Q_avg])
     if GPARAMS.Esoinn_setting.NNdict["RESP"]!=None:
-        print (len(NN_predict))
-        print(RESPCHARGE)
         for i in range(len(NNSet.mols)):
             NN_predict[i][3]=RESPCHARGE[i]
     return NN_predict,ERROR_mols,MAX_ERR,ERROR_strlist,method
