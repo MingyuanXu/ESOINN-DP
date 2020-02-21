@@ -66,4 +66,3 @@ if __name__=="__main__":
             #    f5.write("%.3f %.3f\n"%(refq[k],NNq[k]))
             for k in range(3):
                     f4.write("%.3f %.3f\n"%(refd[k],NNd[k]))
-

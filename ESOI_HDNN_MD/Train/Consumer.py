@@ -141,7 +141,7 @@ def parallel_caljob(MSetname,manager,ctrlfile):
             if GPARAMS.Train_setting.cpuqueuetype=='PBS':
                 cpurun.write(pbscpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
             elif GPARAMS.Train_setting.cpuqueuetype=='LSF':
-                cpurun.write(lsfcpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
+                cpurun.write(lsfcpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i,GPARAMS.Compute_setting.Ncoresperthreads))
             cpurun.write(GPARAMS.Train_setting.helpcpuenv)
             cpurun.write("Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
             cpurun.write("rm *.chk\n")
@@ -149,7 +149,10 @@ def parallel_caljob(MSetname,manager,ctrlfile):
             cpurun.close()
             sftp.put(localpath=workpath+'/cpu.run',remotepath=remotepath+'/cpu.run')
             sftp.put(localpath=workpath+'/'+ctrlfile,remotepath=remotepath+'/'+ctrlfile)
-            ssh.exec_command('cd %s && qsub cpu.run'%remotepath)
+            if GPARAMS.Train_setting.cpuqueuetype=='PBS':
+                ssh.exec_command('cd %s && qsub cpu.run'%remotepath)
+            elif GPARAMS.Train_setting.cpuqueuetype=='LSF':
+                ssh.exec_command('cd %s && bsub <cpu.run'%remotepath)
         t=0
         while False in subMSetresult:
             time.sleep(30)

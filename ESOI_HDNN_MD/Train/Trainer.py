@@ -77,7 +77,6 @@ def trainer(DataQueue,GPUQueue=None,jsonfile=''):
             shellrun.write(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Cluster%d'%ider))
             print(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Cluster%d'%ider),TMMSET.name,ider)
         shellrun.write(GPARAMS.Train_setting.helpgpuenv)
-
         strucstr="_".join([str(i) for i in evostruc])
         shellrun.write('TrainNN.py -i %s -d %s -s %s -t bp\n'%(jsonfile,MSetname,strucstr))
         shellrun.write('touch finished\n')
