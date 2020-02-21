@@ -17,11 +17,11 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
         for i in range(N_Times):
             TMMSET=MSet('tmp')
             TMMSET.mols=NNSet.mols[i*GPARAMS.Neuralnetwork_setting.Batchsize:(i+1)*GPARAMS.Neuralnetwork_setting.Batchsize]
-            try:
-                atom_charge=\
+#            try:
+            atom_charge=\
                     Eval_charge(TMMSET,GPARAMS.Esoinn_setting.NNdict["RESP"])
-            except:
-                atom_charge=[]
+#            except:
+#                atom_charge=[]
             RESPCHARGE+=list(atom_charge)
     for i in range(len(NNSet.mols)):
         for j in NNSet.mols[i].belongto:
@@ -87,23 +87,10 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
             ERROR_str+='%s in NNSet is not believable, MAX_MSE_F: %f\n '%(imol.name,MAX_MSE_F)
             ERROR_strlist.append(ERROR_str)
             ERROR_mols.append([NNSet.mols[i],MAX_MSE_F])
-#        if MAX_MSE_F>=50 or MAX_MSE_F-tmperr>30:
-#            ERROR_str+='%dth mol will be calculated with DFTB!'
-#            NNSet.mols[i].Write_DFTB_input(parapath,False,inpath)
-#            NNSet.mols[i].Cal_DFTB(inpath)
-#            E_avg=NNSet.mols[i].properties['energy']*627.51
-#            F_avg=NNSet.mols[i].properties['force']*627.51
-#            try:
-#                D_avg=NNSet.mols[i].properties['dipole']
-#            except:
-#                D_avg=np.zeros(3)
-#            Q_i=NNSet.mols[i].properties['charge']
-#            NNSet.mols[i].properties={}
-#            ERROR_mols.append(NNSet.mols[i])
-#            method='DFTB'
         NN_predict.append([E_avg,F_avg,D_avg,Q_avg])
     if GPARAMS.Esoinn_setting.NNdict["RESP"]!=None:
         print (len(NN_predict))
+        print(RESPCHARGE)
         for i in range(len(NNSet.mols)):
             NN_predict[i][3]=RESPCHARGE[i]
     return NN_predict,ERROR_mols,MAX_ERR,ERROR_strlist,method
