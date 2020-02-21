@@ -25,12 +25,12 @@ def consumer(Queue):
         num+=1
         if num%2000==0:
             Newaddedset.Save() 
-    Error_list=np.array(-Error_list)
+    Error_list=-np.array(Error_list)
     Newaddedset.mols=[Newaddedset.mols[i] for i in np.argsort(Error_list)]
 
     Dataset=[]
     Newaddedset.mols=Check_MSet(Newaddedset.mols)
-    if len(GPARAMS.Esoinn_setting.Model.nodes)!=0 and GPARAMS.Esoinn_setting.Model.class_id > GPARAMS.Train_setting.Modelnumperpoint:
+    if len(GPARAMS.Esoinn_setting.Model.nodes)!=0 and GPARAMS.Esoinn_setting.Model.class_id >= GPARAMS.Train_setting.Modelnumperpoint:
         for i in Newaddedset.mols:
             try:
                 Dataset.append(i.EGCM)
