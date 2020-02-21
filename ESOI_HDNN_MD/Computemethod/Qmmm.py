@@ -375,8 +375,11 @@ class QMMM_FragSystem:
                 maxerr=np.max(np.array(ERR_List))
             except:
                 NN_predict,ERROR_mols,ERR_List,ERROR_strlist,self.stepmethod=\
-                    Cal_Gaussian_EFQ(QMSet,self.Inpath,GPARAMS.Compute_setting.Gaussiankeywords,GPARAMS.Compute_setting.Ncoresperthreads)
+                    Cal_Gaussian_EFQ(QMSet,self.Inpath,"PM6 nosymm force",GPARAMS.Compute_setting.Ncoresperthreads)
                 maxerr=np.max(np.array(ERR_List))
+                for i in ERROR_mols:
+                    i[0].properties={}
+
 
             
         if self.Theroylevel=='DFTB3':
@@ -436,7 +439,7 @@ class QMMM_FragSystem:
         for i in QMlist:
             qmsysname+=i.aname
         if self.ifresp==True:
-            if self.step%100==0 :
+            if self.step%100==0 and self.stepmethod=='NN':
                 self.resptop.parm_data['CHARGE']=self.RESPCHARGE
                 self.QMparmdict={}
                 self.QMsysdict={}

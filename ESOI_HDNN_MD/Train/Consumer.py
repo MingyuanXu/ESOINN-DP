@@ -21,16 +21,19 @@ def consumer(Queue):
             ERROR_mols[i][0].name="Stage_%d_Mol_%d_%d"%(GPARAMS.Train_setting.Trainstage,num,i)
             Error_list.append(ERROR_mols[i][1])
             Newaddedset.mols.append(ERROR_mols[i][0])
-            
+            print (Error_list)
         num+=1
         if num%2000==0:
             Newaddedset.Save() 
     Error_list=-np.array(Error_list)
+    print (Error_list)
+    print (np.argsort(Error_list))
     Newaddedset.mols=[Newaddedset.mols[i] for i in np.argsort(Error_list)]
 
     Dataset=[]
     Newaddedset.mols=Check_MSet(Newaddedset.mols)
-    if len(GPARAMS.Esoinn_setting.Model.nodes)!=0 and GPARAMS.Esoinn_setting.Model.class_id >= GPARAMS.Train_setting.Modelnumperpoint:
+    sysnum=(len(GPARAMS.System_setting)+GPARAMS.Compute_setting.Checkernum)
+    if len(GPARAMS.Esoinn_setting.Model.nodes)!=0 and GPARAMS.Esoinn_setting.Model.class_id > GPARAMS.Train_setting.Modelnumperpoint:
         for i in Newaddedset.mols:
             try:
                 Dataset.append(i.EGCM)
@@ -46,10 +49,6 @@ def consumer(Queue):
             if signalmask[i]=='Normal':
                 normalmollist.append(Newaddedset.mols[i])
         print ("Select Newadded set:",len(noisemollist),len(edgemollist),len(normalmollist))
-        sysnum=(len(GPARAMS.System_setting)+GPARAMS.Compute_setting.Checkernum)
-        print (sysnum,GPARAMS.Compute_setting.samplebasenum*sysnum)
-
-
         if len(Newaddedset.mols)>GPARAMS.Compute_setting.samplebasenum*sysnum:
             normalnumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)
             edgenumpersys=math.ceil(GPARAMS.Compute_setting.samplebasenum*0.3)

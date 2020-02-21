@@ -7,18 +7,21 @@ from ESOI_HDNN_MD.Train import productor,consumer
 from ESOI_HDNN_MD.Train import consumer
 from ESOI_HDNN_MD.Computemethod import Cal_NN_EFQ 
 import os
+import random
 #from TensorMol import *
 from TensorMol import MSet,JOULEPERHARTREE
 import argparse as arg
 from multiprocessing import Queue,Process,Manager,Pool
 from matplotlib import pyplot as plt 
 def evaler():
+    os.environ["CUDA_VISIBLE_DEVICES"]=str(GPARAMS.Compute_setting.Gpulist[0])
     path="./results/Stage%d/"%GPARAMS.Train_setting.Trainstage 
     if not os.path.exists(path):
         os.system("mkdir %s"%path)
     rmse=[]
     TMPSet=MSet(GPARAMS.Compute_setting.Traininglevel)
     TMPSet.Load()
+    TMPSet.mols=random.sample(TMPSet.mols,5000)
     f1=open(path+GPARAMS.Compute_setting.Traininglevel+'.result','w')
     f2=open(path+GPARAMS.Compute_setting.Traininglevel+'_e.csv','w')
     f3=open(path+GPARAMS.Compute_setting.Traininglevel+'_f.csv','w')
@@ -28,6 +31,7 @@ def evaler():
         EGCM=(TMPSet.mols[j].Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
         EGCM[~ np.isfinite(EGCM)]=0
         TMPSet.mols[j].belongto=GPARAMS.Esoinn_setting.Model.find_closest_cluster(3,EGCM)
+        TMPSet.mols[j].properties['clabel']=int(TMPSet.mols[j].Total_charge)
     NNpredict,ERRORmols,Avgerr,ERROR_str,method=Cal_NN_EFQ(TMPSet)
     for j in range(len(TMPSet.mols)):
         NNe=NNpredict[j][0]/627.51
@@ -55,14 +59,19 @@ def evaler():
                 f3.write("%.3f %.3f\n"%(reff[k][l]*627.51,NNf[k][l]*627.51))
         for k in range(3):
                 f4.write("%.3f %.3f\n"%(refd[k],NNd[k]))
-    fdata=np.loadtxt("%s"%(path+GPARAMS.Dataset_setting.Inputdatasetlist[i]+'_f.csv'))
-    a=fdata[:][0]
-    b=fdata[:][1]
-    rmse.append(np.sqrt(np.sum((a-b)**2))/len(a))
-    edata=np.loadtxt("%s"%(path+GPARAMS.Dataset_setting.Inputdatasetlist[i]+'_e.csv'))
-    a=edata[:][0]
-    b=edata[:][1]
-    rmse.append(np.sqrt(np.sum((a-b)**2))/len(a))
+        f1.flush()
+        f2.flush()
+        f3.flush()
+        f4.flush()
+
+    fdata=np.loadtxt("%s"%(path+GPARAMS.Compute_setting.Traininglevel+'_f.csv'))
+    a=fdata[:,0]
+    b=fdata[:,1]
+    rmse.append(np.sqrt(np.sum((a-b)**2)/len(a)))
+    edata=np.loadtxt("%s"%(path+GPARAMS.Compute_setting.Traininglevel+'_e.csv'))
+    a=edata[:,0]
+    b=edata[:,1]
+    rmse.append(np.sqrt(np.sum((a-b)**2)/len(a)))
     file=open(path+'rmse.result','w')
     file.write('F rmse: %f\n '%rmse[0])
     file.write('E rmse: %f\n '%rmse[1])
