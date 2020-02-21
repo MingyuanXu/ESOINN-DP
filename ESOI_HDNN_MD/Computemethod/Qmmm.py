@@ -436,7 +436,7 @@ class QMMM_FragSystem:
         for i in QMlist:
             qmsysname+=i.aname
         if self.ifresp==True:
-            if self.step%100==0 :
+            if self.step%100==0 and self.stepmethod=='NN':
                 self.resptop.parm_data['CHARGE']=self.RESPCHARGE
                 self.QMparmdict={}
                 self.QMsysdict={}

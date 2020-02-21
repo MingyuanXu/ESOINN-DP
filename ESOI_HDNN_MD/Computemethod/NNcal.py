@@ -86,7 +86,6 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
         if MAX_MSE_F > GPARAMS.Neuralnetwork_setting.Maxerr :
             ERROR_str+='%s in NNSet is not believable, MAX_MSE_F: %f\n '%(imol.name,MAX_MSE_F)
             ERROR_strlist.append(ERROR_str)
-            print(ERROR_str)
             ERROR_mols.append([NNSet.mols[i],MAX_MSE_F])
 #        if MAX_MSE_F>=50 or MAX_MSE_F-tmperr>30:
 #            ERROR_str+='%dth mol will be calculated with DFTB!'
@@ -104,6 +103,7 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
 #            method='DFTB'
         NN_predict.append([E_avg,F_avg,D_avg,Q_avg])
     if GPARAMS.Esoinn_setting.NNdict["RESP"]!=None:
+        print (len(NN_predict))
         for i in range(len(NNSet.mols)):
             NN_predict[i][3]=RESPCHARGE[i]
     return NN_predict,ERROR_mols,MAX_ERR,ERROR_strlist,method

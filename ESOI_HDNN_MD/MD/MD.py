@@ -70,7 +70,6 @@ class Simulation():
             self.v=np.random.randn(*self.x.shape)
             Tstat = Thermostat(self.m, self.v,self.T,self.dt)
         elif self.MDV0=="Thermal":
-            print ("+++++++++++++++++self.T++++++++++%d"%self.T)
             self.v = np.random.normal(size=self.x.shape) * np.sqrt(1.38064852e-23 * self.T / self.m)[:,None]
 
         self.Tstat = None
@@ -146,11 +145,11 @@ class Simulation():
                 if self.format=="Amber":
                     self.trajectory.add_coordinates(self.x)
             step+=1
-            AVG_ERR=np.mean(np.array(ERROR_record[-1:-30]))
-            AVG_TEMP=np.mean(np.array(Temp_record[-1:-30]))
+            AVG_ERR=np.mean(np.array(ERROR_record[-30:-1]))
+            AVG_TEMP=np.mean(np.array(Temp_record[-30:-1]))
             if AVG_ERR>GPARAMS.Train_setting.rmse**2*GPARAMS.Train_setting.Modelnumperpoint*4:
                 MD_Flag=False
-            if method_record>10:
+            if method_record>2:
                 MD_Flag=False 
             if AVG_TEMP>350:
                 MD_Flag=False
@@ -163,7 +162,7 @@ class Simulation():
                         self.steprecord=step
                     else:
                         file=open('%strajd%.trajin'%(self.path,self.stageindex),'w')
-                        file.write('trajin %s %d %d 1\n'%(self.name+'_%d.mdcrd'%self.stageindex,0,math.ceil(self.steprecord,10))
+                        file.write('trajin %s %d %d 1\n'%(self.name+'_%d.mdcrd'%self.stageindex,0,math.ceil(self.steprecord,10)))
                         file.write('trajout %s\n' %(self.name+'_%d.mdcrd'%self.stageindex))
                         os.system("cd %s && cpptraj -p %s < traj%d.trajin > traj%d.out && cd .."%(self.path,self.name+'.prmtop',self.stageindex,self.stageindex))
             if MD_Flag==True:
