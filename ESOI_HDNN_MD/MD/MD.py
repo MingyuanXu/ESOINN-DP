@@ -163,7 +163,7 @@ class Simulation():
                         self.steprecord=step
                     else:
                         file=open('%strajd%.trajin'%(self.path,self.stageindex),'w')
-                        file.write('trajin %s %d %d 1\n'%(self.name+'_%d.mdcrd'%self.stageindex,0,math.ceil(self.steprecord,10))
+                        file.write('trajin %s %d %d 1\n'%(self.name+'_%d.mdcrd'%self.stageindex,0,math.ceil(self.steprecord,10)))
                         file.write('trajout %s\n' %(self.name+'_%d.mdcrd'%self.stageindex))
                         os.system("cd %s && cpptraj -p %s < traj%d.trajin > traj%d.out && cd .."%(self.path,self.name+'.prmtop',self.stageindex,self.stageindex))
             if MD_Flag==True:

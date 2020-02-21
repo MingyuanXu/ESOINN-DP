@@ -9,7 +9,7 @@ from ..Base import *
 import random
 from multiprocessing import Queue,Process 
 #def BumpEnergy(h,w,distag,dis):
-    """
+"""
 
 class BumpHolder:
     def __init__(self,CV_num,Max_bump,Height,Width):
@@ -41,4 +41,4 @@ class BumpHolder:
 def BumpEnergy(h,w,dis_,r):
     for i in 
 
-    """
+"""
