@@ -292,7 +292,11 @@ class TData_BP_Direct_EE_WithCharge():
             if (self.dig.OType  == "EnergyAndDipole"):
                 Elabels[i] = mol.properties["atomization"]
                 Dlabels[i] = mol.properties["dipole"]*AUPERDEBYE
-                Qlabels[i][:mol.NAtoms()] = mol.properties["resp_charge"]
+                if GPARAMS.Esoinn_setting.Ifresp==True:
+                    Qlabels[i][:mol.NAtoms()] = mol.properties["resp_charge"]
+                elif GPARAMS.Esoinn_setting.Ifadch==True:
+                    Qlabels[i][:mol.NAtoms()] = mol.properties["adch_charge"]
+
                 Qtlabels[i]=np.sum(Qlabels[i])
                 masks[i][:mol.NAtoms()]=np.ones(mol.NAtoms(),dtype=np.float64)
             else:

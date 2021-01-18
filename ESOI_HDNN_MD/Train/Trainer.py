@@ -133,12 +133,12 @@ def get_best_struc(candidate_num):
     print (np.mean(candidate_struc,axis=0))
     return candidate_struc
 
-def respnet_train(MSetname,GPUQueue,jsonfile):
+def chargenet_train(MSetname,GPUQueue,jsonfile):
     print ("RESP coming")
     if len(GPARAMS.Neuralnetwork_setting.NNstrucselect)!=0:
         candidate_struc=get_best_struc(2)
-        print ("Candidate_NNSTRUC:",candidate_struc) 
-        basestruc=[math.ceil(i) for i in np.mean(candidate_struc,axis=0)] 
+        print ("Candidate_NNSTRUC:",candidate_struc)
+        basestruc=[math.ceil(i) for i in np.mean(candidate_struc,axis=0)]
     else:
         basestruc=GPARAMS.Neuralnetwork_setting.Initstruc 
     deltastruc=[math.ceil(i*0.10) for i in basestruc]
@@ -149,15 +149,19 @@ def respnet_train(MSetname,GPUQueue,jsonfile):
     if GPARAMS.Train_setting.Ifgpuwithhelp==False:
         GPUID=GPUQueue.get()
         os.environ["CUDA_VISIBLE_DEVICES"]=str(GPUID) 
-        Respset=MSet("HF_resp")
-        Respset.Load()
+        if GPARAMS.Esoinn_setting.Ifresp==True:
+            Chargeset=MSet("HF_resp")
+            Chargeset.Load()
+        else:
+            Chargeset=MSet(GPARAMS.Compute_setting.Traininglevel)
+            Chargeset.Load()
         GPARAMS.Neuralnetwork_setting.Switchrate=0.9
-        if len(Respset.mols)<GPARAMS.Neuralnetwork_setting.Batchsize*20:
+        if len(Chargeset.mols)<GPARAMS.Neuralnetwork_setting.Batchsize*20:
             num=math.ceil(GPARAMS.Neuralnetwork_setting.Batchsize*20/len(TMPset.mols))
-            Respset.mols=Respset.mols*num
-        TreatedAtoms=Respset.AtomTypes()
+            Chargeset.mols=Chargeset.mols*num
+        TreatedAtoms=Chargeset.AtomTypes()
         d=MolDigester(TreatedAtoms,name_="ANI1_Sym_Direct", OType_="EnergyAndDipole")
-        tset=TData_BP_Direct_EE_WithCharge(Respset,d,order_=1,num_indis_=1,type_="mol",WithGrad_=True,MaxNAtoms=100)
+        tset=TData_BP_Direct_EE_WithCharge(Chargeset,d,order_=1,num_indis_=1,type_="mol",WithGrad_=True,MaxNAtoms=100)
         NN_name=None
         ifcontinue=False
         SUBNet=BP_HDNN_charge(tset,NN_name,Structure=evostruc)
@@ -171,7 +175,10 @@ def respnet_train(MSetname,GPUQueue,jsonfile):
         sftp=pko.SFTPClient.from_transport(trans)
         workpath=os.getcwd()
         print (workpath)
-        remotepath=GPARAMS.Train_setting.helpgpupath+'/Stage%d/resp'%(GPARAMS.Train_setting.Trainstage)
+        if GPARAMS.Esoinn_setting.Ifresp==True:
+            remotepath=GPARAMS.Train_setting.helpgpupath+'/Stage%d/resp'%(GPARAMS.Train_setting.Trainstage)
+        elif GPARAMS.Esoinn_setting.Ifadch==True:
+            remotepath=GPARAMS.Train_setting.helpgpupath+'/Stage%d/adch'%(GPARAMS.Train_setting.Trainstage)
         srcpath=workpath+'/datasets/%s.pdb'%(MSetname)
         print (remotepath,srcpath)
         stdin,stdout,stderr=ssh.exec_command('rm %s'%(remotepath))
@@ -180,16 +187,28 @@ def respnet_train(MSetname,GPUQueue,jsonfile):
         sftp.put(srcpath,remotepath+'/datasets/%s.pdb'%(MSetname))
         shellrun=open('gpu_resp.run','w')
         if GPARAMS.Train_setting.gpuqueuetype=='LSF':
-            shellrun.write(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Resp'))
-            print(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Resp'),MSetname)
+            if GPARAMS.Esoinn_setting.Ifresp==True:
+                shellrun.write(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Resp'))
+                print(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Resp'),MSetname)
+            elif GPARAMS.Esoinn_setting.Ifadch==True:
+                shellrun.write(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Adch'))
+                print(lsfgpustr%(GPARAMS.Train_setting.gpuqueuename,'Adch'),MSetname)
+                
             shellrun.write(GPARAMS.Train_setting.helpgpuenv)
         elif GPARAMS.Train_setting.gpuqueuetype=="PBS":
-            shellrun=open('gpu_resp.run','w')
-            shellrun.write(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Resp'))
-            print(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Resp'),MSetname)
+            
+            if GPARAMS.Esoinn_setting.Ifresp==True:
+                shellrun=open('gpu_resp.run','w')
+                shellrun.write(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Resp'))
+                print(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Resp'),MSetname)
+            if GPARAMS.Esoinn_setting.Ifadch==True:
+                shellrun=open('gpu_adch.run','w')
+                shellrun.write(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Adch'))
+                print(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Adch'),MSetname)
+                
             shellrun.write(GPARAMS.Train_setting.helpgpuenv)
         strucstr="_".join([str(i) for i in evostruc])
-        shellrun.write('TrainNN.py -i %s -d %s -s %s -t bpresp \n'%(jsonfile,MSetname,strucstr))
+        shellrun.write('TrainNN.py -i %s -d %s -s %s -t bpcharge \n'%(jsonfile,MSetname,strucstr))
         shellrun.write('touch finished\n')
         shellrun.close()
 
@@ -205,13 +224,13 @@ def respnet_train(MSetname,GPUQueue,jsonfile):
             stdin,stdout,stderr=ssh.exec_command("cd %s&& ls"%remotepath)
             tmpstr=stdout.read().decode()
             flag=not ('finished' in tmpstr)
-        stdin,stdout,stderr=ssh.exec_command("cd %s && mv %s/%s/*.record networks/resp.record"%(remotepath,remotepath,GPARAMS.Compute_setting.Traininglevel))
+        
+        stdin,stdout,stderr=ssh.exec_command("cd %s && mv %s/%s/*.record networks/chargenet.record"%(remotepath,remotepath,GPARAMS.Compute_setting.Traininglevel))
         print (stdout.read().decode())
-        stdin,stdout,stderr=ssh.exec_command("cd %s/networks && tar zcvf resp.tar.gz * && mv resp.tar.gz .."%remotepath)
+        stdin,stdout,stderr=ssh.exec_command("cd %s/networks && tar zcvf chargenet.tar.gz * && mv chargenet.tar.gz .."%remotepath)
         print (stdout.read().decode())
-        sftp.get(localpath=workpath+'/networks/resp.tar.gz',\
-                remotepath=remotepath+'/resp.tar.gz')
-        os.system('cd ./networks && tar zxvf resp.tar.gz && mv *.record ../%s/Stage%d/ && rm resp.tar.gz'%(GPARAMS.Compute_setting.Traininglevel,GPARAMS.Train_setting.Trainstage))
+        sftp.get(localpath=workpath+'/networks/chargenet.tar.gz',\
+                remotepath=remotepath+'/chargenet.tar.gz')
+        os.system('cd ./networks && tar zxvf chargenet.tar.gz && mv *.record ../%s/Stage%d/ && rm chargenet.tar.gz'%(GPARAMS.Compute_setting.Traininglevel,GPARAMS.Train_setting.Trainstage))
         os.system('rm gpu_*.run')
     return 
-

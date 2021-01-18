@@ -10,7 +10,12 @@ def Cal_DFTB_EFQ(NNSet,parapath,inpath):
         E_avg=NNSet.mols[i].properties['atomization']*627.51
         F_avg=NNSet.mols[i].properties['force']*627.51
         D_avg=NNSet.mols[i].properties['dipole']
-        Q_i=NNSet.mols[i].properties['charge']
+        if GPARAMS.Esoinn_setting.Ifresp==True:
+            Q_i=NNSet.mols[i].properties['resp_charge']
+        elif GPARAMS.Esoinn_setting.Ifadch==True:
+            Q_i=NNSet.mols[i].properties['adch_charge']
+        else:
+            Q_i=NNSet.mols[i].properties['charge']
         ERROR_mols.append([NNSet.mols[i],999])
         method='DFTB'
         NN_predict.append([E_avg,F_avg,D_avg,Q_i])
@@ -26,10 +31,12 @@ def Cal_Gaussian_EFQ(NNSet,inpath,keywords,nproc=14,mem=600):
         E_avg=NNSet.mols[i].properties['atomization']*627.51
         F_avg=NNSet.mols[i].properties['force']*627.51
         D_avg=NNSet.mols[i].properties['dipole']
-        if GPARAMS.Esoinn_setting.Ifresp==False:
-            Q_i=NNSet.mols[i].properties['charge']
-        else:
+        if GPARAMS.Esoinn_setting.Ifresp==True:
             Q_i=NNSet.mols[i].properties['resp_charge']
+        elif GPARAMS.Esoinn_setting.Ifadch==True:
+            Q_i=NNSet.mols[i].properties['adch_charge']
+        else:
+            Q_i=NNSet.mols[i].properties['charge']
         ERROR_mols.append([NNSet.mols[i],999])
         method="Gaussian"
         NN_predict.append([E_avg,F_avg,D_avg,Q_i])

@@ -12,6 +12,7 @@ def productor(GPARAMS_index=0,Queue=None,GPUQueue=None):
 #    os.environ["CUDA_VISIBLE_DEVICES"]=Find_useable_gpu(GPARAMS.Compute_setting.Gpulist)
     GPUid=GPUQueue.get()
     os.environ["CUDA_VISIBLE_DEVICES"]=str(GPUid)
+    #os.environ["CUDA_VISIBLE_DEVICES"]='0'
     print (os.environ["CUDA_VISIBLE_DEVICES"])
     if GPARAMS.Compute_setting.Theroylevel=="DFTB+":
         os.environ["OMP_NUM_THREADS"]=GPARAMS.Compute_setting.Ncoresperthreads
@@ -43,7 +44,7 @@ def productor(GPARAMS_index=0,Queue=None,GPUQueue=None):
                                 Inpath='./'+GPARAMS.Compute_setting.Traininglevel+\
                                         '/'+GPARAMS.MD_setting[GPARAMS_index].Name+'/',\
                                  Name=GPARAMS.MD_setting[GPARAMS_index].Name,\
-                                 resplist=GPARAMS.System_setting[GPARAMS_index].reportcharge)
+                                 chargelist=GPARAMS.System_setting[GPARAMS_index].reportcharge)
     elif GPARAMS.Compute_setting.Computelevel[GPARAMS_index]=="Full":
         if GPARAMS.System_setting[GPARAMS_index].Forcefield=="Amber":
             prmfile=GPARAMS.System_setting[GPARAMS_index].Systemparm
@@ -75,11 +76,14 @@ def productor(GPARAMS_index=0,Queue=None,GPUQueue=None):
         print (GPARAMS.MD_setting[GPARAMS_index].Name)
         MD_simulation=Simulation(sys=qmsys,\
                                  MD_setting=GPARAMS.MD_setting[GPARAMS_index])
+
         try:
             MDdeviation=MD_simulation.MD(Queue)
-        except:
+        except Exception as e :
+            
             print ("=======================================")
             print ("ERROR: MD of %s failed by some mistake!")
+            print (e)
             print ("=======================================")
 
     GPUQueue.put(GPUid)

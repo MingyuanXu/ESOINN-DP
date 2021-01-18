@@ -3,7 +3,7 @@ from ESOI_HDNN_MD.Computemethod import Qmmm
 from ESOI_HDNN_MD.Comparm import GPARAMS
 from ESOI_HDNN_MD.Base.Info import List2str
 from ESOI_HDNN_MD import UpdateGPARAMS,LoadModel,Added_MSet
-from ESOI_HDNN_MD.Train import productor,consumer,esoinner,trainer,dataer,parallel_caljob,get_best_struc,respnet_train,evaler 
+from ESOI_HDNN_MD.Train import productor,consumer,esoinner,trainer,dataer,parallel_caljob,get_best_struc,chargenet_train,evaler 
 import os
 
 #from TensorMol import *
@@ -72,7 +72,10 @@ if __name__=="__main__":
             print ("Create HDNN subnet for class %d"%i)
             result=TrainerPool.apply_async(trainer,(DataQueue,GPUQueue,jsonfile))
             Resultlist.append(result)
-        result=TrainerPool.apply_async(respnet_train,("HF_resp",GPUQueue,jsonfile))
+        if GPARAMS.Esoinn_setting.Ifresp==True:
+            result=TrainerPool.apply_async(chargenet_train,("HF_resp",GPUQueue,jsonfile))
+        elif GPARAMS.Esoinn_setting.Ifadch==True:
+            result=TrainerPool.apply_async(chargenet_train,(GPARAMS.Compute_setting.Traininglevel,GPUQueue,jsonfile))
         Resultlist.append(result)
         TrainerPool.close()
         for i in range(max(GPARAMS.Esoinn_setting.Model.class_id+1,GPARAMS.Train_setting.Modelnumperpoint+1)):

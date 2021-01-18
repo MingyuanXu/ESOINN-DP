@@ -140,7 +140,7 @@ def parallel_caljob(MSetname,manager,ctrlfile):
             if GPARAMS.Train_setting.cpuqueuetype=='PBS':
                 cpurun.write(pbscpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
             elif GPARAMS.Train_setting.cpuqueuetype=='LSF':
-                cpurun.write(lsfcpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i,GPARAMS.Compute_setting.Ncoresperthreads))
+                cpurun.write(lsfcpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
             cpurun.write(GPARAMS.Train_setting.helpcpuenv)
             cpurun.write("Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
             cpurun.write("rm *.chk\n")

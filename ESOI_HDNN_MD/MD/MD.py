@@ -37,9 +37,6 @@ class Simulation():
         self.Outfile=open(self.path+MD_setting.Name+'_%d.mdout'%self.stageindex,'w')
         self.Respfile=open(self.path+MD_setting.Name+'_%d.resp'%self.stageindex,'w')
         self.Nprint=MD_setting.Nprint
-        self.Maxerr=GPARAMS.Neuralnetwork_setting.Maxerr 
-        self.Miderr=GPARAMS.Neuralnetwork_setting.Miderr 
-        self.Midrate=GPARAMS.Neuralnetwork_setting.Midrate 
         return
 
     def MD(self,QMQueue=None):
@@ -90,7 +87,6 @@ class Simulation():
         ERROR_record=[]
         method_record=0
         Temp_record=[]
-        miderr_num=0
         MD_Flag=True
         while step < self.maxstep and MD_Flag:
             self.t+=self.dt
@@ -104,17 +100,12 @@ class Simulation():
             self.sys.update_crd()
             f,EPot,ERROR,ERROR_mols,EGCMlist,chargestr=self.sys.Cal_EFQ()
             ERROR_record.append(ERROR)
-            if self.sys.stepmethod=='Gaussian':
+            if self.sys.stepmethod=='Gaussian' and self.sys.Theroylevel=='NN':
                 method_record+=1
             
-            if ERROR>self.Miderr and ERROR<self.Maxerr:
-                miderr_num+=1
             if self.MODE=='Train':
                 if QMQueue!=None:
-                    if ERROR>self.Maxerr:
-                        QMQueue.put(ERROR_mols)
-                    elif miderr_num<self.maxstep*self.Midrate:
-                        QMQueue.put(ERROR_mols)
+                    QMQueue.put(ERROR_mols)
             self.EPot=EPot
             if self.icap==True:
                 Vec=(self.sys.Distance_Matrix[self.center]-self.radius)/self.radius
@@ -141,14 +132,14 @@ class Simulation():
             Teff = (2./3.)*self.KE/IDEALGASR
             Temp_record.append(Teff)
         
-            if (step%10==0 ):
+            if (step%1==0 ):
                 if self.format=="Amber":
                     self.trajectory.add_coordinates(self.x)
             step+=1
-            AVG_ERR=np.mean(np.array(ERROR_record[-30:-1]))
-            AVG_TEMP=np.mean(np.array(Temp_record[-30:-1]))
-            if AVG_ERR>GPARAMS.Train_setting.rmse**2*GPARAMS.Train_setting.Modelnumperpoint*4:
-                MD_Flag=False
+            AVG_ERR=np.mean(np.array(ERROR_record[-1000:-1]))
+            AVG_TEMP=np.mean(np.array(Temp_record[-1000:-1]))
+            #if AVG_ERR>GPARAMS.Train_setting.rmse**2*GPARAMS.Train_setting.Modelnumperpoint*4:
+            #    MD_Flag=False
             if method_record>2:
                 MD_Flag=False 
             if AVG_TEMP>350:
@@ -161,7 +152,7 @@ class Simulation():
                         self.restart.write(self.path+self.name+'_%d.rst7'%self.stageindex)
                         self.steprecord=step
                     else:
-                        file=open('%strajd%.trajin'%(self.path,self.stageindex),'w')
+                        file=open('%straj%d.trajin'%(self.path,self.stageindex),'w')
                         file.write('trajin %s %d %d 1\n'%(self.name+'_%d.mdcrd'%self.stageindex,0,math.ceil(self.steprecord,10)))
                         file.write('trajout %s\n' %(self.name+'_%d.mdcrd'%self.stageindex))
                         os.system("cd %s && cpptraj -p %s < traj%d.trajin > traj%d.out && cd .."%(self.path,self.name+'.prmtop',self.stageindex,self.stageindex))

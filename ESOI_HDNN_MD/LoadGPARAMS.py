@@ -30,6 +30,10 @@ def UpdateGPARAMS(jsonfile,Onlymodel=False):
             Loaddict2obj(jsondict['Dataset'],GPARAMS.Dataset_setting)
         if "Train" in jsondict.keys():
             Loaddict2obj(jsondict["Train"],GPARAMS.Train_setting)
+            GPARAMS.Train_setting.Update()
+            print ("**************************************")
+            print (GPARAMS.Train_setting.sigma)
+            print ("**************************************")
             if GPARAMS.Train_setting.Trainstage!=0:
                 for i in range(len(GPARAMS.MD_setting)):
                     GPARAMS.MD_setting[i].Stageindex=GPARAMS.Train_setting.Trainstage
@@ -37,7 +41,7 @@ def UpdateGPARAMS(jsonfile,Onlymodel=False):
     return
 
 def LoadModel(ifhdnn=True):
-    nnlist=None;respnet=None
+    nnlist=None;chargenet=None
     if GPARAMS.Esoinn_setting.Modelfile!="":
         GPARAMS.Esoinn_setting.Model=Esoinn(GPARAMS.Esoinn_setting.Modelfile,\
                                             dim=GPARAMS.Esoinn_setting.Maxnum,\
@@ -56,11 +60,11 @@ def LoadModel(ifhdnn=True):
     if ifhdnn==True:
         if GPARAMS.Esoinn_setting.Loadefdnet==True and GPARAMS.Esoinn_setting.Model!=None:
             nnlist=Get_neuralnetwork_instance(max(GPARAMS.Esoinn_setting.Model.class_id,GPARAMS.Train_setting.Modelnumperpoint))
-        if GPARAMS.Esoinn_setting.Loadrespnet==True and GPARAMS.Esoinn_setting.respnetname!="":
-            respnet=Get_resp_instance(GPARAMS.Esoinn_setting.respnetname)
-        GPARAMS.Esoinn_setting.NNdict={"NN":nnlist,"RESP":respnet}
+        if GPARAMS.Esoinn_setting.Loadchargenet==True and GPARAMS.Esoinn_setting.chargenetname!="":
+            chargenet=Get_charge_instance(GPARAMS.Esoinn_setting.chargenetname)
+        GPARAMS.Esoinn_setting.NNdict={"NN":nnlist,"Charge":chargenet}
     else:
-        GPARAMS.Esoinn_setting.NNdict={"NN":nnlist,"RESP":nnlist}
+        GPARAMS.Esoinn_setting.NNdict={"NN":nnlist,"Charge":nnlist}
 
 def Loaddict2obj(dict,obj):
     objdict=obj.__dict__
@@ -79,7 +83,7 @@ def Get_neuralnetwork_instance(Class_num):
     print ("Loaded %d subnet in Neural Layer!"%(len(subnet_list)))
     return subnet_list
 
-def Get_resp_instance(Name):
+def Get_charge_instance(Name):
     SUBNET=BP_HDNN_charge(None,Name,False)
     #SUBNET.SaveAndClose()
     return SUBNET

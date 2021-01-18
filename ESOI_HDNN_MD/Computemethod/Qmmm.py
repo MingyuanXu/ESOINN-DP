@@ -21,7 +21,7 @@ from .NNcal import*
 from .DFTBcal import * 
 
 class QMMM_FragSystem:
-    def __init__(self,prmname='',crdname='',Strucdict={},Path='./',Inpath='./',Name="",resplist=[]):
+    def __init__(self,prmname='',crdname='',Strucdict={},Path='./',Inpath='./',Name="",chargelist=[]):
         self.prmname=prmname
         self.crdname=crdname
         self.name=Name
@@ -29,19 +29,22 @@ class QMMM_FragSystem:
         self.chnpts=Strucdict['CHNPTS']
         self.chnpte=Strucdict['CHNPTE']
         self.catom=Strucdict['CENTER']
-        self.reportcharge=resplist
+        self.reportcharge=chargelist
         self.path=Path
         self.Inpath=Inpath
         self.qmcutoff=GPARAMS.Compute_setting.Qmradius
-        if GPARAMS.Esoinn_setting.Loadrespnet ==True and 'IFRESP' in Strucdict.keys():
+        self.ifresp=False
+        self.ifadch=False
+        if GPARAMS.Esoinn_setting.Loadchargenet ==True and 'IFRESP' in Strucdict.keys():
             self.ifresp=Strucdict['IFRESP']
-        else:
-            self.ifresp=False
+        if GPARAMS.Esoinn_setting.Loadchargenet ==True and 'IFADCH' in Strucdict.keys():
+            self.ifadch=Strucdict['IFADCH']
         self.QMparmdict={}
         self.QMstatedict={}
         self.QMsysdict={}
         self.record_err_step=0
         self.step=0
+        self.spinlist=[]
         self.Theroylevel=GPARAMS.Compute_setting.Theroylevel 
         self.Path=Path 
         if not os.path.exists(self.Path):
@@ -62,7 +65,7 @@ class QMMM_FragSystem:
          
     def Get_prmtop_info(self):
         self.prmtop=AmberParm(self.prmname)
-        self.resptop =copy.deepcopy(self.prmtop)
+        self.chargetop =copy.deepcopy(self.prmtop)
         natom=len(self.prmtop.atoms)
         nres=len(self.prmtop.residues)
         atomname=self.prmtop.parm_data['ATOM_NAME']
@@ -75,11 +78,16 @@ class QMMM_FragSystem:
         respte=np.array(respte)-2
         atomcrg=np.array(self.prmtop.parm_data['CHARGE'])
         if self.ifresp==True:
-            self.RESPCHARGE=copy.deepcopy(atomcrg)
+            self.QMCHARGE=copy.deepcopy(atomcrg)
         rescrg=np.zeros(nres,dtype=float)
         for i in range(nres):
             rescrg[i]=round(np.sum(atomcrg[respts[i]:respte[i]+1]))
         residue=self.prmtop.parm_data['RESIDUE_LABEL']
+        for res in residue:
+            if res=='CU2':
+                self.spinlist.append(2)
+            else:
+                self.spinlist.append(1)
         restype=['L' for i in range(nres)]
         resindex=[]
         resname=[]
@@ -88,6 +96,7 @@ class QMMM_FragSystem:
         utype=[]
         ucutbond=[]
         ucuttype=[]
+        uspin=[]
         selectC=np.zeros(nres,dtype=int)
         selectCA=np.zeros(nres,dtype=int)
         selectN=np.zeros(nres,dtype=int)
@@ -116,12 +125,14 @@ class QMMM_FragSystem:
                     tmpupt[1]=selectC[self.chnpts[i]+1]-1
                     utype.append('ORPH')
                     ucharge.append(0)
+                    uspin.append(1)
                     ucutbond[-1].append([selectCA[self.chnpts[i]+1],selectC[self.chnpts[i]+1]])
                     ucuttype[-1].append('CC')
                 else:
                     tmpupt[1]=selectCA[self.chnpts[i]+1]-1
                     utype.append('ECA')
                     ucharge.append(0)
+                    uspin.append(1)
                     ucutbond[-1].append([selectN[self.chnpts[i]+1],selectCA[self.chnpts[i]+1]])
                     ucuttype[-1].append('NC')
                 upt.append(tmpupt)
@@ -136,6 +147,7 @@ class QMMM_FragSystem:
                         strname=resname[j][::-1]
                         utype.append(strname)
                         ucharge.append(rescrg[resindex[j]])
+                        uspin.append(1)
                         ucutbond.append([])
                         ucuttype.append([])
                         ucutbond[-1].append([selectCA[resindex[j]],selectN[resindex[j]]])
@@ -150,6 +162,7 @@ class QMMM_FragSystem:
                             upt.append(tmpupt)
                             utype.append('ORP')
                             ucharge.append(0)
+                            uspin.append(1)
                             ucutbond.append([])
                             ucuttype.append([])
                             ucutbond[-1].append([j,selectCA[resindex[j]]])
@@ -165,6 +178,7 @@ class QMMM_FragSystem:
                             ucharge.append(0)
                             ucutbond.append([])
                             ucuttype.append([])
+                            uspin.append(1)
                             ucutbond[-1].append([j,selectCA[resindex[j]]])
                             ucuttype[-1].append('CC')
                             ucutbond[-1].append([selectN[resindex[j]+1],selectCA[resindex[j]+1]])
@@ -176,6 +190,7 @@ class QMMM_FragSystem:
                 upt.append(tmpupt)
                 utype.append('H')
                 ucharge.append(rescrg[self.chnpts[i]])
+                uspin.append(1)
                 ucutbond.append([])
                 ucuttype.append([])
                 ucutbond[-1].append([selectCA[self.chnpts[i]],selectC[self.chnpts[i]]])
@@ -192,6 +207,7 @@ class QMMM_FragSystem:
                         tmpupt[1]=selectC[resindex[j]]-1
                         utype.append('R')
                         ucharge.append(rescrg[resindex[j]])
+                        uspin.append(1)
                         upt.append(tmpupt)
                         ucutbond.append([])
                         ucuttype.append([])
@@ -206,6 +222,7 @@ class QMMM_FragSystem:
                             tmpupt[1]=selectC[resindex[j]+1]-1
                             upt.append(tmpupt)
                             ucharge.append(rescrg[resindex[j]+1])
+                            uspin.append(1)
                             utype.append('S')
                             ucutbond.append([])
                             ucuttype.append([])
@@ -219,6 +236,7 @@ class QMMM_FragSystem:
                             tmpupt[1]=selectCA[resindex[j]+1]-1
                             upt.append(tmpupt)
                             ucharge.append(0)
+                            uspin.append(1)
                             utype.append('B')
                             ucutbond.append([])
                             ucuttype.append([])
@@ -230,6 +248,7 @@ class QMMM_FragSystem:
                 tmpupt[0]=Xend+1
                 tmpupt[1]=respte[self.chnpte[i]] 
                 ucharge.append(rescrg[self.chnpte[i]])
+                uspin.append(1)
                 upt.append(tmpupt)
                 utype.append('E')     
                 ucutbond.append([])  
@@ -257,6 +276,7 @@ class QMMM_FragSystem:
             else:
                 utype.append(residue[i])
             ucharge.append(rescrg[i])
+            uspin.append(self.spinlist[i])
         unum=len(upt)
         self.nres=nres;self.natom=natom
         self.respts=respts;self.respte=respte
@@ -271,10 +291,11 @@ class QMMM_FragSystem:
         for i in range(len(upt)):
             self.fragindex[upt[i][0]:upt[i][1]+1]=self.nfrag
             f=frag(self.atomlist[upt[i][0]:upt[i][1]+1],cbnd=ucutbond[i],gtype=ucuttype[i],\
-                fragtype=utype[i])
+                fragtype=utype[i],fragspin=uspin[i])
             self.fraglist.append(f)
             self.nfrag=self.nfrag+1
         self.fragcharge=ucharge
+        self.fragspin=uspin
         return 
     def Create_DisMap(self): 
         d1=np.zeros((self.natom,self.natom),dtype=float)
@@ -316,13 +337,20 @@ class QMMM_FragSystem:
         alist=np.array([m.atomnum for m in QMlist_withg])
         positions=np.array([m.crd for m in QMlist_withg])
         QMcharge=np.sum(np.array(self.fragcharge)[QMfraglist])
-        QMMol=Molnew(alist,positions,QMcharge)
+        QMspin=np.sum(np.array(self.fragspin)[QMfraglist])
+        if QMspin > len(QMfraglist):
+            QMspin=2
+        else:
+            QMspin=1
+        QMMol=Molnew(alist,positions,QMcharge,spin=QMspin)
         self.step+=1
         return QMMol
         
     def Cal_EFQ(self):
+        #print (self.FullMMparm.atoms[self.catom].charge,self.chargetop.atoms[self.catom].charge)
         self.TCRvec=self.Distance_Matrix[self.catom]
         tmpindex=np.where(self.TCRvec<self.qmcutoff)[0]
+        
         QMfraglist=sorted(list(set([self.fragindex[m] for m in tmpindex])))
         str=''
         glist=[]
@@ -349,8 +377,15 @@ class QMMM_FragSystem:
         EGCMlist=[]
         alist=np.array([m.atomnum for m in QMlist_withg])
         positions=np.array([m.crd for m in QMlist_withg])
+        reportlist=[m for m in QMlist_withg if m.atomnum not in [1,6]]
+        #coordistr='<<'.join([str(i.atomnum)+' '+str(i.aindex)+' '+i.aname+' '+str(i.rindex)+' '+str(i.rname) for i in reportlist])
         QMcharge=np.sum(np.array(self.fragcharge)[QMfraglist])
-        QMMol=Molnew(alist,positions,QMcharge)
+        QMspin=np.sum(np.array(self.fragspin)[QMfraglist])
+        if QMspin > len(QMfraglist):
+            QMspin=2
+        else:
+            QMspin=1
+        QMMol=Molnew(alist,positions,QMcharge,spin=QMspin)
 
         try:
             EGCM=(QMMol.Cal_EGCM()-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
@@ -380,8 +415,6 @@ class QMMM_FragSystem:
                 for i in ERROR_mols:
                     i[0].properties={}
 
-
-            
         if self.Theroylevel=='DFTB3':
             NN_predict,ERROR_mols,ERR_List,ERROR_strlist,self.stepmethod=\
                     Cal_DFTB_EFQ(QMSet,\
@@ -404,47 +437,52 @@ class QMMM_FragSystem:
         self.recorderr=maxerr
         self.QMarea_QMforce=NN_predict[0][1]
         self.QMarea_QMenergy=NN_predict[0][0]
-        if self.ifresp==True:
-            self.QMarea_respcharge=NN_predict[0][3] 
+        if self.ifresp==True or self.ifadch==True:
+            self.QMarea_QMcharge=NN_predict[0][3] 
 
-        if self.ifresp==True:
-            self.RESPCHARGE=copy.deepcopy(np.array(self.prmtop.parm_data['CHARGE']))
-            if len(self.QMarea_respcharge)!=0:
+        if self.ifresp==True or self.ifadch==True:
+            self.QMCHARGE=copy.deepcopy(np.array(self.prmtop.parm_data['CHARGE']))
+            if len(self.QMarea_QMcharge)!=0:
                 for i in range(len(QMlist_withg)):
                     if QMlist_withg[i].bpt!=-1:
-                        self.RESPCHARGE[QMlist_withg[i].bpt]=0
+                        self.QMCHARGE[QMlist_withg[i].bpt]=0
                     else:
-                        self.RESPCHARGE[QMlist_withg[i].realpt]=0
+                        self.QMCHARGE[QMlist_withg[i].realpt]=0
 
         for i in range(len(QMlist_withg)):
             if QMlist_withg[i].bpt!=-1:
                 self.force[QMlist_withg[i].bpt] +=self.QMarea_QMforce[i]
-                if self.ifresp==True:
-                    if len(self.QMarea_respcharge)!=0:
-                        self.RESPCHARGE[QMlist_withg[i].bpt]+=self.QMarea_respcharge[i]
+                if self.ifresp==True or self.ifadch==True:
+                    if len(self.QMarea_QMcharge)!=0:
+                        self.QMCHARGE[QMlist_withg[i].bpt]+=self.QMarea_QMcharge[i]
             else:
                 self.force[QMlist_withg[i].realpt]+=self.QMarea_QMforce[i]
-                if self.ifresp==True:
-                    if len(self.QMarea_respcharge)!=0:
-                        self.RESPCHARGE[QMlist_withg[i].realpt]+=self.QMarea_respcharge[i]
+                if self.ifresp==True or self.ifadch==True:
+                    if len(self.QMarea_QMcharge)!=0:
+                        self.QMCHARGE[QMlist_withg[i].realpt]+=self.QMarea_QMcharge[i]
 
         self.energy+=self.QMarea_QMenergy
         chargestr=''
-        if self.ifresp==True:
-            chargestr="Step: %d RESP CHARGE OF MBG: "%self.step
-            for i in self.reportcharge: 
-                chargestr+="    %f  "%self.RESPCHARGE[i]
+        if self.ifresp==True or self.ifadch==True:
+#            chargestr="Step: %d RESP CHARGE OF MBG: "%self.step
+#            for i in self.reportcharge: 
+#                chargestr+="    %f  "%self.QMCHARGE[i]
+#        chargestr+='\n'
+            for i in reportlist:
+                chargestr+="\t%s%d.%s: %f"%(i.rname,i.rindex,i.aname,self.QMCHARGE[i.aindex])
         chargestr+='\n'
         qmsysname=''
         for i in QMlist:
             qmsysname+=i.aname
-        if self.ifresp==True:
+        if self.ifresp==True or self.ifadch==True:
             if self.step%100==0 and self.stepmethod=='NN':
-                self.resptop.parm_data['CHARGE']=self.RESPCHARGE
+                for i in range(len(self.chargetop.atoms)):
+                    self.chargetop.atoms[i].charge=self.QMCHARGE[i] 
+                self.chargetop.parm_data['CHARGE']=self.QMCHARGE
                 self.QMparmdict={}
                 self.QMsysdict={}
         if qmsysname not in self.QMparmdict.keys():
-            self.QMparm=copy.deepcopy(self.resptop)
+            self.QMparm=copy.deepcopy(self.chargetop)
             maskstr='!@'
             for i in QMlist:
                 maskstr+='%d,'%(i.realpt+1)
@@ -471,17 +509,18 @@ class QMMM_FragSystem:
         for i in range(len(QMlist)):
             self.force[QMlist[i].realpt]-=self.QMarea_MMforce[i]
         self.energy-=self.QMarea_MMenergy
-        if self.ifresp==True:
+        if self.ifresp==True or self.ifadch==True:
             if self.step%100==0:
                 self.FullMMparm=copy.deepcopy(self.prmtop)
-                self.FullMMparm.parm_data['CHARGE']=self.RESPCHARGE
+                for i in range(len(self.FullMMparm.atoms)):
+                    self.FullMMparm.atoms[i].charge=self.QMCHARGE[i] 
+                self.FullMMparm.parm_data['CHARGE']=self.QMCHARGE
                 mmsys=self.FullMMparm.createSystem(nonbondedMethod=NoCutoff,rigidWater=False)
                 integrator=LangevinIntegrator(300*kelvin, 1/picosecond, 0.00001*picoseconds)
                 self.MM_simulation=Simulation(self.FullMMparm.topology,mmsys,integrator) 
                 positions=np.array(self.coords)
                 self.MM_simulation.context.setPositions(positions/10)
                 self.MMstate=self.MM_simulation.context.getState(getEnergy=True,getForces=True,getPositions=True)
-            
         positions=np.array(self.coords)
         self.MM_simulation.context.setPositions(positions/10)
         self.MMstate=self.MM_simulation.context.getState(getEnergy=True,getForces=True,getPositions=True)

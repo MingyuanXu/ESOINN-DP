@@ -4,15 +4,19 @@ import os,sys
 from TensorMol import MSet
 import math
 
-def esoinner():
+def esoinner(MSetname=''):
     from ..Comparm import GPARAMS 
     if_continue=True
     if len(GPARAMS.Esoinn_setting.Model.nodes)!=0: 
         cluster_center_before=GPARAMS.Esoinn_setting.Model.cal_cluster_center()
     else:
         cluster_center_before=None 
-    TotalMSet=MSet(GPARAMS.Compute_setting.Traininglevel)
+    if MSetname:
+        TotalMSet=MSet(MSetname)
+    else:
+        TotalMSet=MSet(GPARAMS.Compute_setting.Traininglevel)
     TotalMSet.Load()
+    print (len(TotalMSet.mols))
     for i in TotalMSet.mols:
         try:
             i.EGCM
@@ -20,7 +24,9 @@ def esoinner():
             i.Cal_EGCM()
     TotalMSet.Save()
     Dataset=np.array([i.EGCM for i in TotalMSet.mols])
-    try: 
+    print (Dataset)
+    #try: 
+    if True:
         if GPARAMS.Esoinn_setting.scalemax==None and GPARAMS.Esoinn_setting.scalemin==None:
             print("++++++++++++++++++++++++++++++++++++++++++++++++")
             print("initialize the Scalefactor!!!")
@@ -29,8 +35,8 @@ def esoinner():
             GPARAMS.Esoinn_setting.scalemin=np.min(Dataset,0)
             with open("Sfactor.in",'wb') as f:
                 pickle.dump((GPARAMS.Esoinn_setting.scalemax,GPARAMS.Esoinn_setting.scalemin),f)
-    except:
-        pass
+    #except:
+    #    pass
 
     Dataset=(Dataset-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
     Dataset[~np.isfinite(Dataset)]=0
@@ -50,10 +56,10 @@ def esoinner():
     judgenum=math.ceil(sum(signal_num_list)*0.05)
     print ("signal_num_list:",signal_num_list,"judgenum",judgenum)
 
-    removecluster=[i for i in range(len(signal_num_list)) if not(signal_num_list[i] > judgenum)]
-    print ("removeclusteid:",removecluster)
+    #removecluster=[i for i in range(len(signal_num_list)) if not(signal_num_list[i] > judgenum)]
+    #print ("removeclusteid:",removecluster)
 
-    GPARAMS.Esoinn_setting.Model.cut_cluster(removecluster)
+    #GPARAMS.Esoinn_setting.Model.cut_cluster(removecluster)
     GPARAMS.Esoinn_setting.Model.Save()
     print (GPARAMS.Esoinn_setting.Model.Name,GPARAMS.Esoinn_setting.Model.class_id)  
     print("Class id after Cut action:",GPARAMS.Esoinn_setting.Model.class_id)

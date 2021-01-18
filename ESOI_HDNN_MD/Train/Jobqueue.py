@@ -24,7 +24,7 @@ lsfcpustr="""
 #BSUB -o %%J.out
 #BSUB -e %%J.err
 #BSUB -J %s
-#BSUB -R span[ptile=%d]
+#BSUB -R span[hosts=1]
 """
 
 lsfgpustr="""
@@ -34,6 +34,7 @@ lsfgpustr="""
 #BSUB -o %%J.out
 #BSUB -e %%J.err
 #BSUB -J %s
-#BSUB -R "select[ngpus > 0] rusage[ngpus_excl_p=1]"
+#BSUB -R "rusage[ngpus_physical=1]"
+#BSUB -gpu "num=1:mode=exclusive_process"
 """
 

@@ -18,12 +18,15 @@ parser.add_argument('-d',"--dataset")
 parser.add_argument('-s',"--struc")
 parser.add_argument('-t',"--type")
 args=parser.parse_args()
-time.sleep(random.randint(1,10)*20)
 UpdateGPARAMS(args.ctrlfile)
 evostruc=[int(i) for i in args.struc.split('_')]
 print (evostruc)
 TMPset=MSet(args.dataset)
 TMPset.Load()
+if args.type=="bpresp":
+    for imol in TMPset.mols:
+        imol.properties['clabel']=int(round(np.sum(imol.properties['resp_charge'])))
+
 if len(TMPset.mols)< GPARAMS.Neuralnetwork_setting.Batchsize*20 :
     num=math.ceil(GPARAMS.Neuralnetwork_setting.Batchsize*20/len(TMPset.mols))
     TMPset.mols=TMPset.mols*num
@@ -31,7 +34,7 @@ GPUID=Find_useable_gpu([0,1,2,3,4,5,6,7,8])
 os.environ["CUDA_VISIBLE_DEVICES"]=str(GPUID)
 TreatedAtoms=TMPset.AtomTypes()
 d=MolDigester(TreatedAtoms,name_="ANI1_Sym_Direct",OType_="EnergyAndDipole")
-if args.type=="bpresp":
+if args.type=="bpcharge":
     GPARAMS.Neuralnetwork_setting.Switchrate=0.9
     tset=TData_BP_Direct_EE_WithCharge(TMPset,d,order_=1,num_indis_=1,type_="mol",WithGrad_=True,MaxNAtoms=100)
 else:
@@ -39,14 +42,14 @@ else:
 NN_name=None 
 ifcontinue=False
 
-if args.type=="bpresp":
+if args.type=="bpcharge":
     SUBNET=BP_HDNN_charge(tset,NN_name,Structure=evostruc)
     Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,structure=SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue)
 else:
     SUBNET=BP_HDNN(tset,NN_name,Structure=evostruc)
     Ncase,batchnumf,Lossf,Losse,batchnumd,Lossd,structure=SUBNET.train(SUBNET.max_steps,continue_training=ifcontinue,AimF=GPARAMS.Neuralnetwork_setting.Aimf)
 
-if args.type!="bpresp":
+if args.type!="bpcharge":
     strucstr=" ".join([str(i) for i in structure])
     NNstrucfile=open(GPARAMS.Neuralnetwork_setting.NNstrucrecord,'w')
     NNstrucfile.write("%d, %d, %f, %f, %d, %f, %s,\n"\

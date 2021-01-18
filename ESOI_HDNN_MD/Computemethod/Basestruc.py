@@ -64,7 +64,7 @@ class ghost_atom:
         return str 
          
 class frag:
-    def __init__(self,atomlist,cbnd=[],gtype=[],fragtype='',fragindex=0,fragname=''):
+    def __init__(self,atomlist,cbnd=[],gtype=[],fragtype='',fragindex=0,fragname='',fragspin=1):
         self.atomlist=atomlist
         self.indexlist=np.array([m.aindex for m in atomlist])
         self.glist=[]
@@ -72,6 +72,7 @@ class frag:
         self.fragtype=fragtype
         self.fragindex=fragindex
         self.fragname=fragname
+        self.fragspin=fragspin
         
         if len(cbnd)>0:
             self.cbnd=cbnd

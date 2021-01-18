@@ -16,7 +16,11 @@ class BP_HDNN_charge():
         if Name_!=None:
             self.name=Name_
             self.Load()
-            self.recorder=open('./'+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+'_RESP.record','a')
+            if GPARAMS.Esoinn_setting.Ifresp==True:
+                self.recorder=open('./'+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+'_RESP.record','a')
+            elif GPARAMS.Esoinn_setting.Ifadch==True:
+                self.recorder=open('./'+GPARAMS.Compute_setting.Traininglevel+'/'+self.name+'_ADCH.record','a')
+                
             if self.TData==None and TData_ ==None and Trainable_==True:
                 print ("ERROR: A Trainable BP_HDNN Instance don't have trainable dataset!!")
                 exit

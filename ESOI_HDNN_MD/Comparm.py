@@ -22,15 +22,16 @@ class Esoinn_setting:
         self.Traininterval=500
         self.Clusterinterval=50000
         self.Loadefdnet=False 
-        self.Loadrespnet=False  
+        self.Loadchargenet=False  
         self.efdnetname=""
-        self.respnetname=""
+        self.chargenetname=""
         self.NNdict={} 
         self.scalemax=None
         self.scalemin=None
         self.Mixrate=0.1
         self.Model=None 
         self.Ifresp=False
+        self.chargescheme="adch"
         return
     def Update(self):
         self.Maxnum=np.sum(self.Amax)
@@ -95,7 +96,7 @@ class System_setting:
         self.Strucdict={"NCHAIN":0,"CHNPTS":0,"CHNPTE":0,"CENTER":0}
         self.Traj=""
         self.Initstruc=""
-        self.resptrace=[]
+        self.chargetrace=[]
         self.reportcharge=[]
         return 
 
@@ -124,7 +125,7 @@ class MD_setting:
         self.Box=np.zeros(3)
         self.Ifcontinue=True
         return
-    def Update():
+    def Update(self):
         if not os.path.exists(self.Name):
             os.system('mkdir '+self.Name)
         return
@@ -138,7 +139,7 @@ class Dataset_setting:
 
 class Train_setting:
     def __init__(self):
-        self.rmse=3
+        self.rmse=2
         self.Ifcpuwithhelp=False
         self.Ifgpuwithhelp=False
         self.Trainstage=0
@@ -166,6 +167,9 @@ class Train_setting:
         self.gpuqueuename=''
         self.framenumperjob=100
         return 
+    def Update(self):
+        self.sigma=np.sqrt(self.rmse**2*3)
+        return  
 
 class Neuralnetwork_setting:
     def __init__(self):
