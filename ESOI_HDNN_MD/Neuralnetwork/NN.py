@@ -319,7 +319,7 @@ class BP_HDNN():
         self.dipole_wb = None
         self.dipole_loss = None
         self.gradient = None
-        self.hess=None
+        #self.hess=None
         self.total_loss_dipole, self.loss_dipole, self.energy_loss_dipole, self.grads_loss_dipole, self.dipole_loss_dipole = None, None, None, None, None
         self.train_op_dipole, self.train_op_EandG = None, None
         self.total_loss_EandG, self.loss_EandG, self.energy_loss_EandG, self.grads_loss_EandG, self.dipole_loss_EandG = None, None, None, None, None
@@ -482,7 +482,7 @@ class BP_HDNN():
             #self.Etotal,  self.energy_wb = self.inference(self.Scatter_Sym, self.Sym_Index, self.xyzs_pl, self.natom_pl, Ree_on, Ree_off, self.Reep_pl)
             #self.check = tf.add_check_numerics_ops()
             self.gradient  = tf.gradients(self.Etotal, self.xyzs_pl, name="BPEGrad")
-            self.hess=tf.hessians(self.Etotal,self.xyzs_pl,name="BPEHess")
+            #self.hess=tf.hessians(self.Etotal,self.xyzs_pl,name="BPEHess")
             #self.gradient  = tf.gradients(self.Etotal, self.xyzs_pl, name="BPEGrad", colocate_gradients_with_ops=True)
 #            with tf.name_scope("losses"):
             self.total_loss, self.loss, self.energy_loss, self.grads_loss, self.dipole_loss = self.loss_op(self.Etotal, self.gradient, self.dipole, self.Elabel_pl, self.grads_pl, self.Dlabel_pl, self.natom_pl)
@@ -1041,11 +1041,12 @@ class BP_HDNN():
             print ("loading the session..")
             self.EvalPrepare()
         feed_dict=self.fill_feed_dict(batch_data+[GPARAMS.Neuralnetwork_setting.AddEcc]+[np.ones(self.nlayer+1)])
-        Etotal, Ebp, Ebp_atom, Ecc, Evdw, mol_dipole, atom_charge, gradient,hess = self.sess.run([self.Etotal, self.Ebp, self.Ebp_atom, self.Ecc, self.Evdw, self.dipole, self.charge, self.gradient,self.hess], feed_dict=feed_dict)
+        #Etotal, Ebp, Ebp_atom, Ecc, Evdw, mol_dipole, atom_charge, gradient,hess = self.sess.run([self.Etotal, self.Ebp, self.Ebp_atom, self.Ecc, self.Evdw, self.dipole, self.charge, self.gradient,self.hess], feed_dict=feed_dict)
+        Etotal, Ebp, Ebp_atom, Ecc, Evdw, mol_dipole, atom_charge, gradient = self.sess.run([self.Etotal, self.Ebp, self.Ebp_atom, self.Ecc, self.Evdw, self.dipole, self.charge, self.gradient], feed_dict=feed_dict)
         #Etotal, Ebp, Ebp_atom, Ecc, Evdw, mol_dipole, atom_charge, gradient, bp_gradient, syms= self.sess.run([self.Etotal, self.Ebp, self.Ebp_atom, self.Ecc, self.Evdw, self.dipole, self.charge, self.gradient, self.bp_gradient, self.Scatter_Sym], feed_dict=feed_dict)
         #print ("Etotal:", Etotal, " bp_gradient", bp_gradient)
         #return Etotal, Ebp, Ebp_atom, Ecc, Evdw, mol_dipole, atom_charge, gradient, bp_gradient, syms
-        return Etotal, Ebp, Ebp_atom, Ecc, Evdw, mol_dipole, atom_charge, gradient,hess
+        return Etotal, Ebp, Ebp_atom, Ecc, Evdw, mol_dipole, atom_charge, gradient
 
     def EvalPrepare(self,  continue_training =False):
         """
@@ -1091,7 +1092,7 @@ class BP_HDNN():
             self.Radp_pl  = self.Radp_Ele_pl[:,:3]
             self.Etotal, self.Ebp, self.Evdw,  self.energy_wb, self.Ebp_atom = self.energy_inference(self.Scatter_Sym, self.Sym_Index, self.Ecc, self.xyzs_pl, self.Zs_pl, Ele, C6, vdw_R, self.Reep_pl, Ree_on, Ree_off, self.keep_prob_pl,self.batch_size_ctrl)
             self.gradient  = tf.gradients(self.Etotal, self.xyzs_pl, name="BPEGrad")
-            self.hess=tf.hessians(self.Etotal,self.xyzs_pl,name="BPEHess")
+            #self.hess=tf.hessians(self.Etotal,self.xyzs_pl,name="BPEHess")
             self.bp_gradient  = tf.gradients(self.Ebp, self.xyzs_pl, name="BPGrad")
             self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
             self.saver = tf.train.Saver(max_to_keep = self.max_checkpoints)

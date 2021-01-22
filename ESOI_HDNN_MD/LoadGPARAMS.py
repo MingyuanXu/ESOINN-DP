@@ -59,6 +59,7 @@ def LoadModel(ifhdnn=True):
             GPARAMS.Esoinn_setting.scalemin=None
     if ifhdnn==True:
         if GPARAMS.Esoinn_setting.Loadefdnet==True and GPARAMS.Esoinn_setting.Model!=None:
+            print ("===========start load net===============")
             nnlist=Get_neuralnetwork_instance(max(GPARAMS.Esoinn_setting.Model.class_id,GPARAMS.Train_setting.Modelnumperpoint))
         if GPARAMS.Esoinn_setting.Loadchargenet==True and GPARAMS.Esoinn_setting.chargenetname!="":
             chargenet=Get_charge_instance(GPARAMS.Esoinn_setting.chargenetname)

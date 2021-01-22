@@ -54,9 +54,22 @@ def trainer(DataQueue,GPUQueue=None,jsonfile=''):
             SUBNET.SaveAndClose()
         GPUQueue.put(GPUid)
     else:
-        trans=pko.Transport((GPARAMS.Train_setting.helpgpunodeip,GPARAMS.Train_setting.helpgpuport))
-        trans.connect(username=GPARAMS.Train_setting.helpgpuaccount,password=GPARAMS.Train_setting.helpgpupasswd)
+        connectflag=True
+        connect_num=0
+        while connectflag:
+            try:
+                trans=pko.Transport((GPARAMS.Train_setting.helpgpunodeip,GPARAMS.Train_setting.helpgpuport))
+                #trans.banner_timeout=300
+                trans.connect(username=GPARAMS.Train_setting.helpgpuaccount,password=GPARAMS.Train_setting.helpgpupasswd)
+                connectflag=False
+            except Exception as e:
+                print (e)
+                connect_num+=1
+                print (f"{connect_num} th reconnect to {((GPARAMS.Train_setting.helpgpunodeip,GPARAMS.Train_setting.helpgpuport))} for {TMMSET.name}")
+                time.sleep(5)
+
         ssh=pko.SSHClient()
+        #ssh.connect(hostname=GPARAMS.Train_setting.helpgpunodeip,port=GPARAMS.Train_setting.helpgpuport,username=GPARAMS.Train_setting.helpgpuaccount,password=GPARAMS.Train_setting.helpgpupasswd,banner_timeout=300,timeout=15)
         ssh._transport=trans
         sftp=pko.SFTPClient.from_transport(trans)
         workpath=os.getcwd()
@@ -78,11 +91,13 @@ def trainer(DataQueue,GPUQueue=None,jsonfile=''):
             print(pbsgpustr%(4,GPARAMS.Train_setting.gpuqueuename,'Cluster%d'%ider),TMMSET.name,ider)
         shellrun.write(GPARAMS.Train_setting.helpgpuenv)
         strucstr="_".join([str(i) for i in evostruc])
-        shellrun.write('TrainNN.py -i %s -d %s -s %s -t bp\n'%(jsonfile,MSetname,strucstr))
+        shellrun.write('python -u $ESOIHOME/bin/TrainNN.py -i %s -d %s -s %s -t bp\n'%(jsonfile,MSetname,strucstr))
+        #shellrun.write('python -u $ESOIHOME/bin/TrainNN.py -i %s -d %s -s %s -t bp\n'%(jsonfile,MSetname,strucstr))
         shellrun.write('touch finished\n')
         shellrun.close()
         sftp.put(localpath=workpath+'/gpu%d.run'%ider,remotepath=remotepath+'/gpu.run')
         sftp.put(localpath=workpath+'/%s'%jsonfile,remotepath=remotepath+'/%s'%jsonfile)
+
         if GPARAMS.Train_setting.gpuqueuetype=="LSF":
             stdin,stdout,stderr=ssh.exec_command("cd %s && bsub <gpu.run"%remotepath)
         if GPARAMS.Train_setting.gpuqueuetype=="PBS":
@@ -99,7 +114,6 @@ def trainer(DataQueue,GPUQueue=None,jsonfile=''):
                 normalflag=('core dump' in tmpstr)
                 if normalflag==True:
                     stdin,stdout,stderr=ssh.exec_command("cd %s && rm Cluster*.o* && bsub < gpu.run"%remotepath)
-                
         stdin,stdout,stderr=ssh.exec_command("cd %s && mv %s/Cluster*.record networks/Cluster%d.record"%(remotepath,remotepath,ider))
         print (stdout.read().decode())
         stdin,stdout,stderr=ssh.exec_command("cd %s/networks && tar zcvf Cluster%d.tar.gz *"%(remotepath,ider))
@@ -168,9 +182,20 @@ def chargenet_train(MSetname,GPUQueue,jsonfile):
         SUBNet.train(SUBNet.max_steps,continue_training=ifcontinue)
         GPUQueue.put(GPUID)
     else:
-        trans=pko.Transport((GPARAMS.Train_setting.helpgpunodeip,GPARAMS.Train_setting.helpgpuport))
-        trans.connect(username=GPARAMS.Train_setting.helpgpuaccount,password=GPARAMS.Train_setting.helpgpupasswd)
+        connectflag=True
+        connect_num=0
+        while connectflag:
+            try:
+                trans=pko.Transport((GPARAMS.Train_setting.helpgpunodeip,GPARAMS.Train_setting.helpgpuport))
+                trans.connect(username=GPARAMS.Train_setting.helpgpuaccount,password=GPARAMS.Train_setting.helpgpupasswd)
+                connectflag=False
+            except:
+                connect_num+=1
+                print (f"{connect_num} th reconnect to {((GPARAMS.Train_setting.helpgpunodeip,GPARAMS.Train_setting.helpgpuport))} for {MSetname}")
+                time.sleep(5)
+                
         ssh=pko.SSHClient()
+        #ssh.connect(hostname=GPARAMS.Train_setting.helpgpunodeip,port=GPARAMS.Train_setting.helpgpuport,username=GPARAMS.Train_setting.helpgpuaccount,password=GPARAMS.Train_setting.helpgpupasswd,banner_timeout=300,timeout=15)
         ssh._transport=trans
         sftp=pko.SFTPClient.from_transport(trans)
         workpath=os.getcwd()
@@ -208,7 +233,7 @@ def chargenet_train(MSetname,GPUQueue,jsonfile):
                 
             shellrun.write(GPARAMS.Train_setting.helpgpuenv)
         strucstr="_".join([str(i) for i in evostruc])
-        shellrun.write('TrainNN.py -i %s -d %s -s %s -t bpcharge \n'%(jsonfile,MSetname,strucstr))
+        shellrun.write('python -u $ESOIHOME/bin/TrainNN.py -i %s -d %s -s %s -t bpcharge \n'%(jsonfile,MSetname,strucstr))
         shellrun.write('touch finished\n')
         shellrun.close()
 

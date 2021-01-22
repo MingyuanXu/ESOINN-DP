@@ -119,9 +119,21 @@ def parallel_caljob(MSetname,manager,ctrlfile):
         for i in range(nstage):
             subMSetlist[i].mols=submollist[i]
             subMSetlist[i].Save()
-        trans=pko.Transport((GPARAMS.Train_setting.helpcpunodeip,GPARAMS.Train_setting.helpcpuport))
-        trans.connect(username=GPARAMS.Train_setting.helpcpuaccount,password=GPARAMS.Train_setting.helpcpupasswd)
+        connectflag=True
+        connect_num=0
+        while connectflag:
+            try:
+                trans=pko.Transport((GPARAMS.Train_setting.helpcpunodeip,GPARAMS.Train_setting.helpcpuport))
+                #trans.banner_timeout=300
+                trans.connect(username=GPARAMS.Train_setting.helpcpuaccount,password=GPARAMS.Train_setting.helpcpupasswd)
+                connectflag=False
+            except Exception as e:
+                print (e)
+                connect_num+=1
+                print (f"{connect_num} th reconnect to {((GPARAMS.Train_setting.helpcpunodeip,GPARAMS.Train_setting.helpcpuport))} for {MSetname}")
+                time.sleep(5)
         ssh=pko.SSHClient()
+        #ssh.connect(username=GPARAMS.Train_setting.helpcpuaccount,password=GPARAMS.Train_setting.helpcpupasswd,banner_timeout=300,timeout=15)
         ssh._transport=trans
         sftp=pko.SFTPClient.from_transport(trans)
         workpath=os.getcwd()
@@ -142,7 +154,7 @@ def parallel_caljob(MSetname,manager,ctrlfile):
             elif GPARAMS.Train_setting.cpuqueuetype=='LSF':
                 cpurun.write(lsfcpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
             cpurun.write(GPARAMS.Train_setting.helpcpuenv)
-            cpurun.write("Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
+            cpurun.write("python -u $ESOIHOME/bin/Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
             cpurun.write("rm *.chk\n")
             cpurun.write("touch finished\n")
             cpurun.close()

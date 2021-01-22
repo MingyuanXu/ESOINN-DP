@@ -32,8 +32,9 @@ def EvalSet(mol_set, \
         Etotal, Ebp, Ecc, mol_dipole, atom_charge, gradient  = instance.evaluate([xyzs, Zs, dummy_energy, dummy_dipole, dummy_grads, rad_p_ele, ang_t_elep, rad_eep, mil_jk, 1.0/natom])
         return Etotal, Ebp, Ecc, mol_dipole, atom_charge, -JOULEPERHARTREE*gradient[0]
     else:
-        Etotal, Ebp, Ebp_atom, Ecc, Evdw,  mol_dipole, atom_charge, gradient,hess = instance.evaluate([xyzs, Zs, dummy_energy, dummy_dipole, dummy_grads, rad_p_ele, ang_t_elep, rad_eep, mil_jk, 1.0/natom])
-        return Etotal, Ebp, Ebp_atom ,Ecc, Evdw, mol_dipole, atom_charge, -JOULEPERHARTREE*gradient[0],hess
+        #Etotal, Ebp, Ebp_atom, Ecc, Evdw,  mol_dipole, atom_charge, gradient,hess = instance.evaluate([xyzs, Zs, dummy_energy, dummy_dipole, dummy_grads, rad_p_ele, ang_t_elep, rad_eep, mil_jk, 1.0/natom])
+        Etotal, Ebp, Ebp_atom, Ecc, Evdw,  mol_dipole, atom_charge, gradient = instance.evaluate([xyzs, Zs, dummy_energy, dummy_dipole, dummy_grads, rad_p_ele, ang_t_elep, rad_eep, mil_jk, 1.0/natom])
+        return Etotal, Ebp, Ebp_atom ,Ecc, Evdw, mol_dipole, atom_charge, -JOULEPERHARTREE*gradient[0]#,hess
 
 def EvalSet_charge(mol_set, instance,Rr_cut=GPARAMS.Neuralnetwork_setting.AN1_r_Rc, Ra_cut=GPARAMS.Neuralnetwork_setting.AN1_a_Rc, Ree_cut=GPARAMS.Neuralnetwork_setting.EEcutoffoff, HasVdw = True):
     nmols = len(mol_set.mols)

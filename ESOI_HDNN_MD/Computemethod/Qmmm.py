@@ -409,6 +409,7 @@ class QMMM_FragSystem:
                     Cal_NN_EFQ(QMSet,inpath=self.Inpath)
                 maxerr=np.max(np.array(ERR_List))
             except:
+                print ("NN failed")
                 NN_predict,ERROR_mols,ERR_List,ERROR_strlist,self.stepmethod=\
                     Cal_Gaussian_EFQ(QMSet,self.Inpath,"PM6 nosymm force",GPARAMS.Compute_setting.Ncoresperthreads)
                 maxerr=np.max(np.array(ERR_List))
@@ -439,6 +440,7 @@ class QMMM_FragSystem:
         self.QMarea_QMenergy=NN_predict[0][0]
         if self.ifresp==True or self.ifadch==True:
             self.QMarea_QMcharge=NN_predict[0][3] 
+            print (self.QMarea_QMcharge)
 
         if self.ifresp==True or self.ifadch==True:
             self.QMCHARGE=copy.deepcopy(np.array(self.prmtop.parm_data['CHARGE']))

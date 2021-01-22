@@ -25,9 +25,9 @@ def esoinner(MSetname=''):
     TotalMSet.Save()
     Dataset=np.array([i.EGCM for i in TotalMSet.mols])
     print (Dataset)
-    #try: 
-    if True:
-        if GPARAMS.Esoinn_setting.scalemax==None and GPARAMS.Esoinn_setting.scalemin==None:
+    try: 
+    #if True:
+        if len(GPARAMS.Esoinn_setting.scalemax)>0 and len(GPARAMS.Esoinn_setting.scalemin)>0:
             print("++++++++++++++++++++++++++++++++++++++++++++++++")
             print("initialize the Scalefactor!!!")
             print("++++++++++++++++++++++++++++++++++++++++++++++++")
@@ -35,8 +35,8 @@ def esoinner(MSetname=''):
             GPARAMS.Esoinn_setting.scalemin=np.min(Dataset,0)
             with open("Sfactor.in",'wb') as f:
                 pickle.dump((GPARAMS.Esoinn_setting.scalemax,GPARAMS.Esoinn_setting.scalemin),f)
-    #except:
-    #    pass
+    except:
+        pass
 
     Dataset=(Dataset-GPARAMS.Esoinn_setting.scalemin)/(GPARAMS.Esoinn_setting.scalemax-GPARAMS.Esoinn_setting.scalemin)
     Dataset[~np.isfinite(Dataset)]=0
@@ -53,7 +53,7 @@ def esoinner(MSetname=''):
     for i in range(len(Dataset)):
         signal_cluster[cluster_label[i][0]].append(Dataset[i])
     signal_num_list=[len(i) for i in signal_cluster]
-    judgenum=math.ceil(sum(signal_num_list)*0.05)
+    judgenum=math.ceil(sum(signal_num_list)*0.2)
     print ("signal_num_list:",signal_num_list,"judgenum",judgenum)
 
     #removecluster=[i for i in range(len(signal_num_list)) if not(signal_num_list[i] > judgenum)]
