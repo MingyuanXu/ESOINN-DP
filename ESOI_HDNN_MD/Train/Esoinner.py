@@ -27,7 +27,7 @@ def esoinner(MSetname=''):
     print (Dataset)
     try: 
     #if True:
-        if len(GPARAMS.Esoinn_setting.scalemax)>0 and len(GPARAMS.Esoinn_setting.scalemin)>0:
+        if len(GPARAMS.Esoinn_setting.scalemax)=0 and len(GPARAMS.Esoinn_setting.scalemin)=0:
             print("++++++++++++++++++++++++++++++++++++++++++++++++")
             print("initialize the Scalefactor!!!")
             print("++++++++++++++++++++++++++++++++++++++++++++++++")
