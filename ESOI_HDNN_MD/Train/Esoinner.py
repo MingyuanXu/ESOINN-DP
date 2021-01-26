@@ -16,7 +16,6 @@ def esoinner(MSetname=''):
     else:
         TotalMSet=MSet(GPARAMS.Compute_setting.Traininglevel)
     TotalMSet.Load()
-    print (len(TotalMSet.mols))
     for i in TotalMSet.mols:
         try:
             i.EGCM
@@ -24,10 +23,9 @@ def esoinner(MSetname=''):
             i.Cal_EGCM()
     TotalMSet.Save()
     Dataset=np.array([i.EGCM for i in TotalMSet.mols])
-    print (Dataset)
     try: 
     #if True:
-        if len(GPARAMS.Esoinn_setting.scalemax)==0 and len(GPARAMS.Esoinn_setting.scalemin)==0:
+        if not (GPARAMS.Esoinn_setting.scalemax and GPARAMS.Esoinn_setting.scalemin):
             print("++++++++++++++++++++++++++++++++++++++++++++++++")
             print("initialize the Scalefactor!!!")
             print("++++++++++++++++++++++++++++++++++++++++++++++++")
