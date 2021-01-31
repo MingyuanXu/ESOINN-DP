@@ -71,7 +71,8 @@ def Cal_NN_EFQ(NNSet,inpath='./'):
             N_num=math.ceil((NN_num+1)/2)
         E_avg=np.mean(E_i)
         F_avg=np.mean(F_i,axis=0)
-        tmp_list=np.argsort(np.max(np.reshape(np.square(F_i-F_avg),(len(imol.belongto),-1)),1))[:N_num]
+        #tmp_list=np.argsort(np.max(np.reshape(np.square(F_i-F_avg),(len(imol.belongto),-1)),1))[:N_num]
+        tmp_list=np.argsort(np.max(np.reshape(np.square(F_i-F_avg),(len(imol.belongto),-1)),1))
         F_New=[F_i[m] for m in tmp_list]
         F_avg=np.mean(F_New,axis=0)
         E_New=[E_i[m] for m in tmp_list]

@@ -138,6 +138,7 @@ def parallel_caljob(MSetname,manager,ctrlfile):
         sftp=pko.SFTPClient.from_transport(trans)
         workpath=os.getcwd()
         print (workpath)
+        jobidlist=[]
         for i in range(nstage):
             subMSetlist[i].mols=submollist[i]
             subMSetlist[i].Save()
@@ -154,16 +155,24 @@ def parallel_caljob(MSetname,manager,ctrlfile):
             elif GPARAMS.Train_setting.cpuqueuetype=='LSF':
                 cpurun.write(lsfcpustr%(GPARAMS.Compute_setting.Ncoresperthreads,GPARAMS.Compute_setting.Traininglevel+"_%d"%i))
             cpurun.write(GPARAMS.Train_setting.helpcpuenv)
+            cpurun.write("rm queue\n")
+            cpurun.write('touch started\n')
             cpurun.write("python -u $ESOIHOME/bin/Qmcal.py -i %s -d %s> %s.qmout\n"%(ctrlfile,MSetname+'_part%d'%i,MSetname+'_part%d'%i))
-            cpurun.write("rm *.chk\n")
+            cpurun.write("rm *.chk started\n")
             cpurun.write("touch finished\n")
             cpurun.close()
             sftp.put(localpath=workpath+'/cpu.run',remotepath=remotepath+'/cpu.run')
             sftp.put(localpath=workpath+'/'+ctrlfile,remotepath=remotepath+'/'+ctrlfile)
             if GPARAMS.Train_setting.cpuqueuetype=='PBS':
-                ssh.exec_command('cd %s && qsub cpu.run'%remotepath)
+                stdin,stdout,stderr=ssh.exec_command('cd %s &&touch queue &&qsub cpu.run'%remotepath)
+                jobidlist.append(stdout.read().decode().strip())
+                print (jobidlist[-1])
+#                stdin,stdout,stderr=ssh.exec_command('cd %s &&ls &&qsub cpu.run'%remotepath)
+                #print (stdout.read().decode(),stdout.channel.recv_exit_status(),stderr,stdin,remotepath)
+                #print (stdout.read().decode(),stderr,stdin)
             elif GPARAMS.Train_setting.cpuqueuetype=='LSF':
-                ssh.exec_command('cd %s && bsub <cpu.run'%remotepath)
+                stdin,stdout,stderr=ssh.exec_command('cd %s && bsub <cpu.run'%remotepath)
+                print (stdout.read().decode,stderr,stdin)
         t=0
         while False in subMSetresult:
             time.sleep(30)
@@ -173,7 +182,19 @@ def parallel_caljob(MSetname,manager,ctrlfile):
                 stdin,stdout,stderr=ssh.exec_command("cd %s && ls "%(remotepath))
                 tmpstr=stdout.read().decode()
                 if 'finished' in tmpstr:
+                    state='finished'
+                elif 'started' in tmpstr:
+                    state='cal'
+                elif 'queue' in tmpstr:
+                    state='queue'
+                if 'finished' in tmpstr:
                     subMSetresult[i]=True
+                stdin,stdout,stderr=ssh.exec_command('qstat')
+                tmpstr=stdout.read().decode()
+                if jobidlist[i] not in tmpstr and state=='queue':
+                    stdin,stdout,stderr=ssh.exec_command('cd %s && qsub cpu.run'%remotepath)
+                    newid=stdout.read().decode().strip()
+                    jobidlist[i]=newid 
             print (t,subMSetresult)
         finishmols=[]
         subMSetlist=[MSet(MSetname+'_part%d'%i) for i in range(nstage)]

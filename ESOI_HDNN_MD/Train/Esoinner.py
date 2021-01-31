@@ -54,10 +54,10 @@ def esoinner(MSetname=''):
     judgenum=math.ceil(sum(signal_num_list)*0.2)
     print ("signal_num_list:",signal_num_list,"judgenum",judgenum)
 
-    #removecluster=[i for i in range(len(signal_num_list)) if not(signal_num_list[i] > judgenum)]
-    #print ("removeclusteid:",removecluster)
+    removecluster=[i for i in range(len(signal_num_list)) if not(signal_num_list[i] > judgenum)]
+    print ("removeclusteid:",removecluster)
 
-    #GPARAMS.Esoinn_setting.Model.cut_cluster(removecluster)
+    GPARAMS.Esoinn_setting.Model.cut_cluster(removecluster)
     GPARAMS.Esoinn_setting.Model.Save()
     print (GPARAMS.Esoinn_setting.Model.Name,GPARAMS.Esoinn_setting.Model.class_id)  
     print("Class id after Cut action:",GPARAMS.Esoinn_setting.Model.class_id)
