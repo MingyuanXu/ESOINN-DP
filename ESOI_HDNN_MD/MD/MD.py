@@ -140,8 +140,8 @@ class Simulation():
             AVG_TEMP=np.mean(np.array(Temp_record[-1000:-1]))
             #if AVG_ERR>GPARAMS.Train_setting.rmse**2*GPARAMS.Train_setting.Modelnumperpoint*4:
             #    MD_Flag=False
-            if method_record>2:
-                MD_Flag=False 
+            #if method_record>2:
+            #    MD_Flag=False 
             if AVG_TEMP>350:
                 MD_Flag=False
             if (step%self.Nprint==0 ):
