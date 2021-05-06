@@ -52,7 +52,7 @@ class Simulation():
         self.KE=0.0
         self.atoms=self.sys.atoms
         self.m=np.array(list(map(lambda x:ATOMICMASSES[x-1],self.atoms)))
-        self.x=self.sys.coords
+        self.x=self.sys.coords-self.sys.coords[self.center]
         self.v=np.zeros(self.x.shape)
         self.a=np.zeros(self.x.shape)
         self.f=f
@@ -92,12 +92,11 @@ class Simulation():
             self.t+=self.dt
             t1=time.time()
             x_new=self.x+self.v*self.dt+0.5*self.a*self.dt**2
-            if self.icap==True:
-                x_new=x_new-x_new[self.center]
+            #if self.icap==True:
+            #    x_new=x_new-x_new[self.center]
             self.sys.coords=x_new
             f=x_new;EPot=0;ERROR_mols=[]
-            if step%50==0:
-                self.sys.Update_DisMap()
+            self.sys.Update_DisMap()
             self.sys.update_crd()
             f,EPot,ERROR,ERROR_mols,EGCMlist,chargestr=self.sys.Cal_EFQ()
             ERROR_record.append(ERROR)
@@ -108,14 +107,16 @@ class Simulation():
                 if QMQueue!=None:
                     QMQueue.put(ERROR_mols)
             self.EPot=EPot
+            distozero=np.sqrt(np.sum(self.sys.coords**2,axis=1))
             if self.icap==True:
-                Vec=(self.sys.Distance_Matrix[self.center]-self.radius)/self.radius
+                #Vec=(self.sys.Distance_Matrix[self.center]-self.radius)/self.radius
+                Vec=(distozero-self.radius)/self.radius
                 for i in range(len(x_new)):
                     if Vec[i]>0:
-                        tmpvec=(x_new[i]-x_new[self.center])
+                        tmpvec=(x_new[i])
                         tmpvec=tmpvec/np.sqrt(np.sum(tmpvec**2))
                         f[i]=f[i]-tmpvec*self.fcap*Vec[i]*JOULEPERHARTREE/627.51
-                
+                f[self.center]=f[self.center]-x_new[self.center]*10*Vec[self.center]*JOULEPERHARTREE/627.51
             a_new=pow(10.0,-10.0)*np.einsum("ax,a->ax", f, 1.0/self.m)
             v_new=self.v+0.5*(self.a+a_new)*self.dt
             if self.MDThermostat!=None and step%1==0:
@@ -141,8 +142,8 @@ class Simulation():
             AVG_TEMP=np.mean(np.array(Temp_record[-1000:-1]))
             #if AVG_ERR>GPARAMS.Train_setting.rmse**2*GPARAMS.Train_setting.Modelnumperpoint*4:
             #    MD_Flag=False
-            if method_record>10:
-                MD_Flag=False 
+            #if method_record>2:
+            #    MD_Flag=False 
             if AVG_TEMP>350:
                 MD_Flag=False
             if (step%self.Nprint==0 ):
