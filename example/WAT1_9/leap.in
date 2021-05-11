@@ -1,0 +1,4 @@
+source oldff/leaprc.ff14SB
+m=loadpdb WAT8.pdb 
+saveamberparm m WAT8.prmtop WAT8.inpcrd
+quit

@@ -1,0 +1,28 @@
+{
+    "ESOINN":
+    {
+        "Atype":[30,1,6,7,8,16],
+        "Amax":[2,100,50,10,20,10],
+        "Modelfile":"WAT",
+        "Scalefactorfile":"Sfactor.in",
+        "Loadefdnet":true,
+        "efdnetname":"PM6_New"
+    },
+    "Compute":
+    {
+        "Gpulist":[0],
+        "Traininglevel":"PM6",
+        "Atomizationlevel":"PM6"
+    },
+    "HDNN":
+    {
+        "Maxerr":5,
+        "Miderr":3,
+        "Midrate":0.3,
+        "Structure":[200,200,200]
+    },
+    "Dataset":
+    {
+        "Inputdatasetlist":["PM6_Cluster2"]
+    }
+}

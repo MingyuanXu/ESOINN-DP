@@ -1,0 +1,238 @@
+2021-05-11 20:30:47,409 - TensorMol - INFO - Searching for Installed Optional Packages...
+2021-05-11 20:30:47,409 - TensorMol - INFO - Pyscf is not installed -- no ab-initio sampling
+2021-05-11 20:30:47,462 - TensorMol - DEBUG - MolEmb has been found.
+2021-05-11 20:30:47,462 - TensorMol - DEBUG - Tensorflow version 1.12.0 has been found
+2021-05-11 20:30:47,462 - TensorMol - DEBUG - Found 12 CPUs to thread over... 
+2021-05-11 20:30:47,462 - TensorMol - DEBUG - TensorMol ready...
+2021-05-11 20:30:47,462 - TensorMol - DEBUG - TMPARAMS----------
+2021-05-11 20:30:47,462 - TensorMol - DEBUG - GIT_REVISION:
+CheckLevel:1
+PrintTMTimer:False
+MAX_ATOMIC_NUMBER:10
+RBFS:[[ 0.35000000  0.35000000]
+ [ 0.70000000  0.35000000]
+ [ 1.05000000  0.35000000]
+ [ 1.40000000  0.35000000]
+ [ 1.75000000  0.35000000]
+ [ 2.10000000  0.35000000]
+ [ 2.45000000  0.35000000]
+ [ 2.80000000  0.35000000]
+ [ 3.15000000  0.35000000]
+ [ 3.50000000  0.35000000]
+ [ 3.85000000  0.35000000]
+ [ 4.20000000  0.35000000]
+ [ 4.55000000  0.35000000]
+ [ 4.90000000  0.35000000]]
+ANES:[ 2.20000000  1.00000000  1.00000000  1.00000000  1.00000000  2.55000000
+  3.04000000  3.44000000]
+SRBF:[[ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]
+ [ 0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+   0.00000000  0.00000000]]
+SH_LMAX:4
+SH_NRAD:14
+SH_ORTH:1
+SH_rot_invar:False
+SH_MAXNR:14
+AN1_r_Rc:4.6
+AN1_a_Rc:3.1
+AN1_eta:4.0
+AN1_zeta:8.0
+AN1_num_r_Rs:32
+AN1_num_a_Rs:8
+AN1_num_a_As:8
+AN1_r_Rs:[ 0.00000000  0.14375000  0.28750000  0.43125000  0.57500000  0.71875000
+  0.86250000  1.00625000  1.15000000  1.29375000  1.43750000  1.58125000
+  1.72500000  1.86875000  2.01250000  2.15625000  2.30000000  2.44375000
+  2.58750000  2.73125000  2.87500000  3.01875000  3.16250000  3.30625000
+  3.45000000  3.59375000  3.73750000  3.88125000  4.02500000  4.16875000
+  4.31250000  4.45625000]
+AN1_a_Rs:[ 0.00000000  0.38750000  0.77500000  1.16250000  1.55000000  1.93750000
+  2.32500000  2.71250000]
+AN1_a_As:[ 0.00000000  0.78539816  1.57079633  2.35619449  3.14159265  3.92699082
+  4.71238898  5.49778714]
+GradScalar:0.05
+DipoleScalar:1.0
+RotateSet:0
+TransformSet:1
+NModePts:10
+NDistorts:5
+GoK:0.05
+dig_ngrid:20
+dig_SamplingType:Smooth
+BlurRadius:0.05
+Classify:False
+Embedded_Charge_Order:2
+MBE_ORDER:3
+MonitorSet:None
+NetNameSuffix:
+NeuronType:relu
+tf_prec:tf.float64
+learning_rate:0.001
+learning_rate_dipole:0.0001
+learning_rate_energy:1e-05
+momentum:0.9
+max_steps:1001
+batch_size:1000
+test_freq:10
+HiddenLayers:[200, 200, 200]
+hidden1:512
+hidden2:512
+hidden3:512
+GradWeight:0.01
+TestRatio:0.2
+Profiling:False
+max_checkpoints:1
+KeepProb:0.7
+weight_decay:0.001
+ConvFilter:[32, 64]
+ConvKernelSize:[[8, 1], [4, 1]]
+ConvStrides:[[8, 1], [4, 1]]
+sigmoid_alpha:100.0
+EnergyScalar:1.0
+DipoleScaler:1.0
+InNormRoutine:None
+OutNormRoutine:None
+RandomizeData:True
+MxTimePerElement:36000
+MxMemPerElement:16000
+ChopTo:None
+RotAvOutputs:1
+OctahedralAveraging:0
+train_gradients:True
+train_dipole:True
+train_quadrupole:False
+train_rotation:True
+OptMaxCycles:50
+OptThresh:0.0001
+OptMaxStep:0.1
+OptStepSize:0.1
+OptMomentum:0.5
+OptMomentumDecay:0.8
+OptPrintLvl:1
+OptLatticeStep:0.05
+GSSearchAlpha:0.05
+SDStep:0.05
+MaxBFGS:7
+NebSolver:Verlet
+NebNumBeads:18
+NebK:0.07
+NebKMax:1.0
+NebClimbingImage:True
+DiisSize:20
+RemoveInvariant:True
+MDMaxStep:20000
+MDdt:0.2
+MDTemp:300.0
+MDV0:Random
+MDThermostat:None
+MDLogTrajectory:True
+MDUpdateCharges:True
+MDIrForceMin:False
+MDAnnealT0:20.0
+MDAnnealTF:300.0
+MDAnnealKickBack:1.0
+MDAnnealSteps:1000
+MDFieldVec:[ 1.00000000  0.00000000  0.00000000]
+MDFieldAmp:0.0
+MDFieldFreq:0.8333333333333334
+MDFieldTau:1.2
+MDFieldT0:3.0
+MetaBumpTime:15.0
+MetaBowlK:0.0
+MetaMaxBumps:500
+MetaMDBumpHeight:0.05
+MetaMDBumpWidth:0.1
+AddEcc:True
+OPR12:Poly
+Poly_Width:4.6
+Elu_Width:4.6
+EEOn:True
+EESwitchFunc:CosLR
+EEVdw:True
+EEOrder:2
+EEdr:1.0
+EECutoff:5.0
+EECutoffOn:4.4
+EECutoffOff:15.0
+Erf_Width:0.2
+DSFAlpha:0.18
+tm_root:.
+sets_dir:./datasets/
+networks_directory:./networks/
+output_root:.
+results_dir:./results/
+dens_dir:./densities/
+log_dir:./logs/
+Qchem_RIMP2_Block:$rem
+   jobtype   sp
+   method   rimp2
+   MAX_SCF_CYCLES  200
+   basis   cc-pvtz
+   aux_basis rimp2-cc-pvtz
+   symmetry   false
+   INCFOCK 0
+   thresh 12
+   SCF_CONVERGENCE 12
+$end
+
+
+2021-05-11 20:30:47,464 - TensorMol - DEBUG - TMPARAMS~~~~~~~~~~
+2021-05-11 20:30:47,472 - TensorMol - DEBUG - TMTimed NeighborList::init[0.0, 0]
+2021-05-11 20:30:47,472 - TensorMol - DEBUG - TMTimed NeighborList::BuildPairs[0.0, 0]
+2021-05-11 20:30:47,472 - TensorMol - DEBUG - TMTimed NLSetUpdate[0.0, 0]
+2021-05-11 20:30:47,472 - TensorMol - DEBUG - TMTimed SetbuildPairsAndTriples[0.0, 0]
+2021-05-11 20:30:47,473 - TensorMol - DEBUG - TMTimed buildPairsWithBothEleIndex[0.0, 0]
+2021-05-11 20:30:47,473 - TensorMol - DEBUG - TMTimed buildPairsAndTriplesWithEleIndexPeriodic[0.0, 0]
+2021-05-11 20:30:47,484 - TensorMol - DEBUG - TMTimed EvalPeriodic[0.0, 0]
+2021-05-11 20:30:47,484 - TensorMol - DEBUG - TMTimed EvalPeriodic[0.0, 0]
+2021-05-11 20:30:47,484 - TensorMol - DEBUG - TMTimed energy_inference[0.0, 0]
+2021-05-11 20:30:47,484 - TensorMol - DEBUG - TMTimed EvalPrepare[0.0, 0]
+2021-05-11 20:30:47,484 - TensorMol - DEBUG - TMTimed energy_inference[0.0, 0]
+2021-05-11 20:30:47,484 - TensorMol - DEBUG - TMTimed dipole_inference[0.0, 0]
+2021-05-11 20:30:47,485 - TensorMol - DEBUG - TMTimed EvalPeriodic[0.0, 0]
+2021-05-11 20:30:47,487 - TensorMol - DEBUG - TMTimed EvalPeriodic[0.0, 0]
+2021-05-11 20:30:47,487 - TensorMol - DEBUG - TMTimed EvalPeriodic[0.0, 0]
+2021-05-11 20:30:47,488 - TensorMol - DEBUG - TMTimed EvalBPDirectEEUpdateSingle[0.0, 0]
+2021-05-11 20:30:47,488 - TensorMol - DEBUG - TMTimed EvalBPDirectEEUpdateSinglePeriodic[0.0, 0]
+2021-05-11 20:30:47,488 - TensorMol - DEBUG - TMTimed TFMolMangePrepare[0.0, 0]
+2021-05-11 20:30:47,496 - TensorMol - DEBUG - TensorMol import complete.
+2021-05-11 20:30:48,973 - TensorMol - INFO - Loaded, 6162 molecules 136641 Atoms total [1 8] Types 
